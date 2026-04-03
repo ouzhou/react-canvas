@@ -1,16 +1,16 @@
 {
-  "name": "utils",
+  "name": "@ouzhou/react-canvas",
   "version": "0.0.0",
-  "description": "A starter for creating a TypeScript package.",
-  "homepage": "https://github.com/author/library#readme",
+  "description": "React syntax, Canvas rendering.",
+  "homepage": "https://github.com/ouzhou/react-canvas#readme",
   "bugs": {
-    "url": "https://github.com/author/library/issues"
+    "url": "https://github.com/ouzhou/react-canvas/issues"
   },
   "license": "MIT",
-  "author": "Author Name <author.name@mail.com>",
+  "author": "ouzhou",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/author/library.git"
+    "url": "git+https://github.com/ouzhou/react-canvas.git"
   },
   "files": [
     "dist"
@@ -35,6 +35,6 @@
     "@typescript/native-preview": "7.0.0-dev.20260328.1",
     "bumpp": "^11.0.1",
     "typescript": "^6.0.2",
-    "vite-plus": "^0.1.14"
+    "vite-plus": "catalog:"
   }
 }

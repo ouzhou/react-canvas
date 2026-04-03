@@ -8,6 +8,9 @@
     "build": "tsc && vp build",
     "preview": "vp preview"
   },
+  "dependencies": {
+    "@ouzhou/react-canvas": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "~5.9.3",
     "vite": "catalog:",

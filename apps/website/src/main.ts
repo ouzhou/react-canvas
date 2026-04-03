@@ -1,4 +1,5 @@
 import "./style.css";
+import { fn } from "@ouzhou/react-canvas";
 import typescriptLogo from "./assets/typescript.svg";
 import viteLogo from "./assets/vite.svg";
 import heroImg from "./assets/hero.png";
@@ -58,3 +59,5 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 `;
 
 setupCounter(document.querySelector<HTMLButtonElement>("#counter")!);
+
+console.log(fn());
