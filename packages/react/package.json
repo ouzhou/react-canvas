@@ -29,6 +29,7 @@
   "devDependencies": {
     "@types/react": "catalog:",
     "@types/react-reconciler": "catalog:",
+    "@typescript/native-preview": "catalog:",
     "jsdom": "catalog:",
     "react": "catalog:",
     "typescript": "catalog:",

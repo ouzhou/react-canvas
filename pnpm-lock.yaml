@@ -15,6 +15,9 @@ catalogs:
     '@types/react-reconciler':
       specifier: 0.33.0
       version: 0.33.0
+    '@typescript/native-preview':
+      specifier: 7.0.0-dev.20260403.1
+      version: 7.0.0-dev.20260403.1
     '@vitejs/plugin-react':
       specifier: 4.7.0
       version: 4.7.0
@@ -54,9 +57,9 @@ importers:
 
   apps/website:
     dependencies:
-      '@ouzhou/react-canvas':
+      '@react-canvas/react':
         specifier: workspace:*
-        version: link:../../packages/react-canvas
+        version: link:../../packages/react
       react:
         specifier: 'catalog:'
         version: 19.2.0
@@ -110,6 +113,9 @@ importers:
       '@types/react-reconciler':
         specifier: 'catalog:'
         version: 0.33.0(@types/react@19.2.14)
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260403.1
       jsdom:
         specifier: 'catalog:'
         version: 29.0.1
@@ -122,40 +128,6 @@ importers:
       vite-plus:
         specifier: 'catalog:'
         version: 0.1.15(@types/node@25.5.0)(jiti@2.6.1)(jsdom@29.0.1)(typescript@5.9.3)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.0)(jiti@2.6.1)(yaml@2.8.3))(yaml@2.8.3)
-
-  packages/react-canvas:
-    dependencies:
-      react-reconciler:
-        specifier: 'catalog:'
-        version: 0.33.0(react@19.2.0)
-      scheduler:
-        specifier: 'catalog:'
-        version: 0.27.0
-    devDependencies:
-      '@types/node':
-        specifier: ^25.5.0
-        version: 25.5.0
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.2.14
-      '@types/react-reconciler':
-        specifier: 'catalog:'
-        version: 0.33.0(@types/react@19.2.14)
-      '@typescript/native-preview':
-        specifier: 7.0.0-dev.20260328.1
-        version: 7.0.0-dev.20260328.1
-      bumpp:
-        specifier: ^11.0.1
-        version: 11.0.1
-      react:
-        specifier: 'catalog:'
-        version: 19.2.0
-      typescript:
-        specifier: ^6.0.2
-        version: 6.0.2
-      vite-plus:
-        specifier: 'catalog:'
-        version: 0.1.15(@types/node@25.5.0)(jiti@2.6.1)(jsdom@29.0.1)(typescript@6.0.2)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.0)(jiti@2.6.1)(yaml@2.8.3))(yaml@2.8.3)
 
 packages:
 
@@ -617,9 +589,6 @@ packages:
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
 
-  '@quansync/fs@1.0.0':
-    resolution: {integrity: sha512-4TJ3DFtlf1L5LDMaM6CanJ/0lckGNtJcMjQ1NAV6zDmA0tEHKZtxNKin8EgPaVX1YzljbxckyT2tJrpQKAtngQ==}
-
   '@rolldown/binding-android-arm64@1.0.0-rc.12':
     resolution: {integrity: sha512-pv1y2Fv0JybcykuiiD3qBOBdz6RteYojRFY1d+b95WVuzx211CRh+ytI/+9iVyWQ6koTh5dawe4S/yRfOFjgaA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -761,43 +730,43 @@ packages:
   '@types/react@19.2.14':
     resolution: {integrity: sha512-ilcTH/UniCkMdtexkoCN0bI7pMcJDvmQFPvuPvmEaYA/NSfFTAgdUSLAoVjaRJm7+6PvcM+q1zYOwS4wTYMF9w==}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260328.1':
-    resolution: {integrity: sha512-BmJGDWC0bSQ2w5O/E+Mw9eTv9RklJ3vjshu7UdD92bUMxc4V4dkBhYj5r0qxbl4f+VFNX7fXvcDDI+9o+Kb6yw==}
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260403.1':
+    resolution: {integrity: sha512-ugcAqKn2F+kHVmCm2AvFeSpCyf4aKmtuuKqYJsrkozqiH124Vcs8uZgT9PWBUXqYeCPXQ09cAeGHsR1rLSwK0Q==}
     cpu: [arm64]
     os: [darwin]
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260328.1':
-    resolution: {integrity: sha512-osc0XQn+AV4X/Vz4hehMm9YtwjZU8VN57FBx4/bsoZ2Z3H1KCA2vbrPQx1hxobrA/+LxkTEk/i6L+z1XwI3RTw==}
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260403.1':
+    resolution: {integrity: sha512-aka3t5q8CkUgOECb1xUmGLu6dUWVT9rPK6qAUFYkUFrIGOQQKnq03xZV8za6TuV91CBG/vYW5nOZ0Cbam6lhDw==}
     cpu: [x64]
     os: [darwin]
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260328.1':
-    resolution: {integrity: sha512-UdPWbxynH/yu54Bx9SSmUsdBQVcKeB8hVLXWiF6qKGDQxwUmqo04xa+PUdxryUXxYzjedbqKMhDLL/W0AlbUMQ==}
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260403.1':
+    resolution: {integrity: sha512-bQRELks2/P2wrnLIBgVogTymLa9l3fkTDBSfftopBJeHdHfc0KD5ceVXKRRToYNrkJluVNID9UzOOF61r/Wouw==}
     cpu: [arm64]
     os: [linux]
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260328.1':
-    resolution: {integrity: sha512-869rJ0Clw7aQTApV1dts2bKV+V6E0qNFJae3SNRo+4TPmrwlmYct3ouGrsQsDCat6XIaCdul8YOBzmj4QUzuMw==}
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260403.1':
+    resolution: {integrity: sha512-NpTDW/ls7jrl9UMh5dF6pgznx7J0/FVbPlqtW1JmyjW/4hjc/6Y5noisWTn0PS6nrVlk1zpx+CI3qwlbmOeNBg==}
     cpu: [arm]
     os: [linux]
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260328.1':
-    resolution: {integrity: sha512-0ZPwzToIRV4r2L/wZUwTD9DvZsVnezrc7x5xwZedGvuRifUKMAAwI+rGaKHqHq5nE5Y1gQA/wwMPPJ4xq6hzVw==}
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260403.1':
+    resolution: {integrity: sha512-BpOPq+7JNqZrvkTXqGJjQYSGp/4I3YVPZEgjtHQYvMhbtm/J2wKOP0pA5OleLK/g3XNd0O2BDqeqbLiMWogCqw==}
     cpu: [x64]
     os: [linux]
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260328.1':
-    resolution: {integrity: sha512-iCgWfPDIbs0xB+zkVu5IFfcco3II3b7DhatIa1hQiTFH4vGs0A4/LskLbSYyWOId4j5WEkCKK5T0KNnEYfbg1g==}
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260403.1':
+    resolution: {integrity: sha512-GtmysWvS9BHQGpqF+tOQeiFji+rAiUIfWC2f/n+y8UlRYoqrjzNEqMrXJMRKKT37sdote2mVsendg12aLEVDJA==}
     cpu: [arm64]
     os: [win32]
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260328.1':
-    resolution: {integrity: sha512-k1/yoqrELzkm6eOFaYm9x+M7mDOlArO1P0YvEgEmcdnL6Igm+0ZmGy6eDmhk9pshPb0GfL1knN6c+5sJA7YReA==}
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260403.1':
+    resolution: {integrity: sha512-qqhzP1/8MaGnpWkFdRQupAR6Ta0Z0ntf4QZ7dhP/sqO7xUwavok0pe+AsC96nyDaEOzYJCk5VGewnDV3gv10/Q==}
     cpu: [x64]
     os: [win32]
 
-  '@typescript/native-preview@7.0.0-dev.20260328.1':
-    resolution: {integrity: sha512-e2f1LaETJ1wFIZSZAJwsAumWixGaRslUjESf0nSrZGUensq3ZwXddoDJPPoDLkSAr/Fa3v5aff+dJ39UbNfbNQ==}
+  '@typescript/native-preview@7.0.0-dev.20260403.1':
+    resolution: {integrity: sha512-iy+90WygcMl3IPnvI3RLMfbieOCT5OW/RMPnnk+H1kY8AcqQGXqGZfrasUKH+/zfmtM+W+gsDs3nSNk2ScKy4g==}
     hasBin: true
 
   '@vitejs/plugin-react@4.7.0':
@@ -943,9 +912,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  args-tokenizer@0.3.0:
-    resolution: {integrity: sha512-xXAd7G2Mll5W8uo37GETpQ2VrE84M181Z7ugHFGQnJZ50M2mbOv0osSZ9VsSgPfJQ+LVG0prSi0th+ELMsno7Q==}
-
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
@@ -961,11 +927,6 @@ packages:
   browserslist@4.28.2:
     resolution: {integrity: sha512-48xSriZYYg+8qXna9kwqjIVzuQxi+KYWp2+5nCYnYKPTr0LvD89Jqk2Or5ogxz0NUMfIjhh2lIUX/LyX9B4oIg==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
-    hasBin: true
-
-  bumpp@11.0.1:
-    resolution: {integrity: sha512-X0ti27I/ewsx/u0EJSyl0IZWWOE95q+wIpAG/60kc5gqMNR4a23YJdd3lL7JsBN11TgLbCM4KpfGMuFfdigb4g==}
-    engines: {node: '>=20.19.0'}
     hasBin: true
 
   cac@7.0.0:
@@ -1004,9 +965,6 @@ packages:
 
   decimal.js@10.6.0:
     resolution: {integrity: sha512-YpgQiITW3JXGntzdUmyUR1V812Hn8T1YVXhCu+wO3OpS4eU9l4YdD3qjyiKdV6mvV29zapkMeD390UVEf2lkUg==}
-
-  defu@6.1.6:
-    resolution: {integrity: sha512-f8mefEW4WIVg4LckePx3mALjQSPQgFlg9U8yaPdlsbdYcHQyj9n2zL2LJEA52smeYxOvmd/nB7TpMtHGMTHcug==}
 
   detect-libc@2.1.2:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
@@ -1204,9 +1162,6 @@ packages:
       oxlint-tsgolint:
         optional: true
 
-  package-manager-detector@1.6.0:
-    resolution: {integrity: sha512-61A5ThoTiDG/C8s8UMZwSorAGwMJ0ERVGj2OjoW5pAalsNOg15+iQiPzrLJ4jhZ1HJzmC2PIHT2oEiH3R5fzNA==}
-
   parse5@8.0.0:
     resolution: {integrity: sha512-9m4m5GSgXjL4AjumKzq1Fgfp3Z8rsvjRNbnkVwfu2ImRqE5D0LnY2QfDen18FSY9C573YU5XxSapdHZTZ2WolA==}
 
@@ -1236,9 +1191,6 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
-
-  quansync@1.0.0:
-    resolution: {integrity: sha512-5xZacEEufv3HSTPQuchrvV6soaiACMFnq1H8wkVioctoH3TRha9Sz66lOxRwPK/qZj7HPiSveih9yAyh98gvqA==}
 
   react-dom@19.2.0:
     resolution: {integrity: sha512-UlbRu4cAiGaIewkPyiRGJk0imDN2T3JjieT6spoL2UeSf5od4n5LB/mQ4ejmxhCFT1tYe8IvaFulzynWovsEFQ==}
@@ -1277,11 +1229,6 @@ packages:
 
   semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
-    hasBin: true
-
-  semver@7.7.4:
-    resolution: {integrity: sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==}
-    engines: {node: '>=10'}
     hasBin: true
 
   shebang-command@2.0.0:
@@ -1352,12 +1299,6 @@ packages:
     resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
     engines: {node: '>=14.17'}
     hasBin: true
-
-  unconfig-core@7.5.0:
-    resolution: {integrity: sha512-Su3FauozOGP44ZmKdHy2oE6LPjk51M/TRRjHv2HNCWiDvfvCoxC2lno6jevMA91MYAdCdwP05QnWdWpSbncX/w==}
-
-  unconfig@7.5.0:
-    resolution: {integrity: sha512-oi8Qy2JV4D3UQ0PsopR28CzdQ3S/5A1zwsUwp/rosSbfhJ5z7b90bIyTwi/F7hCLD4SGcZVjDzd4XoUQcEanvA==}
 
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
@@ -1810,10 +1751,6 @@ snapshots:
 
   '@polka/url@1.0.0-next.29': {}
 
-  '@quansync/fs@1.0.0':
-    dependencies:
-      quansync: 1.0.0
-
   '@rolldown/binding-android-arm64@1.0.0-rc.12':
     optional: true
 
@@ -1906,6 +1843,7 @@ snapshots:
   '@types/node@25.5.0':
     dependencies:
       undici-types: 7.18.2
+    optional: true
 
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:
@@ -1919,36 +1857,36 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260328.1':
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260403.1':
     optional: true
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260328.1':
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260403.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260328.1':
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260403.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260328.1':
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260403.1':
     optional: true
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260328.1':
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260403.1':
     optional: true
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260328.1':
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260403.1':
     optional: true
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260328.1':
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260403.1':
     optional: true
 
-  '@typescript/native-preview@7.0.0-dev.20260328.1':
+  '@typescript/native-preview@7.0.0-dev.20260403.1':
     optionalDependencies:
-      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260328.1
-      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260328.1
-      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260328.1
-      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260328.1
-      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260328.1
-      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260328.1
-      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260328.1
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260403.1
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260403.1
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260403.1
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260403.1
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260403.1
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260403.1
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260403.1
 
   '@vitejs/plugin-react@4.7.0(@voidzero-dev/vite-plus-core@0.1.15(@types/node@25.5.0)(jiti@2.6.1)(typescript@5.9.3)(yaml@2.8.3))':
     dependencies:
@@ -2132,8 +2070,6 @@ snapshots:
   '@voidzero-dev/vite-plus-win32-x64-msvc@0.1.15':
     optional: true
 
-  args-tokenizer@0.3.0: {}
-
   assertion-error@2.0.1: {}
 
   baseline-browser-mapping@2.10.13: {}
@@ -2149,18 +2085,6 @@ snapshots:
       electron-to-chromium: 1.5.331
       node-releases: 2.0.37
       update-browserslist-db: 1.2.3(browserslist@4.28.2)
-
-  bumpp@11.0.1:
-    dependencies:
-      args-tokenizer: 0.3.0
-      cac: 7.0.0
-      jsonc-parser: 3.3.1
-      package-manager-detector: 1.6.0
-      semver: 7.7.4
-      tinyexec: 1.0.4
-      tinyglobby: 0.2.15
-      unconfig: 7.5.0
-      yaml: 2.8.3
 
   cac@7.0.0: {}
 
@@ -2194,8 +2118,6 @@ snapshots:
 
   decimal.js@10.6.0: {}
 
-  defu@6.1.6: {}
-
   detect-libc@2.1.2: {}
 
   electron-to-chromium@1.5.331: {}
@@ -2225,7 +2147,8 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  jiti@2.6.1: {}
+  jiti@2.6.1:
+    optional: true
 
   js-tokens@4.0.0: {}
 
@@ -2384,8 +2307,6 @@ snapshots:
       '@oxlint/binding-win32-x64-msvc': 1.58.0
       oxlint-tsgolint: 0.18.1
 
-  package-manager-detector@1.6.0: {}
-
   parse5@8.0.0:
     dependencies:
       entities: 6.0.1
@@ -2409,8 +2330,6 @@ snapshots:
       source-map-js: 1.2.1
 
   punycode@2.3.1: {}
-
-  quansync@1.0.0: {}
 
   react-dom@19.2.0(react@19.2.0):
     dependencies:
@@ -2459,8 +2378,6 @@ snapshots:
   scheduler@0.27.0: {}
 
   semver@6.3.1: {}
-
-  semver@7.7.4: {}
 
   shebang-command@2.0.0:
     dependencies:
@@ -2512,22 +2429,11 @@ snapshots:
 
   typescript@5.9.3: {}
 
-  typescript@6.0.2: {}
+  typescript@6.0.2:
+    optional: true
 
-  unconfig-core@7.5.0:
-    dependencies:
-      '@quansync/fs': 1.0.0
-      quansync: 1.0.0
-
-  unconfig@7.5.0:
-    dependencies:
-      '@quansync/fs': 1.0.0
-      defu: 6.1.6
-      jiti: 2.6.1
-      quansync: 1.0.0
-      unconfig-core: 7.5.0
-
-  undici-types@7.18.2: {}
+  undici-types@7.18.2:
+    optional: true
 
   undici@7.24.7: {}
 
@@ -2728,4 +2634,5 @@ snapshots:
 
   yallist@3.1.1: {}
 
-  yaml@2.8.3: {}
+  yaml@2.8.3:
+    optional: true

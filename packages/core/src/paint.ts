@@ -1,7 +1,12 @@
 import type { RenderBackend } from "./types.ts";
 import type { ViewNode } from "./view-node.ts";
 
-export function paintScene(roots: ViewNode[], backend: RenderBackend, width: number, height: number): void {
+export function paintScene(
+  roots: ViewNode[],
+  backend: RenderBackend,
+  width: number,
+  height: number,
+): void {
   backend.clear(width, height);
   for (const child of roots) {
     paintNode(child, backend, width, height);

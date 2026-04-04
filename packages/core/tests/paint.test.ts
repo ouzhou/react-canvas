@@ -3,14 +3,13 @@ import { ViewNode, paintScene } from "../src/index.ts";
 import type { RenderBackend } from "../src/index.ts";
 
 test("C5: paintScene calls backend methods", () => {
-  const backend: RenderBackend = {
-    clear: vi.fn(),
-    fillRect: vi.fn(),
-  };
+  const clear = vi.fn();
+  const fillRect = vi.fn();
+  const backend: RenderBackend = { clear, fillRect };
 
   const root = new ViewNode({ style: { backgroundColor: "#ff0000" } });
   paintScene([root], backend, 800, 600);
 
-  expect(backend.clear).toHaveBeenCalledWith(800, 600);
-  expect(backend.fillRect).toHaveBeenCalledWith(0, 0, 800, 600, "#ff0000");
+  expect(clear).toHaveBeenCalledWith(800, 600);
+  expect(fillRect).toHaveBeenCalledWith(0, 0, 800, 600, "#ff0000");
 });
