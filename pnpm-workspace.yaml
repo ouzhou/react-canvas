@@ -2,14 +2,23 @@ packages:
   - apps/*
   - packages/*
 
-catalogMode: prefer
-
 catalog:
   "@types/node": ^24
+  "@types/react": ^19.2.14
+  "@types/react-dom": ^19.2.3
+  "@types/react-reconciler": 0.33.0
+  "@vitejs/plugin-react": 4.7.0
+  jsdom: ^29.0.1
+  react: 19.2.0
+  react-dom: 19.2.0
+  react-reconciler: 0.33.0
+  scheduler: 0.27.0
   typescript: ^5
   vite: npm:@voidzero-dev/vite-plus-core@latest
-  vitest: npm:@voidzero-dev/vite-plus-test@latest
   vite-plus: latest
+  vitest: npm:@voidzero-dev/vite-plus-test@latest
+
+catalogMode: prefer
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
