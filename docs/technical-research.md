@@ -1,17 +1,18 @@
 # React Canvas 技术调研报告
 
-> 调研目标：从 Konva / react-konva、Ink、React Native、minigame-canvas-engine 四个项目中汲取技术方案，围绕**结构设计、样式处理、布局排版、文字换行、事件系统、渲染管线与性能优化、图片与资源加载、滚动与裁剪、无障碍、Reconciler 实现、动画系统、高分屏与 DPR、测试**十三个维度展开对比分析，为 React Canvas 项目提供参考。
+> 调研目标：从 Konva / react-konva、Ink、React Native、minigame-canvas-engine、**Lynx** 五个方向汲取技术方案，围绕**结构设计、样式处理、布局排版、文字换行、事件系统、渲染管线与性能优化、图片与资源加载、滚动与裁剪、无障碍、Reconciler 实现、动画系统、高分屏与 DPR、测试**十三个维度展开对比分析，为 React Canvas 项目提供参考。
 
 ---
 
 ## 一、项目概览
 
-| 项目                                                                                              | 定位                         | 渲染目标               | 布局引擎               | React 集成方式                   |
-| ------------------------------------------------------------------------------------------------- | ---------------------------- | ---------------------- | ---------------------- | -------------------------------- |
-| [Konva](https://github.com/konvajs/konva) / [react-konva](https://github.com/konvajs/react-konva) | HTML5 Canvas 2D 图形框架     | 浏览器 `<canvas>`      | 无内置布局（手动坐标） | Custom React Reconciler          |
-| [Ink](https://github.com/vadimdemedes/ink)                                                        | 终端 CLI 的 React 渲染器     | 终端（ANSI 输出）      | Yoga (Flexbox)         | Custom React Reconciler          |
-| [React Native](https://github.com/facebook/react-native)                                          | 跨平台原生应用框架           | iOS / Android 原生视图 | Yoga (Flexbox)         | Custom React Reconciler (Fabric) |
-| [minigame-canvas-engine](https://github.com/wechat-miniprogram/minigame-canvas-engine)            | 微信小游戏轻量级 Canvas 引擎 | Canvas 2D              | 自研 Flexbox 子集      | 非 React（XML 模板 + 样式对象）  |
+| 项目                                                                                              | 定位                         | 渲染目标               | 布局引擎                     | React 集成方式                      |
+| ------------------------------------------------------------------------------------------------- | ---------------------------- | ---------------------- | ---------------------------- | ----------------------------------- |
+| [Konva](https://github.com/konvajs/konva) / [react-konva](https://github.com/konvajs/react-konva) | HTML5 Canvas 2D 图形框架     | 浏览器 `<canvas>`      | 无内置布局（手动坐标）       | Custom React Reconciler             |
+| [Ink](https://github.com/vadimdemedes/ink)                                                        | 终端 CLI 的 React 渲染器     | 终端（ANSI 输出）      | Yoga (Flexbox)               | Custom React Reconciler             |
+| [React Native](https://github.com/facebook/react-native)                                          | 跨平台原生应用框架           | iOS / Android 原生视图 | Yoga (Flexbox)               | Custom React Reconciler (Fabric)    |
+| [minigame-canvas-engine](https://github.com/wechat-miniprogram/minigame-canvas-engine)            | 微信小游戏轻量级 Canvas 引擎 | Canvas 2D              | 自研 Flexbox 子集            | 非 React（XML 模板 + 样式对象）     |
+| [Lynx](https://github.com/lynx-family/lynx) / [ReactLynx](https://lynxjs.org/)                    | 跨端原生 UI（字节开源）      | iOS / Android / Web 等 | **类 Web CSS**（含 Flexbox） | React（ReactLynx）+ 可选类 Web 标签 |
 
 ---
 
@@ -123,6 +124,24 @@ Canvas 2D Context 绘制
 - 作为轻量级 Canvas 渲染引擎，其自研布局系统的实现思路可供参考（尤其是不依赖 Yoga 时的退路方案）。
 - 它的文字换行规则非常贴合 Web 标准（`whiteSpace` / `wordBreak`），值得学习。
 
+### 2.5 Lynx
+
+**定位与架构（概要）：**
+
+[Lynx](https://lynxjs.org/) 是字节跳动开源的跨端 UI 框架，主打 **「Web 心智 + 原生渲染」**：开发者可使用熟悉的 **CSS** 与 **React**（官方 [ReactLynx](https://lynxjs.org/react/thinking-in-reactlynx)）编写界面，产物在 iOS / Android / HarmonyOS / Web 等端由 Lynx 引擎渲染。构建侧常见工具为基于 Rspack 的 [Rspeedy](https://www.npmjs.com/package/create-rspeedy)（`npm create rspeedy@latest`）。
+
+**与 React Canvas 的对比维度：**
+
+- **样式形态**：Lynx 走 **声明式 CSS**（属性名、单位、选择器体系贴近 Web），而非 React Native 的 **JavaScript style 对象**；文档中有专门的 [Styling](https://lynxjs.org/guide/ui/styling)、[Layout](https://lynxjs.org/guide/ui/layout) 指南。
+- **布局**：Flexbox 以 **CSS 属性** 表达（如 `display: flex`、`flex-direction`），官方说明在多数场景下 **与 Web 标准对齐**，并列出 [支持的 Flex 相关属性](https://lynxjs.org/guide/ui/layout/flexible-box-layout)；与 RN/Yoga 仍存在细节差异（例如文档注明 **尚不支持 `min-content`**，在收缩场景下与浏览器行为可能不一致）。
+- **渲染管线**：Lynx 为 **原生 / 自研渲染路径**（非「自定义 Reconciler → 场景树 → Yoga → Skia」这一条），但 **多线程引擎**（主线程 UI + 后台 JS）等思路对「如何避免业务逻辑卡帧」仍有启发。
+- **集成方式**：可作为 **嵌入式卡片 / 模块** 接入现有 App（见 [Integrate with existing apps](https://lynxjs.org/guide/start/integrate-with-existing-apps)），与「在宿主内嵌 Canvas 渲染层」的产品形态不同，但同属跨端 UI 技术选型参考。
+
+**可借鉴点：**
+
+- 若未来希望 **缩小与 Web CSS 的心智差距**（例如支持更多 CSS 语义、工具类工作流），Lynx 证明了一条 **「CSS 前端 → 非 DOM 原生渲染」** 的可行产品路径；React Canvas 当前选型是 **RN 式 style 对象 + Yoga**，与 Lynx **不竞争同一条实现路线**，但可作为 **需求演进时的对照系**（是否要引入 CSS 子集 / 编译层）。
+- 文档中 **Flexbox 与 Web 的差异清单**（如 `min-content`）提醒：即便布局引擎能力接近 Yoga，**CSS 语义与 RN 语义仍须分别回归测试**，不能假设「和 Chrome 一样」。
+
 ---
 
 ## 三、样式处理
@@ -170,16 +189,26 @@ Canvas 2D Context 绘制
 | 文字样式 | color、fontSize、fontWeight、fontFamily、textAlign、lineHeight、textStroke、textShadow  |
 | 伪类支持 | `:active` 状态样式（v1.0.9+）                                                           |
 
+### 3.5 Lynx
+
+| 维度        | 说明                                                                                                                                                                                                |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 样式形态    | **类 Web CSS**：支持以 CSS 属性描述 UI（含与 Web 对齐度较高的子集），详见 [Styling](https://lynxjs.org/guide/ui/styling)；与 RN 的「驼峰 style 对象」是不同范式。                                   |
+| 布局样式    | Flexbox 等以 **CSS 属性** 书写（`display: flex` 等），[Flexible Box Layout](https://lynxjs.org/guide/ui/layout/flexible-box-layout) 列出已支持的 `flex-*`、`gap`、`justify-content`、`align-*` 等。 |
+| 与 Web 差异 | 文档明确部分行为与浏览器不一致（例如 **不支持 `min-content`**，按 `0px` 处理），需在跨端一致性与 Web 兼容之间单独评估。                                                                             |
+| React 集成  | **ReactLynx** 为官方 React 方案；组件与标签模型见 [Elements & Components](https://lynxjs.org/guide/ui/elements-components)。                                                                        |
+| 样式继承    | 遵循 CSS 层叠/继承语义（与 RN「仅 Text 内嵌套继承」不同）。                                                                                                                                         |
+
 ### 样式系统对比总结
 
-| 特性                | Konva | Ink         | React Native      | Canvas Engine |
-| ------------------- | ----- | ----------- | ----------------- | ------------- |
-| 样式复用机制        | 无    | 无          | StyleSheet.create | class 属性    |
-| 样式继承            | 无    | Text 内继承 | Text 内继承       | 类 CSS 继承   |
-| 样式合并            | 无    | N/A         | 数组合并          | class 合并    |
-| 与 Web CSS 的接近度 | 低    | 中          | 中高              | 高            |
+| 特性                | Konva | Ink         | React Native      | Canvas Engine | Lynx        |
+| ------------------- | ----- | ----------- | ----------------- | ------------- | ----------- |
+| 样式复用机制        | 无    | 无          | StyleSheet.create | class 属性    | CSS / 模块  |
+| 样式继承            | 无    | Text 内继承 | Text 内继承       | 类 CSS 继承   | CSS 继承    |
+| 样式合并            | 无    | N/A         | 数组合并          | class 合并    | 层叠/选择器 |
+| 与 Web CSS 的接近度 | 低    | 中          | 中高              | 高            | **高**      |
 
-**React Canvas 应采纳的方案：** 与 React Native 保持一致——`style` prop 接受对象或数组、支持 `StyleSheet.create` 优化、Text 内部继承文字样式。
+**React Canvas 应采纳的方案：** 与 React Native 保持一致——`style` prop 接受对象或数组、支持 `StyleSheet.create` 优化、Text 内部继承文字样式。**Lynx 作为对照**：若产品未来强需求「写 CSS / 工具类」，需要额外 **编译或运行时层** 将 CSS 或 class 映射到本项目的 style/Yoga 语义（见下文 §15.14）。
 
 ---
 
@@ -228,17 +257,23 @@ Canvas 2D Context 绘制
 - 不支持 flexGrow / flexShrink / flexBasis 的精细控制。
 - 布局计算在 `Layout.init()` 阶段完成。
 
+### 4.5 Lynx
+
+- **布局表达方式**：以 **CSS Flexbox** 为主（`display: flex`），属性列表与说明见官方 [Flexible Box Layout](https://lynxjs.org/guide/ui/layout/flexible-box-layout)；另有多维布局文档入口 [Layout](https://lynxjs.org/guide/ui/layout)。
+- **与 Yoga / RN 的关系**：Lynx **不是**「公开文档即 Yoga」的同构实现；其定位是 **引擎内建布局 + Web 对齐的 CSS 子集**。与 React Canvas（Yoga + RN 默认语义）对比时，应关注 **同名属性在不同默认值下的差异**（参考 Lynx 文档中已列出的 Web 差异项）。
+- **启发**：若 React Canvas 仅支持 RN 式 style，则 **与 Lynx 的 CSS 工作流不兼容**；若要接近 Lynx 开发者体验，需要 **独立的样式前端**（解析 CSS 或工具类 → 生成内部 style / 布局指令）。
+
 ### 布局系统对比总结
 
-| 特性           | Konva | Ink         | React Native | Canvas Engine |
-| -------------- | ----- | ----------- | ------------ | ------------- |
-| 布局引擎       | 无    | Yoga (WASM) | Yoga (C++)   | 自研          |
-| Flexbox 支持度 | 无    | 完整        | 完整         | 子集          |
-| 布局单位       | 像素  | 字符格      | dp / %       | 像素 / %      |
-| 绝对定位       | 默认  | 支持        | 支持         | 支持          |
-| Gap 支持       | 无    | 支持        | 支持         | 不确定        |
+| 特性           | Konva | Ink         | React Native | Canvas Engine | Lynx                |
+| -------------- | ----- | ----------- | ------------ | ------------- | ------------------- |
+| 布局引擎       | 无    | Yoga (WASM) | Yoga (C++)   | 自研          | Lynx 引擎（CSS）    |
+| Flexbox 支持度 | 无    | 完整        | 完整         | 子集          | 文档列出的 CSS 子集 |
+| 布局单位       | 像素  | 字符格      | dp / %       | 像素 / %      | CSS 单位体系        |
+| 绝对定位       | 默认  | 支持        | 支持         | 支持          | 依 CSS 能力         |
+| Gap 支持       | 无    | 支持        | 支持         | 不确定        | 支持（`gap` 等）    |
 
-**React Canvas 应采纳的方案：** 使用 Yoga 引擎，与 React Native 的 Flexbox 语义保持一致（默认 column、flexShrink: 0 等）。
+**React Canvas 应采纳的方案：** 使用 Yoga 引擎，与 React Native 的 Flexbox 语义保持一致（默认 column、flexShrink: 0 等）。**Lynx** 用于对照「CSS 优先」路线的产物形态与文档化差异，不替代当前 Yoga 选型。
 
 ---
 
@@ -1014,6 +1049,28 @@ React Reconciler → 可变场景树（类似 Shadow Tree）→ Yoga 布局 → 
 - 支持像素级回归测试（Skia 渲染结果导出为图片对比）。
 - 使用 Vitest 作为测试框架（与项目工具链一致）。
 
+### 15.14 Tailwind CSS 与原子化工具类（可选演进）
+
+**问题：** 浏览器里的 Tailwind 默认产出 **CSS 类 + 选择器**，依赖 DOM 与完整 CSS 引擎；React Canvas 的 `View` 只有 **`style`（类 RN 对象）** 与 **Yoga**，没有「给节点挂 className 即生效」的路径。
+
+**可行方向（按与 RN 生态接近程度排序）：**
+
+1. **编译期：工具类 → style 对象（推荐优先评估）**  
+   思路类似 [NativeWind](https://www.nativewind.dev/)、[twrnc](https://github.com/jaredh159/tailwind-react-native-classnames) 等：**在构建阶段**把 `className` 或原子类字符串 **静态展开** 为 JavaScript 对象（`{ flex: 1, padding: 8 }`），再传给 `style`。
+   - 要求：为本项目维护一份 **「Tailwind 语义 → RN/Yoga 可识别键值」** 的映射表（或复用社区 RN preset），并明确 **不支持的 utilities**（如任意复杂选择器、`grid`、部分 `position` 组合等）。
+   - 与 Lynx 的差异：Lynx 是 **引擎理解 CSS**；本方案是 **Tailwind 仅作为书写语法**，最终仍落在 RN 式 style + Yoga。
+
+2. **运行期：`cn()` / 字符串 → style 合并**  
+   小集合工具类可在运行时查表合并为对象；适合 demo 或极小子集，**不宜**承载完整 Tailwind 默认配置（包体与性能）。
+
+3. **UnoCSS / 自定义 preset**  
+   用 [UnoCSS](https://unocss.dev/) 等生成 **静态 style 对象或内联样式片段**，再喂给 reconciler；本质仍是「原子化命名 → 内部 token」，需单独维护 preset 与 Yoga 对齐。
+
+4. **不追求「完整 Tailwind」**  
+   仅采纳 **设计 token**（间距、色板、圆角）通过 `theme` 对象或 `StyleSheet.create` 引用，与 Figma / 设计系统对齐，而不引入 Tailwind 引擎。
+
+**结论：** 后续若要「像写 Tailwind 一样写 UI」，应在 **不改变核心渲染模型** 的前提下增加 **编译或 preset 层**，输出 **与当前阶段一致的 `style` 对象**；并单独文档化 **支持的工具类子集** 与 **与 Web 的差异**（与 Lynx 文档列出 CSS 与 Web 差异是同一类工作）。
+
 ---
 
 ## 附录：参考资源
@@ -1028,3 +1085,10 @@ React Reconciler → 可变场景树（类似 Shadow Tree）→ Yoga 布局 → 
 - [Yoga 布局引擎](https://yogalayout.dev/)
 - [minigame-canvas-engine 文档](https://wechat-miniprogram.github.io/minigame-canvas-engine/)
 - [minigame-canvas-engine Text 组件](https://wechat-miniprogram.github.io/minigame-canvas-engine/components/text.html)
+- [Lynx 官网](https://lynxjs.org/)
+- [Lynx GitHub（lynx-family/lynx）](https://github.com/lynx-family/lynx)
+- [Lynx — Styling](https://lynxjs.org/guide/ui/styling)
+- [Lynx — Layout](https://lynxjs.org/guide/ui/layout)
+- [Lynx — Flexible Box Layout](https://lynxjs.org/guide/ui/layout/flexible-box-layout)
+- [Lynx — ReactLynx / Thinking in ReactLynx](https://lynxjs.org/react/thinking-in-reactlynx)
+- [NativeWind（Tailwind → RN 风格参考）](https://www.nativewind.dev/)
