@@ -21,9 +21,16 @@
     "test": "vp test",
     "check": "vp check"
   },
+  "dependencies": {
+    "canvaskit-wasm": "catalog:",
+    "yoga-layout": "catalog:"
+  },
   "devDependencies": {
     "@typescript/native-preview": "catalog:",
     "typescript": "catalog:",
     "vite-plus": "catalog:"
+  },
+  "inlinedDependencies": {
+    "yoga-layout": "3.2.1"
   }
 }

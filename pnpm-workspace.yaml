@@ -3,12 +3,13 @@ packages:
   - packages/*
 
 catalog:
-  "@types/node": ^24
+  "@types/node": ^24.12.2
   "@types/react": ^19.2.14
   "@types/react-dom": ^19.2.3
   "@types/react-reconciler": 0.33.0
   "@typescript/native-preview": 7.0.0-dev.20260403.1
   "@vitejs/plugin-react": 4.7.0
+  canvaskit-wasm: ^0.41.0
   jsdom: ^29.0.1
   react: 19.2.0
   react-dom: 19.2.0
@@ -18,6 +19,7 @@ catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
   vite-plus: latest
   vitest: npm:@voidzero-dev/vite-plus-test@latest
+  yoga-layout: ^3.2.1
 
 catalogMode: prefer
 overrides:
