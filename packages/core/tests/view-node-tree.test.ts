@@ -94,4 +94,18 @@ describe("ViewNode", () => {
     n.calculateLayout(100, 100);
     expect(n.layout.width).toBe(40);
   });
+
+  it("updateStyle on a node with parent and children does not throw (Yoga 3 forbids reset())", () => {
+    const root = new ViewNode(yoga, "View");
+    const mid = new ViewNode(yoga, "View");
+    const leaf = new ViewNode(yoga, "View");
+    root.appendChild(mid);
+    mid.appendChild(leaf);
+    mid.setStyle({ width: 100, flexDirection: "row" });
+    mid.dirty = false;
+    mid.updateStyle({ width: 100, flexDirection: "row" }, { width: 200, flexDirection: "row" });
+    expect(mid.dirty).toBe(true);
+    mid.calculateLayout(400, 400);
+    expect(mid.layout.width).toBe(200);
+  });
 });

@@ -266,9 +266,70 @@ export function applyStylesToYoga(node: YogaNode, style: ViewStyle): void {
   node.setOverflow(Overflow.Visible);
 }
 
-/** Reset layout-related state then apply RN defaults + full style (for commit updates). */
+/**
+ * Yoga 3+ forbids `node.reset()` while the node has a parent or children (see `Node::reset()` in
+ * facebook/yoga). Commit-time style updates must re-apply without calling `reset()`.
+ *
+ * When `style` explicitly sets a layout key to `undefined` (merged update semantics), clear that
+ * key on the Yoga node before applying defaults + the remaining style.
+ */
+function applyExplicitUndefinedLayoutClears(node: YogaNode, style: ViewStyle): void {
+  const raw = style as Record<string, unknown>;
+  const u = (k: keyof ViewStyle) =>
+    Object.prototype.hasOwnProperty.call(raw, k) && raw[k as string] === undefined;
+
+  if (u("width")) node.setWidth(undefined);
+  if (u("height")) node.setHeight(undefined);
+  if (u("minWidth")) node.setMinWidth(undefined);
+  if (u("maxWidth")) node.setMaxWidth(undefined);
+  if (u("minHeight")) node.setMinHeight(undefined);
+  if (u("maxHeight")) node.setMaxHeight(undefined);
+
+  if (u("flex")) node.setFlex(undefined);
+  if (u("flexGrow")) node.setFlexGrow(undefined);
+  if (u("flexShrink")) node.setFlexShrink(undefined);
+  if (u("flexBasis")) node.setFlexBasis(undefined);
+
+  if (u("flexDirection")) node.setFlexDirection(FlexDirection.Column);
+  if (u("flexWrap")) node.setFlexWrap(Wrap.NoWrap);
+  if (u("justifyContent")) node.setJustifyContent(Justify.FlexStart);
+  if (u("alignItems")) node.setAlignItems(Align.Stretch);
+  if (u("alignSelf")) node.setAlignSelf(Align.Auto);
+  if (u("alignContent")) node.setAlignContent(Align.FlexStart);
+
+  if (u("margin")) node.setMargin(Edge.All, undefined);
+  if (u("marginHorizontal")) node.setMargin(Edge.Horizontal, undefined);
+  if (u("marginVertical")) node.setMargin(Edge.Vertical, undefined);
+  if (u("marginLeft")) node.setMargin(Edge.Left, undefined);
+  if (u("marginRight")) node.setMargin(Edge.Right, undefined);
+  if (u("marginTop")) node.setMargin(Edge.Top, undefined);
+  if (u("marginBottom")) node.setMargin(Edge.Bottom, undefined);
+
+  if (u("padding")) node.setPadding(Edge.All, undefined);
+  if (u("paddingHorizontal")) node.setPadding(Edge.Horizontal, undefined);
+  if (u("paddingVertical")) node.setPadding(Edge.Vertical, undefined);
+  if (u("paddingLeft")) node.setPadding(Edge.Left, undefined);
+  if (u("paddingRight")) node.setPadding(Edge.Right, undefined);
+  if (u("paddingTop")) node.setPadding(Edge.Top, undefined);
+  if (u("paddingBottom")) node.setPadding(Edge.Bottom, undefined);
+
+  if (u("gap")) node.setGap(Gutter.All, undefined);
+  if (u("columnGap")) node.setGap(Gutter.Column, undefined);
+  if (u("rowGap")) node.setGap(Gutter.Row, undefined);
+
+  if (u("position")) node.setPositionType(PositionType.Relative);
+  if (u("top")) node.setPosition(Edge.Top, undefined);
+  if (u("right")) node.setPosition(Edge.Right, undefined);
+  if (u("bottom")) node.setPosition(Edge.Bottom, undefined);
+  if (u("left")) node.setPosition(Edge.Left, undefined);
+
+  if (u("display")) node.setDisplay(Display.Flex);
+  if (u("aspectRatio")) node.setAspectRatio(undefined);
+}
+
+/** Re-apply RN defaults + full style for commit updates (no `node.reset()` — Yoga 3 incompatible). */
 export function resetAndApplyStyles(node: YogaNode, style: ViewStyle): void {
-  node.reset();
+  applyExplicitUndefinedLayoutClears(node, style);
   applyRNLayoutDefaults(node);
   applyStylesToYoga(node, style);
 }
