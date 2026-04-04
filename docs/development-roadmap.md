@@ -8,20 +8,21 @@
 
 ## 当前进度
 
-| 模块                  | 状态      | 说明                                                |
-| --------------------- | --------- | --------------------------------------------------- |
-| monorepo 结构         | ✅ 完成   | `packages/core` + `packages/react` + `apps/website` |
-| `ViewNode` 场景树     | ❌ 未开始 |                                                     |
-| Reconciler HostConfig | ❌ 未开始 |                                                     |
-| 绘制管线              | ❌ 未开始 |                                                     |
-| Yoga 布局             | ❌ 未开始 |                                                     |
-| CanvasKit (Skia)      | ❌ 未开始 | 阶段一直接使用 Skia，不经过 Canvas 2D               |
-| Text 节点             | ❌ 未开始 |                                                     |
-| 事件系统              | ❌ 未开始 |                                                     |
-| Image 组件            | ❌ 未开始 |                                                     |
-| 滚动 / 裁剪           | ❌ 未开始 |                                                     |
-| 动画系统              | ❌ 未开始 |                                                     |
-| 无障碍                | ❌ 未开始 |                                                     |
+| 模块                  | 状态        | 说明                                                       |
+| --------------------- | ----------- | ---------------------------------------------------------- |
+| monorepo 结构         | ✅ 完成     | `packages/core` + `packages/react` + `apps/website`        |
+| `ViewNode` 场景树     | ❌ 未开始   |                                                            |
+| Reconciler HostConfig | ❌ 未开始   |                                                            |
+| 绘制管线              | ❌ 未开始   |                                                            |
+| Yoga 布局             | ❌ 未开始   |                                                            |
+| CanvasKit (Skia)      | ❌ 未开始   | 阶段一直接使用 Skia，不经过 Canvas 2D                      |
+| Text 节点             | ❌ 未开始   |                                                            |
+| 事件系统              | ❌ 未开始   |                                                            |
+| Image 组件            | ❌ 未开始   |                                                            |
+| 滚动 / 裁剪           | ❌ 未开始   |                                                            |
+| 动画系统              | ❌ 未开始   |                                                            |
+| 无障碍                | ❌ 未开始   |                                                            |
+| Tailwind / className  | 🔲 远期可选 | 见阶段六 Step 16，**优先级极低**（收益有限，无法等同 Web） |
 
 ---
 
@@ -33,7 +34,7 @@
 阶段三  交互能力            ← 从"能看"到"能用"
 阶段四  多媒体与滚动        ← 完整 UI 场景
 阶段五  高级绘制能力        ← 阴影、渐变、clipPath、transform 等
-阶段六  完善与打磨          ← 生产可用
+阶段六  完善与打磨          ← 生产可用（含可选：Tailwind → style，极低优先级）
 ```
 
 ---
@@ -349,18 +350,36 @@
 | API 文档            | 完善 `apps/website` 的组件 API 文档    |
 | Playground          | 在线交互式 demo（可嵌入文档站）        |
 
+### Step 16 — Tailwind / `className` 原子化样式（可选，**极低优先级**）
+
+> **定位：** 在核心 `style` API 稳定之后，再评估是否做；**不纳入 M6 必达范围**。  
+> **预期：** 无法复刻浏览器里「写 Tailwind = 写 Web」的体验；仅能覆盖 **映射到 Yoga / Skia / RN 语义** 的工具类子集，继承与层叠按 **React Native 规则**（`View` 不继承文字样式，嵌套 `Text` 继承），详见 [技术调研报告 §15.14](./technical-research.md)（「Tailwind CSS 与原子化工具类」）。
+
+| 任务                 | 详情                                                                                                            |
+| -------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 构建期转换           | Babel / SWC / Vite 插件等：将 `className` 中的 utilities **编译为 `style` 对象**（思路参考 NativeWind / twrnc） |
+| 支持子集与文档       | 明确 **支持的 utilities 列表** 与 **刻意不支持** 项（grid、复杂选择器、与 DOM 强绑定的类等）                    |
+| 与 StyleSheet 的关系 | 与 Step 11 的 `StyleSheet.create` 并存：原子类展开结果仍应是普通对象，可再与数组 style 合并                     |
+| 优先级说明           | **收益有限**：开发体验仍显著弱于 Web；维护映射与升级 Tailwind 主版本有持续成本，故排期 **最后、可不做**         |
+
+**验收标准（若立项）：**
+
+- 文档写明支持的工具类子集与 RN 继承语义
+- 示例工程：`className` 写法在若干典型布局上与等价 `style` 渲染一致
+
 ---
 
 ## 里程碑与交付物
 
-| 里程碑              | 阶段              | 标志性能力                                                            | 预估复杂度 |
-| ------------------- | ----------------- | --------------------------------------------------------------------- | ---------- |
-| **M1 — "看到矩形"** | 阶段一 Step 1-3   | Yoga + CanvasKit + Reconciler，Flexbox 布局的嵌套 View 通过 Skia 绘制 | 中高       |
-| **M2 — "看到文字"** | 阶段二 Step 4-5   | Text 换行（Skia Paragraph）、嵌套样式、省略号                         | 高         |
-| **M3 — "点得到"**   | 阶段三 Step 6-7   | 事件命中、Pressable 交互                                              | 中         |
-| **M4 — "完整 UI"**  | 阶段四 Step 8-9   | Image + ScrollView                                                    | 中         |
-| **M5 — "高级绘制"** | 阶段五 Step 10    | 阴影、渐变、clipPath、transform                                       | 中         |
-| **M6 — "生产就绪"** | 阶段六 Step 11-15 | 动画、无障碍、FlatList、DevTools                                      | 高         |
+| 里程碑                     | 阶段              | 标志性能力                                                            | 预估复杂度   |
+| -------------------------- | ----------------- | --------------------------------------------------------------------- | ------------ |
+| **M1 — "看到矩形"**        | 阶段一 Step 1-3   | Yoga + CanvasKit + Reconciler，Flexbox 布局的嵌套 View 通过 Skia 绘制 | 中高         |
+| **M2 — "看到文字"**        | 阶段二 Step 4-5   | Text 换行（Skia Paragraph）、嵌套样式、省略号                         | 高           |
+| **M3 — "点得到"**          | 阶段三 Step 6-7   | 事件命中、Pressable 交互                                              | 中           |
+| **M4 — "完整 UI"**         | 阶段四 Step 8-9   | Image + ScrollView                                                    | 中           |
+| **M5 — "高级绘制"**        | 阶段五 Step 10    | 阴影、渐变、clipPath、transform                                       | 中           |
+| **M6 — "生产就绪"**        | 阶段六 Step 11-15 | 动画、无障碍、FlatList、DevTools                                      | 高           |
+| **M6+ — Tailwind（可选）** | 阶段六 Step 16    | 构建期 `className` → `style`，**极低优先级**，不阻塞发布              | 低（可不做） |
 
 ---
 
@@ -368,19 +387,20 @@
 
 在实现过程中遇到设计抉择时，参考以下决策表（详细论据见 [技术调研报告](./technical-research.md)）：
 
-| 决策点              | 方案                                  | 参考来源                       |
-| ------------------- | ------------------------------------- | ------------------------------ |
-| 布局引擎            | Yoga (WASM)，默认值对齐 RN            | 调研 §四                       |
-| style API           | `style` prop 对象/数组，对齐 RN       | 调研 §三                       |
-| 文字换行规则        | `whiteSpace` + `wordBreak` 模型       | 调研 §五（canvas-engine）      |
-| 嵌套 Text           | 合并为单个段落绘制                    | 调研 §五（RN）                 |
-| 文字测量 × Yoga     | Yoga measure 回调                     | 调研 §十一（Reconciler）       |
-| 命中检测            | 包围盒（Yoga 布局结果）               | 调研 §六（RN + canvas-engine） |
-| 事件传播            | 捕获 + 冒泡两阶段                     | 调研 §六（RN）                 |
-| 帧调度              | rAF 帧合并 + React 18 batching        | 调研 §七（Konva）              |
-| DPR 处理            | 自动 scale，style 统一逻辑像素        | 调研 §十三                     |
-| 绘制后端            | 直接 CanvasKit (Skia WASM)            | 阶段一设计规格                 |
-| Reconciler 触发重绘 | `resetAfterCommit` → `scheduleRender` | 调研 §十一（Ink）              |
-| 动画执行路径        | 绕过 Reconciler，直接改节点属性       | 调研 §十二（Konva）            |
-| 无障碍              | Proxy DOM 层 + ARIA 属性              | 调研 §十                       |
-| 测试                | Vitest + headless 渲染断言 + 像素对比 | 调研 §十四                     |
+| 决策点              | 方案                                                               | 参考来源                       |
+| ------------------- | ------------------------------------------------------------------ | ------------------------------ |
+| 布局引擎            | Yoga (WASM)，默认值对齐 RN                                         | 调研 §四                       |
+| style API           | `style` prop 对象/数组，对齐 RN                                    | 调研 §三                       |
+| 文字换行规则        | `whiteSpace` + `wordBreak` 模型                                    | 调研 §五（canvas-engine）      |
+| 嵌套 Text           | 合并为单个段落绘制                                                 | 调研 §五（RN）                 |
+| 文字测量 × Yoga     | Yoga measure 回调                                                  | 调研 §十一（Reconciler）       |
+| 命中检测            | 包围盒（Yoga 布局结果）                                            | 调研 §六（RN + canvas-engine） |
+| 事件传播            | 捕获 + 冒泡两阶段                                                  | 调研 §六（RN）                 |
+| 帧调度              | rAF 帧合并 + React 18 batching                                     | 调研 §七（Konva）              |
+| DPR 处理            | 自动 scale，style 统一逻辑像素                                     | 调研 §十三                     |
+| 绘制后端            | 直接 CanvasKit (Skia WASM)                                         | 阶段一设计规格                 |
+| Reconciler 触发重绘 | `resetAfterCommit` → `scheduleRender`                              | 调研 §十一（Ink）              |
+| 动画执行路径        | 绕过 Reconciler，直接改节点属性                                    | 调研 §十二（Konva）            |
+| 无障碍              | Proxy DOM 层 + ARIA 属性                                           | 调研 §十                       |
+| 测试                | Vitest + headless 渲染断言 + 像素对比                              | 调研 §十四                     |
+| Tailwind / 原子类   | 可选；构建期 className → style，子集 + RN 继承语义；**优先级极低** | 调研 §15.14                    |
