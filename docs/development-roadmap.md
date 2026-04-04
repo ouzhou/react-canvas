@@ -2,27 +2,64 @@
 
 > 基于 [技术调研报告](./technical-research.md) 的结论，结合项目当前进度，制定分阶段开发计划。
 
-**说明：** 业务实现已清空，仓库保留 monorepo 与导出占位；下列除 monorepo 外均为待实现。
+**说明：** 阶段一核心管线（ViewNode、Yoga、CanvasKit、Reconciler、`Canvas`/`CanvasProvider`）已落地；下列其余能力仍多为待实现。
 
 ---
 
 ## 当前进度
 
-| 模块                  | 状态        | 说明                                                       |
-| --------------------- | ----------- | ---------------------------------------------------------- |
-| monorepo 结构         | ✅ 完成     | `packages/core` + `packages/react` + `apps/website`        |
-| `ViewNode` 场景树     | ❌ 未开始   |                                                            |
-| Reconciler HostConfig | ❌ 未开始   |                                                            |
-| 绘制管线              | ❌ 未开始   |                                                            |
-| Yoga 布局             | ❌ 未开始   |                                                            |
-| CanvasKit (Skia)      | ❌ 未开始   | 阶段一直接使用 Skia，不经过 Canvas 2D                      |
-| Text 节点             | ❌ 未开始   |                                                            |
-| 事件系统              | ❌ 未开始   |                                                            |
-| Image 组件            | ❌ 未开始   |                                                            |
-| 滚动 / 裁剪           | ❌ 未开始   |                                                            |
-| 动画系统              | ❌ 未开始   |                                                            |
-| 无障碍                | ❌ 未开始   |                                                            |
-| Tailwind / className  | 🔲 远期可选 | 见阶段六 Step 16，**优先级极低**（收益有限，无法等同 Web） |
+| 模块                  | 状态          | 说明                                                                |
+| --------------------- | ------------- | ------------------------------------------------------------------- |
+| monorepo 结构         | ✅ 完成       | `packages/core` + `packages/react` + `apps/website`                 |
+| `ViewNode` 场景树     | ✅ 阶段一基线 | `packages/core`：树操作、样式拆分、布局回写、基础绘制               |
+| Reconciler HostConfig | ✅ 阶段一基线 | `packages/react`：`View` 宿主、`commitUpdate`、隐式场景根容器       |
+| 绘制管线              | ✅ 阶段一基线 | `paintScene` / `paintNode`；站内在线 demo 见 playground 页          |
+| Yoga 布局             | ✅ 阶段一基线 | `yoga-layout/load`（WASM async）                                    |
+| CanvasKit (Skia)      | ✅ 阶段一基线 | 阶段一直接使用 Skia WASM，不经 Canvas 2D                            |
+| Text 节点             | ❌ 未开始     |                                                                     |
+| 事件系统              | ❌ 未开始     |                                                                     |
+| Image 组件            | ❌ 未开始     |                                                                     |
+| 滚动 / 裁剪           | ❌ 未开始     |                                                                     |
+| 动画系统              | ❌ 未开始     |                                                                     |
+| 无障碍                | ❌ 未开始     |                                                                     |
+| Tailwind / className  | 🔲 远期可选   | 见阶段六 Step 16，**优先级极低**（收益有限，无法等同 Web）          |
+| 运行时结构校验        | 🔶 部分落地   | R-ROOT-1、R-HOST-5、Canvas 单子 `View` 等已强制；其余规则随阶段扩展 |
+
+---
+
+## 结构约束（须运行时强制）
+
+> 下列规则 **必须通过代码在运行时生效**（抛错、invariant 或等价失败），**不能**仅靠文档或 TypeScript 类型「提醒」。此处记录 **规则 ID** 与 **建议落地阶段**；**检测点、抛错策略与测试建议** 见专文 [runtime-structure-constraints.md](./runtime-structure-constraints.md)。
+
+### 根与加载上下文
+
+| 规则 ID  | 规则                                                                                                                                                                                                                                     | 建议落地                    |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| R-ROOT-1 | 使用 `<Canvas>` 时须处于 **`CanvasProvider` 已提供且 Yoga/CanvasKit 已就绪** 的 Context 中；否则 **必须失败**（抛错），而非静默无绘制或 undefined 行为。                                                                                 | 阶段一 Step 3               |
+| R-ROOT-2 | 宿主类型（阶段一为 `View`，后续含 `Text` / `Image` 等）**只能**出现在 **该 `<Canvas>` 所绑定 Reconciler 根** 的子树中；若对外误导出可在 DOM 树误用的 API，须在 **开发模式** 下可检测时 **assert / 抛错**（具体手段随 public API 定型）。 | 阶段一 Step 3 起随 API 收口 |
+
+### 宿主树合法性（对齐 React Native 组件模型）
+
+| 规则 ID  | 规则                                                                                                                                                | 建议落地                 |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| R-HOST-1 | **`View` 下允许 `Text`**。                                                                                                                          | 阶段二（引入 `Text` 后） |
+| R-HOST-2 | **`Text` 内禁止 `View`**（及任何非文字意图的块级宿主；具体名单随宿主类型扩展而更新）。违反时 **必须抛错**，错误信息应指明「Text 内不可嵌套 View」。 | 阶段二 Step 4+           |
+| R-HOST-3 | **`Text` 内允许嵌套 `Text`** 与文本叶子（与 RN 一致）。                                                                                             | 阶段二                   |
+| R-HOST-4 | **`View` 下禁止裸字符串 / 裸文本节点**（未由 `<Text>` 包裹）；在 `createTextInstance` 或首次挂子节点路径 **必须抛错**。                             | 阶段二                   |
+| R-HOST-5 | 阶段一仅 `View` 时：**禁止**出现需 `createTextInstance` 的路径（当前设计为对裸文本 **抛错**），与上条一致。                                         | 阶段一 Step 3            |
+
+### 多 Canvas 与 Portal（先约束、后实现）
+
+| 规则 ID    | 规则                                                                                                                                                                                                                              | 建议落地                                                    |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| R-MULTI-1  | **多个并列 `<Canvas>`**（同级或多个 Provider 子树）是否允许：V1 **允许**并列多个独立 Surface；**禁止**在单棵场景树内出现「宿主节点再嵌一个 Canvas 根」的歧义结构（阶段一无可挂点，后续若增加宿主型 `Canvas` 须重新定义本条）。    | 随阶段一/四能力演进复查                                     |
+| R-PORTAL-1 | **`ReactDOM.createPortal` / `react-reconciler` Portal** 在未实现 HostConfig Portal 与多容器规格前，遇 **跨根传送** 须 **明确失败**（抛错或 dev 下 invariant），**禁止**静默错误渲染。实现 Portal 后本条替换为「按专页规格校验」。 | 未实现前：阶段一起可防御性检测；完整 Portal：**另立里程碑** |
+
+### 实现备忘
+
+- 完整检测设计见 [runtime-structure-constraints.md](./runtime-structure-constraints.md)。
+- **推荐机制**：`getChildHostContext` 传递「是否在 `Text` 内」等标志；`createInstance` / `createTextInstance` / `appendChild` 路径上校验并抛错。
+- 与 [hostconfig-guide.md](./hostconfig-guide.md) 一致：**校验发生在 commit 路径**，不在 render 函数体里改场景树。
 
 ---
 
@@ -83,10 +120,11 @@
 | ---------------- | -------------------------------------------------------------------------------------- |
 | HostConfig 实现  | `createInstance` / `commitUpdate` / `prepareUpdate`（diff）/ `resetAfterCommit` 等     |
 | `CanvasProvider` | 并行加载 Yoga + CanvasKit，通过 Context 暴露 ready 状态，render prop 供用户控制加载 UI |
-| `Canvas` 组件    | 创建 Surface + Reconciler 容器，持有根 ViewNode 和 scheduleRender                      |
+| `Canvas` 组件    | 创建 Surface + Reconciler 容器，持有根 ViewNode 与 `queueLayoutPaintFrame`（帧调度）   |
 | rAF 帧合并       | `surface.requestAnimationFrame` 去重，同帧内多次 commit 只绘制一次                     |
 | 脏标记           | `ViewNode` 增加 `dirty` 标志，`commitUpdate` 时标记                                    |
 | 差量更新         | `prepareUpdate` 计算 style diff，无变化返回 `null` 跳过 commit                         |
+| 运行时结构校验   | **R-ROOT-1**、**R-HOST-5**：见上文 **结构约束（须运行时强制）**（抛错，非仅文档）      |
 
 **验收标准：**
 
@@ -124,14 +162,14 @@
 
 **包：** `@react-canvas/core` + `@react-canvas/react`
 
-| 任务                  | 详情                                                                       |
-| --------------------- | -------------------------------------------------------------------------- |
-| `TextNode` 类型       | 新增节点类型，区别于 `ViewNode`                                            |
-| Reconciler 扩展       | `createInstance` 支持 `"Text"` 类型；`createTextInstance` 创建文本叶子节点 |
-| `getChildHostContext` | 传递"是否在 Text 内"的上下文，Text 内禁止嵌套 View                         |
-| Yoga measure 回调     | `yogaNode.setMeasureFunc()`，用 Skia Paragraph API 返回文字宽高给 Yoga     |
-| 绘制                  | `skCanvas.drawParagraph()` 在 Yoga 计算出的坐标绘制文字                    |
-| 基础文字样式          | `fontSize`、`color`、`fontFamily`、`fontWeight`、`textAlign`               |
+| 任务                  | 详情                                                                          |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `TextNode` 类型       | 新增节点类型，区别于 `ViewNode`                                               |
+| Reconciler 扩展       | `createInstance` 支持 `"Text"` 类型；`createTextInstance` 创建文本叶子节点    |
+| `getChildHostContext` | 传递「是否在 Text 内」等上下文；**R-HOST-2～4** 须运行时抛错，见 **结构约束** |
+| Yoga measure 回调     | `yogaNode.setMeasureFunc()`，用 Skia Paragraph API 返回文字宽高给 Yoga        |
+| 绘制                  | `skCanvas.drawParagraph()` 在 Yoga 计算出的坐标绘制文字                       |
+| 基础文字样式          | `fontSize`、`color`、`fontFamily`、`fontWeight`、`textAlign`                  |
 
 **验收标准：**
 
@@ -387,20 +425,20 @@
 
 在实现过程中遇到设计抉择时，参考以下决策表（详细论据见 [技术调研报告](./technical-research.md)）：
 
-| 决策点              | 方案                                                               | 参考来源                       |
-| ------------------- | ------------------------------------------------------------------ | ------------------------------ |
-| 布局引擎            | Yoga (WASM)，默认值对齐 RN                                         | 调研 §四                       |
-| style API           | `style` prop 对象/数组，对齐 RN                                    | 调研 §三                       |
-| 文字换行规则        | `whiteSpace` + `wordBreak` 模型                                    | 调研 §五（canvas-engine）      |
-| 嵌套 Text           | 合并为单个段落绘制                                                 | 调研 §五（RN）                 |
-| 文字测量 × Yoga     | Yoga measure 回调                                                  | 调研 §十一（Reconciler）       |
-| 命中检测            | 包围盒（Yoga 布局结果）                                            | 调研 §六（RN + canvas-engine） |
-| 事件传播            | 捕获 + 冒泡两阶段                                                  | 调研 §六（RN）                 |
-| 帧调度              | rAF 帧合并 + React 18 batching                                     | 调研 §七（Konva）              |
-| DPR 处理            | 自动 scale，style 统一逻辑像素                                     | 调研 §十三                     |
-| 绘制后端            | 直接 CanvasKit (Skia WASM)                                         | 阶段一设计规格                 |
-| Reconciler 触发重绘 | `resetAfterCommit` → `scheduleRender`                              | 调研 §十一（Ink）              |
-| 动画执行路径        | 绕过 Reconciler，直接改节点属性                                    | 调研 §十二（Konva）            |
-| 无障碍              | Proxy DOM 层 + ARIA 属性                                           | 调研 §十                       |
-| 测试                | Vitest + headless 渲染断言 + 像素对比                              | 调研 §十四                     |
-| Tailwind / 原子类   | 可选；构建期 className → style，子集 + RN 继承语义；**优先级极低** | 调研 §15.14                    |
+| 决策点              | 方案                                                                    | 参考来源                       |
+| ------------------- | ----------------------------------------------------------------------- | ------------------------------ |
+| 布局引擎            | Yoga (WASM)，默认值对齐 RN                                              | 调研 §四                       |
+| style API           | `style` prop 对象/数组，对齐 RN                                         | 调研 §三                       |
+| 文字换行规则        | `whiteSpace` + `wordBreak` 模型                                         | 调研 §五（canvas-engine）      |
+| 嵌套 Text           | 合并为单个段落绘制                                                      | 调研 §五（RN）                 |
+| 文字测量 × Yoga     | Yoga measure 回调                                                       | 调研 §十一（Reconciler）       |
+| 命中检测            | 包围盒（Yoga 布局结果）                                                 | 调研 §六（RN + canvas-engine） |
+| 事件传播            | 捕获 + 冒泡两阶段                                                       | 调研 §六（RN）                 |
+| 帧调度              | rAF 帧合并 + React 18 batching                                          | 调研 §七（Konva）              |
+| DPR 处理            | 自动 scale，style 统一逻辑像素                                          | 调研 §十三                     |
+| 绘制后端            | 直接 CanvasKit (Skia WASM)                                              | 阶段一设计规格                 |
+| Reconciler 触发重绘 | `resetAfterCommit` → `queueLayoutPaintFrame`                            | 调研 §十一（Ink）              |
+| 动画执行路径        | 绕过 Reconciler，直接改节点属性                                         | 调研 §十二（Konva）            |
+| 无障碍              | Proxy DOM 层 + ARIA 属性                                                | 调研 §十                       |
+| 测试                | `vp test` + `vite-plus/test` 导入；headless 布局断言 + 像素对比（可选） | 调研 §十四；`AGENTS.md`        |
+| Tailwind / 原子类   | 可选；构建期 className → style，子集 + RN 继承语义；**优先级极低**      | 调研 §15.14                    |

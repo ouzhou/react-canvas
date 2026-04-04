@@ -1047,7 +1047,7 @@ React Reconciler → 可变场景树（类似 Shadow Tree）→ Yoga 布局 → 
 - 提供类似 ink-testing-library 的 **headless 渲染测试工具**。
 - 支持布局结果的结构化断言（节点位置、尺寸）。
 - 支持像素级回归测试（Skia 渲染结果导出为图片对比）。
-- 使用 Vitest 作为测试框架（与项目工具链一致）。
+- 使用 **`vp test`** 跑测试；测试工具从 **`vite-plus/test`** 导入（Vite+ 统一工具链，不直接依赖 `vitest` 包作 import 源）。
 
 ### 15.14 Tailwind CSS 与原子化工具类（可选演进）
 
