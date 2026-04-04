@@ -1,0 +1,39 @@
+{
+  "name": "@react-canvas/react",
+  "version": "0.0.0",
+  "description": "React bindings for React Canvas.",
+  "license": "MIT",
+  "author": "ouzhou",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@react-canvas/core": "workspace:*",
+    "react-reconciler": "catalog:",
+    "scheduler": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-reconciler": "catalog:",
+    "react": "catalog:",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0"
+  }
+}
