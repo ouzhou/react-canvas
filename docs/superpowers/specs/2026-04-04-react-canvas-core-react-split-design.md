@@ -1,7 +1,7 @@
 # React Canvas：Core / React 拆分与第一阶段设计
 
 **日期：** 2026-04-04  
-**修订：** 渲染后端定为 **Skia（CanvasKit，WebAssembly）**（§1.3）；**安装与 Vite+ 落地约束**见 §2.3。  
+**修订：** 渲染后端定为 **Skia（CanvasKit，WebAssembly）**（§1.3）；**安装与 Vite+ 落地约束**见 §2.3；**独立文档站方案对比与选型**见 §8。  
 **状态：** 设计已定稿（实现前以本 spec 为准；若有变更再走修订流程）
 
 ## 1. 目标与非目标
@@ -38,7 +38,8 @@
 
 - `packages/core` → 发布为 `@react-canvas/core`
 - `packages/react` → 发布为 `@react-canvas/react`
-- `apps/website` 依赖 `@react-canvas/react`（workspace 链接），作为演示与手工验收。
+- `apps/website` 依赖 `@react-canvas/react`（workspace 链接），作为 **轻量演示 / 手工验收**（**不**作为正式文档站载体；文档见 §8）。
+- `apps/docs` → **[Starlight](https://starlight.astro.build)** 文档站（§8），含搜索、侧边栏与 MDX 内容；通过 `workspace:*` 引用上述包以编写 **段落内代码片段与 Live Demo**。
 
 ### 2.3 CanvasKit 安装与落地（实现约束）
 
@@ -125,4 +126,42 @@
 - Monorepo 中 **`@react-canvas/core` 与 `@react-canvas/react` 可独立构建**，workspace 内引用正常。
 - `apps/website` 使用 **`<Canvas>`** 展示至少一个 **`<View style={{ backgroundColor: … }} />`**，且 **CanvasKit 成功初始化并绘制到 `<canvas>`**。
 - **Core 与 React 包均具备**基于 **vite-plus/test** 的自动化测试，且 `vp test` 在仓库级可通过（以实际任务配置为准）。
+- **文档站（§8）：** 实现计划可 **分阶段** 引入 **`apps/docs`（Starlight）**；一旦纳入里程碑，应满足 **可构建**、**内置搜索可用**、侧边栏含 **概述 + Core + React** 骨架。
 - **不引入** Yoga、通用 CSS 解析、文本宿主类型（除本 spec 已列范围外）。
+
+## 8. 文档站（独立应用）
+
+### 8.1 目标与约束
+
+- **不扩展现有 `apps/website`** 承担正式文档职责：`apps/website` 保持 **最小演示**；**搜索、导航、代码高亮、结构化侧边栏** 等由 **独立文档应用** 提供，**不自研**搜索引擎或文档框架。
+- 文档需支持：**代码片段**、**段落内可交互渲染 Demo**（CanvasKit 仅客户端；需 `client:load` 或等价 **仅客户端挂载**）。
+- 文档内容按读者分册：**Core（JavaScript）** 与 **React** 两大块；**共用**「概述 / CanvasKit / 安装」等概念页，避免重复维护。
+
+### 8.2 候选方案对比（均保留在 spec 供复盘）
+
+以下三种均为成熟方案，**不要求**与库本体（Vite+、包构建）同技术栈。
+
+| 方案          | 底层栈                                                       | 适合场景（摘要）                                                                                                                         | 官方入口                                               |
+| ------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **Starlight** | [Astro](https://astro.build)                                 | **文档站优先**；内置搜索（如 Pagefind）、主题与代码块体验完整；交互 Demo 通过 **`@astrojs/react` 岛**（`client:load`）挂载 React         | [starlight.astro.build](https://starlight.astro.build) |
+| **Nextra**    | [Next.js](https://nextjs.org)                                | 已采用或希望 **Next 一统**；Docs 主题自带搜索栏与侧边栏；内置 [Playground](https://nextra.site/docs/built-ins/playground) 等适合文内试写 | [nextra.site](https://nextra.site)                     |
+| **Fumadocs**  | 常见为 **Next.js**（亦可 [Vite 集成](https://fumadocs.dev)） | **强定制**内容源、布局与 MDX 管线；React 文档与组件深度合体时灵活                                                                        | [fumadocs.dev](https://fumadocs.dev)                   |
+
+**与本文档目标的对照（简述）：**
+
+- **Starlight**：最少在「文档站功能」上拼插件；**代价**是文档走 **Astro dev/build**，与 `apps/website` 的 Vite+ **并行**。
+- **Nextra**：**React/Next 心智**最顺，Playground 对「文内小段可跑」友好；**代价**是维护 **Next 应用**。
+- **Fumadocs**：扩展性最强；**代价**是前期配置与概念多于「装 Starlight 模板」。
+
+### 8.3 选型结论（已定）
+
+- **当前选定：[Starlight](https://starlight.astro.build)**，新建 **`apps/docs`**。
+- **理由（与 §8.1 对齐）：** 在 **不扩展现有 Vite website** 的前提下，优先 **开箱搜索与文档范式**，减少自研；接受 **Astro + React 岛** 承载 CanvasKit / `<Canvas>` Demo。
+- **若未来复盘更换栈：** 可依据 §8.2 表在 **Nextra** 或 **Fumadocs** 间迁移内容模型（MDX 章节结构可尽量保持 **Core / React / 概述** 三分组不变）。
+
+### 8.4 落地要点（实现计划引用）
+
+- Monorepo 内 **`apps/docs`**：`workspace:*` 依赖 **`@react-canvas/core`**、**`@react-canvas/react`**（包名以实际 `package.json` 为准）。
+- 安装 **`@astrojs/react`**（及与 React 版本匹配的集成配置），MDX 中 Demo 组件使用 **`client:load`**（或文档约定），确保 **CanvasKit WASM 仅在浏览器执行**。
+- **CanvasKit `locateFile` / 静态资源**：文档站构建需能 **提供可访问的 `.wasm` URL**（与 §2.3 一致）；实现计划中写清 **Astro 侧** 资源目录或 `public/` 同步策略。
+- 侧边栏：**顶级分组** `Core（JavaScript）`、`React`，并设 **概述**（或 **入门**）共用章节。
