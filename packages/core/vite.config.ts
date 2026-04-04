@@ -8,10 +8,13 @@ export default defineConfig({
     exports: true,
   },
   lint: {
+    ignorePatterns: ["dist/**"],
     options: {
       typeAware: true,
       typeCheck: true,
     },
   },
-  fmt: {},
+  fmt: {
+    ignorePatterns: ["dist/**"],
+  },
 });

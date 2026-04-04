@@ -27,11 +27,20 @@ Skia / CanvasKit 绘制 → <canvas>
 
 ## 仓库结构
 
-| 路径 | 包名 | 说明 |
-| --- | --- | --- |
-| `packages/core` | `@react-canvas/core` | 场景树、Yoga 布局、Skia 绘制管线 |
+| 路径             | 包名                  | 说明                                 |
+| ---------------- | --------------------- | ------------------------------------ |
+| `packages/core`  | `@react-canvas/core`  | 场景树、Yoga 布局、Skia 绘制管线     |
 | `packages/react` | `@react-canvas/react` | React reconciler、JSX 类型、入口 API |
-| `apps/website` | — | 文档站（Astro Starlight） |
+| `apps/website`   | —                     | 文档站（Astro Starlight）            |
+
+## 环境要求
+
+请保证本地 **Node.js**、**Git** 的版本**不低于**下表（满足即可，无需完全一致）。
+
+| 工具                           | 推荐最低版本 |
+| ------------------------------ | ------------ |
+| [Node.js](https://nodejs.org/) | **22.12.0**  |
+| [Git](https://git-scm.com/)    | **2.32**     |
 
 ## 快速开始
 
@@ -50,11 +59,11 @@ pnpm run ready
 
 ## 技术栈
 
-| 领域 | 技术 |
-| --- | --- |
-| 渲染引擎 | [CanvasKit (Skia WASM)](https://skia.org/docs/user/modules/canvaskit/) |
-| 布局引擎 | [Yoga](https://yogalayout.dev/) |
-| UI 框架 | [React 19](https://react.dev/) + [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler) + [scheduler](https://github.com/facebook/react/tree/main/packages/scheduler) |
-| 工具链 | [Vite+](https://vite.dev/) · pnpm workspace |
+| 领域     | 技术                                                                                                                                                                                                     |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 渲染引擎 | [CanvasKit (Skia WASM)](https://skia.org/docs/user/modules/canvaskit/)                                                                                                                                   |
+| 布局引擎 | [Yoga](https://yogalayout.dev/)                                                                                                                                                                          |
+| UI 框架  | [React 19](https://react.dev/) + [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler) + [scheduler](https://github.com/facebook/react/tree/main/packages/scheduler) |
+| 工具链   | [Vite+](https://vite.dev/) · pnpm workspace                                                                                                                                                              |
 
 工具链与命令约定见 [`AGENTS.md`](AGENTS.md)。

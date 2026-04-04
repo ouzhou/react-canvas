@@ -1,3 +1,1 @@
-export { ViewNode } from "./view-node.ts";
-export type { ViewProps, ViewStyle, RenderBackend } from "./types.ts";
-export { paintScene } from "./paint.ts";
+export const View = "View" as const;
