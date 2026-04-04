@@ -15,7 +15,7 @@
 | Reconciler HostConfig | ❌ 未开始 |                                                     |
 | 绘制管线              | ❌ 未开始 |                                                     |
 | Yoga 布局             | ❌ 未开始 |                                                     |
-| CanvasKit (Skia)      | ❌ 未开始 | 计划先 Canvas 2D，后切 Skia                         |
+| CanvasKit (Skia)      | ❌ 未开始 | 阶段一直接使用 Skia，不经过 Canvas 2D               |
 | Text 节点             | ❌ 未开始 |                                                     |
 | 事件系统              | ❌ 未开始 |                                                     |
 | Image 组件            | ❌ 未开始 |                                                     |
@@ -28,11 +28,11 @@
 ## 阶段总览
 
 ```
-阶段一  核心渲染管线        ← 地基，所有后续功能的前提
-阶段二  文字能力            ← UI 的基本要素
+阶段一  核心渲染管线        ← 地基，所有后续功能的前提（直接使用 CanvasKit/Skia）
+阶段二  文字能力            ← UI 的基本要素（使用 Skia Paragraph API）
 阶段三  交互能力            ← 从"能看"到"能用"
 阶段四  多媒体与滚动        ← 完整 UI 场景
-阶段五  Skia 升级           ← 性能与能力飞跃
+阶段五  高级绘制能力        ← 阴影、渐变、clipPath、transform 等
 阶段六  完善与打磨          ← 生产可用
 ```
 
@@ -40,63 +40,78 @@
 
 ## 阶段一：核心渲染管线
 
-> 目标：嵌套的 `<View style={...} />` 能在 Canvas 上按照 Flexbox 规则正确布局并绘制。
+> 目标：嵌套的 `<View style={...} />` 能在 Canvas 上按照 Flexbox 规则正确布局，并通过 CanvasKit (Skia WASM) 绘制。
+>
+> 详细设计规格见 [phase-1-design.md](./phase-1-design.md)。
 
-### Step 1 — Yoga 集成
+### Step 1 — Yoga 集成 + CanvasKit 初始化
 
 **包：** `@react-canvas/core`
 
 | 任务                    | 详情                                                                                                                   |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 安装 yoga-layout        | `yoga-layout`（官方 WASM 包，Ink 也用此包）                                                                            |
-| ViewNode 关联 Yoga Node | 构造时创建 `Yoga.Node`，销毁时释放                                                                                     |
+| 安装 yoga-layout        | `yoga-layout`（官方 WASM 包，使用 `yoga-layout/wasm-async` 异步加载）                                                  |
+| 安装 canvaskit-wasm     | `canvaskit-wasm`（Skia 官方 WASM 包 v0.41.0）                                                                          |
+| 并行异步初始化          | `Promise.all([initYoga(), CanvasKitInit()])` 并行加载两个 WASM 模块                                                    |
+| ViewNode 关联 Yoga Node | 构造时创建 `Yoga.Node`，销毁时 `free()` 释放 WASM 内存                                                                 |
 | style → Yoga 属性映射   | `width` / `height` / `flex` / `flexDirection` / `margin` / `padding` / `position` / `alignItems` / `justifyContent` 等 |
+| 扩展布局属性            | `gap` / `flexWrap` / `minWidth` / `maxWidth` / `minHeight` / `maxHeight` / `aspectRatio` / `display`                   |
 | Yoga 默认值对齐 RN      | `flexDirection: 'column'`、`flexShrink: 0`                                                                             |
 | 布局计算                | 根节点调用 `yogaRoot.calculateLayout(width, height)`，结果写回节点的 `layout` 属性                                     |
-| 增量布局                | 只有属性变化的节点标记 `yogaNode.markDirty()`                                                                          |
+| 增量布局                | 依赖 Yoga 自身的脏标记机制，只重算变化的子树                                                                           |
+
+### Step 2 — Skia 绘制管线
+
+**包：** `@react-canvas/core`
+
+| 任务                     | 详情                                                                                                |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| Surface 创建             | `CanvasKit.MakeCanvasSurface(id)` 优先 WebGL2，降级 `MakeSWCanvasSurface`                           |
+| `paintNode` 使用布局坐标 | 读取 `node.layout.left/top/width/height`，通过 Skia API 绘制                                        |
+| 坐标系累加               | 子节点坐标相对于父节点，绘制时累加偏移                                                              |
+| 视觉样式                 | `backgroundColor`（`drawRect`/`drawRRect`）、`borderRadius`、`borderWidth`/`borderColor`、`opacity` |
+| DPR 处理                 | `canvas.width = logicalWidth * dpr`，`skCanvas.scale(dpr, dpr)`                                     |
+| DPR 变化监听             | `matchMedia` 监听 DPR 变化，重建 Surface 并重绘                                                     |
+| WASM 资源释放            | Paint 每帧 `delete()`，Surface 在 unmount 时 `delete()`，YogaNode 在移除时 `free()`                 |
+
+### Step 3 — Reconciler + 帧调度
+
+**包：** `@react-canvas/react`
+
+| 任务             | 详情                                                                                   |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| HostConfig 实现  | `createInstance` / `commitUpdate` / `prepareUpdate`（diff）/ `resetAfterCommit` 等     |
+| `CanvasProvider` | 并行加载 Yoga + CanvasKit，通过 Context 暴露 ready 状态，render prop 供用户控制加载 UI |
+| `Canvas` 组件    | 创建 Surface + Reconciler 容器，持有根 ViewNode 和 scheduleRender                      |
+| rAF 帧合并       | `surface.requestAnimationFrame` 去重，同帧内多次 commit 只绘制一次                     |
+| 脏标记           | `ViewNode` 增加 `dirty` 标志，`commitUpdate` 时标记                                    |
+| 差量更新         | `prepareUpdate` 计算 style diff，无变化返回 `null` 跳过 commit                         |
 
 **验收标准：**
 
 ```tsx
-<View style={{ flexDirection: "row", width: 200, height: 100 }}>
-  <View style={{ flex: 1, backgroundColor: "red" }} />
-  <View style={{ flex: 1, backgroundColor: "blue" }} />
-</View>
-// → 两个 100×100 的矩形，红色在左蓝色在右
+<CanvasProvider>
+  {({ isReady }) =>
+    isReady ? (
+      <Canvas width={400} height={300}>
+        <View style={{ flexDirection: "row", width: 200, height: 100 }}>
+          <View style={{ flex: 1, backgroundColor: "red" }} />
+          <View style={{ flex: 1, backgroundColor: "blue" }} />
+        </View>
+      </Canvas>
+    ) : (
+      <div>Loading...</div>
+    )
+  }
+</CanvasProvider>
+// → 两个 100×100 的矩形，红色在左蓝色在右，通过 CanvasKit 绘制
 ```
 
-### Step 2 — 绘制管线完善
-
-**包：** `@react-canvas/core`
-
-| 任务                     | 详情                                                                                                                |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| `paintNode` 使用布局坐标 | 读取 `node.layout.left/top/width/height` 绘制                                                                       |
-| 坐标系累加               | 子节点坐标相对于父节点，绘制时累加偏移                                                                              |
-| 视觉样式                 | `backgroundColor`、`borderRadius`（`ctx.roundRect`）、`borderWidth` / `borderColor`、`opacity`（`ctx.globalAlpha`） |
-| DPR 处理                 | `canvas.width = clientWidth * dpr`，`ctx.scale(dpr, dpr)`                                                           |
-| DPR 变化监听             | `matchMedia` 监听 DPR 变化，自动重建                                                                                |
-
-**验收标准：**
-
 - 嵌套 View 在正确位置绘制
+- Flexbox 布局结果与 React Native 一致
+- `borderRadius` 圆角正常显示
 - 高分屏（Retina）上不模糊
-- `borderRadius` 圆角矩形正常显示
-
-### Step 3 — 帧调度与批处理
-
-**包：** `@react-canvas/react`
-
-| 任务       | 详情                                                                              |
-| ---------- | --------------------------------------------------------------------------------- |
-| rAF 帧合并 | `resetAfterCommit` 改为调度 `requestAnimationFrame`，同帧内多次 commit 只绘制一次 |
-| 脏标记     | `ViewNode` 增加 `dirty` 标志，`commitUpdate` 时标记                               |
-| 布局缓存   | 未变化的子树跳过 Yoga 重算（依赖 Yoga 自身的增量计算）                            |
-
-**验收标准：**
-
-- 连续 10 次 `setState`，只触发 1 次绘制
-- 性能 profile 中 `paintScene` 每帧只出现一次
+- 连续多次 `setState` 只触发 1 次绘制
 
 ---
 
@@ -113,8 +128,8 @@
 | `TextNode` 类型       | 新增节点类型，区别于 `ViewNode`                                            |
 | Reconciler 扩展       | `createInstance` 支持 `"Text"` 类型；`createTextInstance` 创建文本叶子节点 |
 | `getChildHostContext` | 传递"是否在 Text 内"的上下文，Text 内禁止嵌套 View                         |
-| Yoga measure 回调     | `yogaNode.setMeasureFunc()`，用 `ctx.measureText()` 返回文字宽高给 Yoga    |
-| 绘制                  | `ctx.fillText()` 在 Yoga 计算出的坐标绘制文字                              |
+| Yoga measure 回调     | `yogaNode.setMeasureFunc()`，用 Skia Paragraph API 返回文字宽高给 Yoga     |
+| 绘制                  | `skCanvas.drawParagraph()` 在 Yoga 计算出的坐标绘制文字                    |
 | 基础文字样式          | `fontSize`、`color`、`fontFamily`、`fontWeight`、`textAlign`               |
 
 **验收标准：**
@@ -130,15 +145,15 @@
 
 **包：** `@react-canvas/core`
 
-| 任务               | 详情                                                                   |
-| ------------------ | ---------------------------------------------------------------------- |
-| 逐词换行           | 在容器宽度内按单词边界换行（参考 Konva 的 `measureText` 逐词累加算法） |
-| CJK 支持           | CJK 字符间可断行（参考 minigame-canvas-engine 的 `wordBreak` 规则）    |
-| `numberOfLines`    | 限制最大行数，超出截断                                                 |
-| 省略号             | `ellipsizeMode: 'tail'` 截断并显示 `...`                               |
-| `lineHeight`       | 控制行间距                                                             |
-| 嵌套 Text 样式继承 | 内层 `<Text>` 继承外层的 `fontSize` / `color`（参考 RN）               |
-| 嵌套 Text 绘制     | 合并为单个段落，内层样式作为 inline span 处理                          |
+| 任务               | 详情                                                                |
+| ------------------ | ------------------------------------------------------------------- |
+| 逐词换行           | 使用 Skia Paragraph API 自动处理换行                                |
+| CJK 支持           | CJK 字符间可断行（参考 minigame-canvas-engine 的 `wordBreak` 规则） |
+| `numberOfLines`    | 限制最大行数，超出截断                                              |
+| 省略号             | `ellipsizeMode: 'tail'` 截断并显示 `...`                            |
+| `lineHeight`       | 控制行间距                                                          |
+| 嵌套 Text 样式继承 | 内层 `<Text>` 继承外层的 `fontSize` / `color`（参考 RN）            |
+| 嵌套 Text 绘制     | 合并为单个段落，内层样式作为 inline span 处理                       |
 
 **验收标准：**
 
@@ -213,14 +228,14 @@
 
 **包：** `@react-canvas/core` + `@react-canvas/react`
 
-| 任务             | 详情                                           |
-| ---------------- | ---------------------------------------------- |
-| `ImageNode` 节点 | Reconciler 支持 `"Image"` 宿主类型             |
-| 异步加载         | `new Image()` → `onload` → 标记脏 → 重绘       |
-| 绘制             | `ctx.drawImage()` 在 Yoga 计算的位置绘制       |
-| 缓存             | URL → `HTMLImageElement` 的 Map，避免重复加载  |
-| 生命周期         | `onLoad` / `onError` 回调                      |
-| 尺寸             | 支持 `resizeMode`（cover / contain / stretch） |
+| 任务             | 详情                                                       |
+| ---------------- | ---------------------------------------------------------- |
+| `ImageNode` 节点 | Reconciler 支持 `"Image"` 宿主类型                         |
+| 异步加载         | fetch → `CanvasKit.MakeImageFromEncoded()` → 标记脏 → 重绘 |
+| 绘制             | `skCanvas.drawImageRect()` 在 Yoga 计算的位置绘制          |
+| 缓存             | URL → decoded `SkImage` 的 Map，避免重复解码               |
+| 生命周期         | `onLoad` / `onError` 回调                                  |
+| 尺寸             | 支持 `resizeMode`（cover / contain / stretch）             |
 
 **验收标准：**
 
@@ -236,13 +251,13 @@
 
 **包：** `@react-canvas/core` + `@react-canvas/react`
 
-| 任务                 | 详情                                                              |
-| -------------------- | ----------------------------------------------------------------- |
-| `overflow: 'hidden'` | 绘制前 `ctx.save()` → `ctx.clip()` → 绘制子节点 → `ctx.restore()` |
-| `ScrollView` 组件    | 监听触摸/滚轮 → 更新偏移量 → clip 区域内偏移绘制                  |
-| 惯性滚动             | 基于 `pointermove` 速度的减速动画                                 |
-| 滚动指示器           | 可选的滚动条绘制                                                  |
-| 弹性回弹             | 滚动到边界时的弹性效果（可选）                                    |
+| 任务                 | 详情                                                                                           |
+| -------------------- | ---------------------------------------------------------------------------------------------- |
+| `overflow: 'hidden'` | 绘制前 `skCanvas.save()` → `skCanvas.clipRect/clipRRect()` → 绘制子节点 → `skCanvas.restore()` |
+| `ScrollView` 组件    | 监听触摸/滚轮 → 更新偏移量 → clip 区域内偏移绘制                                               |
+| 惯性滚动             | 基于 `pointermove` 速度的减速动画                                                              |
+| 滚动指示器           | 可选的滚动条绘制                                                                               |
+| 弹性回弹             | 滚动到边界时的弹性效果（可选）                                                                 |
 
 **验收标准：**
 
@@ -258,28 +273,29 @@
 
 ---
 
-## 阶段五：Skia 升级
+## 阶段五：高级绘制能力
 
-> 目标：将渲染后端从 Canvas 2D 切换为 CanvasKit (Skia WASM)，获得 GPU 加速和高级绘制能力。
+> 目标：利用 CanvasKit (Skia) 的高级 API，支持阴影、渐变、裁剪路径、变换等进阶视觉效果。
+>
+> 注：CanvasKit 已在阶段一集成，本阶段专注于扩展绘制能力。
 
-### Step 10 — CanvasKit 集成
+### Step 10 — 高级视觉效果
 
 **包：** `@react-canvas/core`
 
-| 任务                 | 详情                                                                                    |
-| -------------------- | --------------------------------------------------------------------------------------- |
-| CanvasKit 初始化     | 异步加载 `canvaskit-wasm`，创建 `CanvasKitInit()` → `Surface`                           |
-| `RenderBackend` 实现 | 用 CanvasKit API 替代 Canvas 2D：`SkCanvas.drawRect` / `drawRRect` / `drawImageRect` 等 |
-| 文字绘制升级         | 用 Skia `Paragraph` API 替代手写换行算法，支持更精确的排版                              |
-| Yoga measure 升级    | 文字测量改用 `ParagraphBuilder.build().getHeight()` / `getMaxIntrinsicWidth()`          |
-| 高级绘制             | 阴影（`dropShadow`）、渐变（`LinearGradient`）、`clipPath`、`transform`                 |
-| 字体加载             | `CanvasKit.Typeface.MakeFreeTypeFaceFromData()` 加载自定义字体                          |
+| 任务        | 详情                                                            |
+| ----------- | --------------------------------------------------------------- |
+| 阴影        | `shadow*` 样式属性 → Skia `MaskFilter` / `ImageFilter` 实现     |
+| 渐变        | `LinearGradient` / `RadialGradient` 作为 backgroundColor 的扩展 |
+| `clipPath`  | 自定义裁剪路径（使用 `PathBuilder`，0.41.0 新 API）             |
+| `transform` | `translateX/Y`、`scale`、`rotate` → `skCanvas.concat(matrix)`   |
+| 字体加载    | `CanvasKit.Typeface.MakeFreeTypeFaceFromData()` 加载自定义字体  |
 
 **验收标准：**
 
-- 所有阶段一～四的功能在 Skia 后端下正常工作
-- GPU 加速，复杂界面渲染性能提升
-- 阴影、渐变等 Canvas 2D 难以实现的效果正常显示
+- 阴影、渐变效果正常显示
+- transform 变换可叠加
+- 自定义字体加载并正确渲染
 
 ---
 
@@ -337,14 +353,14 @@
 
 ## 里程碑与交付物
 
-| 里程碑               | 阶段              | 标志性能力                       | 预估复杂度 |
-| -------------------- | ----------------- | -------------------------------- | ---------- |
-| **M1 — "看到矩形"**  | 阶段一 Step 1-2   | Flexbox 布局的嵌套 View 正确绘制 | 中         |
-| **M2 — "看到文字"**  | 阶段二 Step 4-5   | Text 换行、嵌套样式、省略号      | 高         |
-| **M3 — "点得到"**    | 阶段三 Step 6-7   | 事件命中、Pressable 交互         | 中         |
-| **M4 — "完整 UI"**   | 阶段四 Step 8-9   | Image + ScrollView               | 中         |
-| **M5 — "Skia 驱动"** | 阶段五 Step 10    | CanvasKit 替换 Canvas 2D         | 高         |
-| **M6 — "生产就绪"**  | 阶段六 Step 11-15 | 动画、无障碍、FlatList、DevTools | 高         |
+| 里程碑              | 阶段              | 标志性能力                                                            | 预估复杂度 |
+| ------------------- | ----------------- | --------------------------------------------------------------------- | ---------- |
+| **M1 — "看到矩形"** | 阶段一 Step 1-3   | Yoga + CanvasKit + Reconciler，Flexbox 布局的嵌套 View 通过 Skia 绘制 | 中高       |
+| **M2 — "看到文字"** | 阶段二 Step 4-5   | Text 换行（Skia Paragraph）、嵌套样式、省略号                         | 高         |
+| **M3 — "点得到"**   | 阶段三 Step 6-7   | 事件命中、Pressable 交互                                              | 中         |
+| **M4 — "完整 UI"**  | 阶段四 Step 8-9   | Image + ScrollView                                                    | 中         |
+| **M5 — "高级绘制"** | 阶段五 Step 10    | 阴影、渐变、clipPath、transform                                       | 中         |
+| **M6 — "生产就绪"** | 阶段六 Step 11-15 | 动画、无障碍、FlatList、DevTools                                      | 高         |
 
 ---
 
@@ -363,7 +379,7 @@
 | 事件传播            | 捕获 + 冒泡两阶段                     | 调研 §六（RN）                 |
 | 帧调度              | rAF 帧合并 + React 18 batching        | 调研 §七（Konva）              |
 | DPR 处理            | 自动 scale，style 统一逻辑像素        | 调研 §十三                     |
-| 绘制后端            | 先 Canvas 2D，后切 Skia               | README 架构                    |
+| 绘制后端            | 直接 CanvasKit (Skia WASM)            | 阶段一设计规格                 |
 | Reconciler 触发重绘 | `resetAfterCommit` → `scheduleRender` | 调研 §十一（Ink）              |
 | 动画执行路径        | 绕过 Reconciler，直接改节点属性       | 调研 §十二（Konva）            |
 | 无障碍              | Proxy DOM 层 + ARIA 属性              | 调研 §十                       |
