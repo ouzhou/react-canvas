@@ -1,0 +1,26 @@
+{
+  "name": "@react-canvas/core",
+  "version": "0.0.0",
+  "description": "Scene tree and render backend for React Canvas.",
+  "license": "MIT",
+  "author": "ouzhou",
+  "type": "module",
+  "files": ["dist"],
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test",
+    "check": "vp check"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}
