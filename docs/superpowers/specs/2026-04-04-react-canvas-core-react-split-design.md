@@ -1,8 +1,8 @@
 # React Canvas：Core / React 拆分与第一阶段设计
 
 **日期：** 2026-04-04  
-**修订：** 渲染后端定为 **Skia（CanvasKit，WebAssembly）**（§1.3）；**安装与 Vite+ 落地约束**见 §2.3；**独立文档站方案对比与选型**见 §8；**仓库对齐、View 几何、文档语言**见 §1.4。  
-**状态：** 设计已定稿（实现前以本 spec 为准；若有变更再走修订流程）
+**修订：** 渲染后端定为 **Skia（CanvasKit，WebAssembly）**（§1.3）；**安装与 Vite+ 落地约束**见 §2.3；**独立文档站方案对比与选型**见 §8；**仓库目标为 `@react-canvas/core` + `@react-canvas/react` 拆包（实现阶段执行，见 §1.4）**；View 几何与文档语言见 §1.4。  
+**状态：** 设计已定稿（实现前以本 spec 为准；若有变更再走修订流程）。**纯文档修订可不伴随源码变更。**
 
 ## 1. 目标与非目标
 
@@ -25,27 +25,27 @@
 
 ### 1.4 澄清（仓库、View、文档语言）
 
-- **与仓库立刻对齐：** **`package.json` 的 `name` 与 monorepo 内 `workspace:*` 以当前仓库为唯一事实来源**（本文更新时主包为 **`@ouzhou/react-canvas`**）。Spec 下文的 **`@react-canvas/core` / `@react-canvas/react`** 表示 **目标拆分后的包名**；**何时拆包、是否改名为该 scope** **不阻塞**设计与实现细化，**可后续再定**，但 **文档与示例中的 import 路径须与当时仓库一致**。
+- **包名与拆分（已定，实现阶段执行）：** monorepo **目标状态**为 **`@react-canvas/core`** + **`@react-canvas/react`** 双包（见 §2），**弃用** **`@ouzhou/react-canvas`** 单包形态；**实现计划 / 后续开发 PR** 中完成目录迁移、`workspace:*` 与 **`apps/website` / `apps/docs`** 依赖更新。**本 spec 修订仅记录决策：在仅编辑文档的阶段不修改源码**；若当前仓库仍为旧包名，以 **本文 §2** 为迁移依据，而非以旧 `package.json` 反推长期架构。
 - **View 几何（全屏 vs 显式矩形）：** **暂不裁决**，由 **实现计划** 在首版可运行闭环内选定；**不阻塞** CanvasKit 初始化与单宿主 `View` 绘制验证。
 - **文档语言：** **`apps/docs`（Starlight）以英文为主**；中文等翻译可在后续通过 Starlight i18n 或增量页面补充。
 
 ## 2. 包结构
 
-### 2.1 两个 npm 包（目标名；与当前仓库见 §1.4）
+### 2.1 两个 npm 包（仓库目标名）
 
-| 包名（目标）          | 职责                                                                                                                                                                                                                       |
+| 包名                  | 职责                                                                                                                                                                                                                       |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@react-canvas/core`  | 无 `react` / `react-reconciler` 依赖；场景树（类/可变树）、**基于 CanvasKit 的绘制与资源初始化**、与 **`HTMLCanvasElement` + Skia 表面** 的绑定（尺寸、DPR、resize；**不**以 `CanvasRenderingContext2D` 为唯一绘制接口）。 |
 | `@react-canvas/react` | 依赖 `@react-canvas/core`、`react-reconciler`、`scheduler`；`peerDependencies`: `react`。JSX 宿主类型、`<Canvas>`、`render` 等。                                                                                           |
 
-**说明：** 目标 scope **`@react-canvas`** 的 npm 注册与发布不在本阶段阻塞实现；**当前仓库包名可与上表不一致**，以 §1.4 为准同步。
+**说明：** npm scope **`@react-canvas`** 的注册与发布可在实现阶段处理；**文档与示例代码**以 **`@react-canvas/core` / `@react-canvas/react`** 为准（§1.4）。
 
 ### 2.2 仓库布局（建议）
 
-- `packages/core` → 目标发布为 **`@react-canvas/core`**（目录名以实现为准）。
-- `packages/react` → 目标发布为 **`@react-canvas/react`**。
-- **`apps/website`**：`workspace:*` 依赖 **当前仓库中的 React 绑定包**（现为 **`@ouzhou/react-canvas`**；拆包后为 **`@react-canvas/react`**），作为 **轻量演示 / 手工验收**（**不**作为正式文档站载体；文档见 §8）。
-- **`apps/docs`** → **[Starlight](https://starlight.astro.build)** 文档站（§8），**默认英文内容**；`workspace:*` 引用 **当时仓库内实际包名** 以编写 **段落内代码片段与 Live Demo**。
+- `packages/core` → **`@react-canvas/core`**
+- `packages/react` → **`@react-canvas/react`**
+- **`apps/website`**：`workspace:*` 依赖 **`@react-canvas/react`**，作为 **轻量演示 / 手工验收**（**不**作为正式文档站载体；文档见 §8）。
+- **`apps/docs`** → **[Starlight](https://starlight.astro.build)** 文档站（§8），**默认英文内容**；`workspace:*` 引用 **`@react-canvas/core`** / **`@react-canvas/react`** 以编写 **段落内代码片段与 Live Demo**。
 
 ### 2.3 CanvasKit 安装与落地（实现约束）
 
@@ -53,7 +53,7 @@
 
 **依赖安装**
 
-- 在 **core 包**（目标名 **`@react-canvas/core`**，见 §1.4）将 **`canvaskit-wasm`** 声明为 **dependency**（运行时加载 WASM，非仅开发依赖）。
+- 在 **`@react-canvas/core`** 将 **`canvaskit-wasm`** 声明为 **dependency**（运行时加载 WASM，非仅开发依赖）。
 - **版本显式锁定**（`package.json` 精确版本或 monorepo catalog 固定版本）：CanvasKit 发布节奏快，避免隐式升级导致 **`.wasm` 与 JS 绑定** 不一致。
 - **类型**：使用 npm 包内 **`types/`** 目录提供的定义（官方说明见上文模块页）；实现时保证 TypeScript 能解析 **`canvaskit-wasm`** 的类型入口。
 
@@ -93,7 +93,7 @@
 
 ### 4.1 宿主类型
 
-- 字符串宿主 **`View`**（与现有设计一致），类型增强文件放在 **React 绑定包**（目标 **`@react-canvas/react`**；当前见 §1.4）。
+- 字符串宿主 **`View`**（与现有设计一致），类型增强文件放在 **`@react-canvas/react`**。
 
 ### 4.2 推荐使用方式：根组件 `Canvas`
 
@@ -129,7 +129,7 @@
 
 ## 7. 验收标准（第一阶段）
 
-- Monorepo 中 **core / react 绑定包按实现阶段可独立构建**（目标名为 **`@react-canvas/core` / `@react-canvas/react`**；过渡期内单包 **`@ouzhou/react-canvas`** 视为合法状态，见 §1.4），workspace 内引用正常。
+- Monorepo 中 **`@react-canvas/core` 与 `@react-canvas/react` 可独立构建**，workspace 内引用正常。
 - `apps/website` 使用 **`<Canvas>`** 展示至少一个 **`<View style={{ backgroundColor: … }} />`**，且 **CanvasKit 成功初始化并绘制到 `<canvas>`**。
 - **Core 与 React 包均具备**基于 **vite-plus/test** 的自动化测试，且 `vp test` 在仓库级可通过（以实际任务配置为准）。
 - **文档站（§8）：** 实现计划可 **分阶段** 引入 **`apps/docs`（Starlight）**；一旦纳入里程碑，应满足 **可构建**、**内置搜索可用**、侧边栏含 **概述 + Core + React** 骨架。
@@ -168,7 +168,7 @@
 
 ### 8.4 落地要点（实现计划引用）
 
-- Monorepo 内 **`apps/docs`**：`workspace:*` 依赖 **仓库内实际包名**（目标为 **`@react-canvas/core`** / **`@react-canvas/react`**，过渡期内与 **`@ouzhou/react-canvas`** 等并存，以 `package.json` 为准，见 §1.4）。
+- Monorepo 内 **`apps/docs`**：`workspace:*` 依赖 **`@react-canvas/core`**、**`@react-canvas/react`**。
 - 安装 **`@astrojs/react`**（及与 React 版本匹配的集成配置），MDX 中 Demo 组件使用 **`client:load`**（或文档约定），确保 **CanvasKit WASM 仅在浏览器执行**。
 - **CanvasKit `locateFile` / 静态资源**：文档站构建需能 **提供可访问的 `.wasm` URL**（与 §2.3 一致）；实现计划中写清 **Astro 侧** 资源目录或 `public/` 同步策略。
 - 侧边栏：**顶级分组** 在英文站中建议使用 **`Core (JavaScript)`**、**`React`**，并设 **`Introduction`**（或 **Getting started**）等共用章节；中文标签仅作结构示意。
