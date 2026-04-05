@@ -9,6 +9,7 @@ const reactCanvasReact = fileURLToPath(
   new URL("../../packages/react/src/index.ts", import.meta.url),
 );
 const reactCanvasCore = fileURLToPath(new URL("../../packages/core/src/index.ts", import.meta.url));
+const reactCanvasUi = fileURLToPath(new URL("../../packages/ui/src/index.ts", import.meta.url));
 
 // https://astro.build/config
 export default defineConfig({
@@ -18,13 +19,14 @@ export default defineConfig({
       alias: {
         "@react-canvas/react": reactCanvasReact,
         "@react-canvas/core": reactCanvasCore,
+        "@react-canvas/ui": reactCanvasUi,
       },
     },
     optimizeDeps: {
       include: ["react", "react/jsx-runtime", "react-dom", "react-dom/client", "@astrojs/react"],
     },
     ssr: {
-      noExternal: ["@react-canvas/react", "@react-canvas/core"],
+      noExternal: ["@react-canvas/react", "@react-canvas/core", "@react-canvas/ui"],
     },
   },
   integrations: [
@@ -41,6 +43,7 @@ export default defineConfig({
             { label: "Phase 1 playground", slug: "playground/phase-1" },
             { label: "Text playground", slug: "playground/text" },
             { label: "Button playground", slug: "playground/button" },
+            { label: "@react-canvas/ui", slug: "playground/ui" },
             { label: "Pointer playground", slug: "playground/pointer" },
             { label: "Image & SVG playground", slug: "playground/image-svg" },
           ],
