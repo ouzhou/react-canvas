@@ -1,5 +1,18 @@
 import type { CanvasToken, SeedToken } from "./types.ts";
 
+/** 暗色下在种子主色上提亮，避免 primary 按钮与深色背景融在一起。 */
+function lightenPrimaryForDark(hex: string): string {
+  const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex.trim());
+  if (!m) {
+    return "#5b9fff";
+  }
+  const bump = (s: string, add: number) =>
+    Math.min(255, parseInt(s, 16) + add)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${bump(m[1], 48)}${bump(m[2], 44)}${bump(m[3], 36)}`;
+}
+
 export function defaultAlgorithm(seed: SeedToken): CanvasToken {
   return {
     colorPrimary: seed.colorPrimary,
@@ -28,6 +41,6 @@ export function darkAlgorithm(token: CanvasToken): Partial<CanvasToken> {
     colorBgLayout: "#141414",
     colorText: "rgba(255,255,255,0.9)",
     colorBorder: "#424242",
-    colorPrimary: token.colorPrimary,
+    colorPrimary: lightenPrimaryForDark(token.colorPrimary),
   };
 }

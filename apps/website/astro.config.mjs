@@ -1,26 +1,25 @@
 // @ts-check
 import react from "@astrojs/react";
-import { fileURLToPath } from "node:url";
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-/** Workspace 包在 Rolldown 下需显式指向源码入口（pnpm symlink + exports 解析）。 */
-const reactCanvasReact = fileURLToPath(
-  new URL("../../packages/react/src/index.ts", import.meta.url),
-);
-const reactCanvasCore = fileURLToPath(new URL("../../packages/core/src/index.ts", import.meta.url));
-const reactCanvasUi = fileURLToPath(new URL("../../packages/ui/src/index.ts", import.meta.url));
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, "../..");
 
+// Monorepo packages publish `dist/`; local static build uses `import` condition → dist.
+// Alias to `src` so `astro build` works without pre-running `vp pack` in each package.
 // https://astro.build/config
 export default defineConfig({
   vite: {
     resolve: {
-      dedupe: ["react", "react-dom"],
       alias: {
-        "@react-canvas/react": reactCanvasReact,
-        "@react-canvas/core": reactCanvasCore,
-        "@react-canvas/ui": reactCanvasUi,
+        "@react-canvas/react": path.join(repoRoot, "packages/react/src/index.ts"),
+        "@react-canvas/core": path.join(repoRoot, "packages/core/src/index.ts"),
+        "@react-canvas/ui": path.join(repoRoot, "packages/ui/src/index.ts"),
       },
+      dedupe: ["react", "react-dom"],
     },
     optimizeDeps: {
       include: ["react", "react/jsx-runtime", "react-dom", "react-dom/client", "@astrojs/react"],

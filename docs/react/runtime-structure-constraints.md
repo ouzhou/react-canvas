@@ -1,6 +1,6 @@
 # 运行时结构约束 — 检测设计
 
-本文说明 **如何在运行时强制** [development-roadmap.md](./development-roadmap.md) 中的结构规则（**R-ROOT** / **R-HOST** / **R-MULTI** / **R-PORTAL**），与 [phase-1-design.md](./phase-1-design.md)、[hostconfig-guide.md](./hostconfig-guide.md) 中的 Reconciler 流程一致。
+本文说明 **如何在运行时强制** [development-roadmap.md](../development-roadmap.md) 中的结构规则（**R-ROOT** / **R-HOST** / **R-MULTI** / **R-PORTAL**），与 [phase-1-design.md](./phase-1-design.md)、[hostconfig-guide.md](./hostconfig-guide.md) 中的 Reconciler 流程一致。
 
 **原则：非法结构须 `throw`（或等价失败），禁止仅靠文档或类型提示。** 可选的 `console.warn` 仅用于弃用 API、性能提示等，不用于替代结构校验。
 
@@ -97,6 +97,6 @@
 
 ## 7. 相关文档
 
-- 规则来源与落地阶段：[development-roadmap.md](./development-roadmap.md) 文中 **「结构约束（须运行时强制）」** 一节
+- 规则来源与落地阶段：[development-roadmap.md](../development-roadmap.md) 文中 **「结构约束（须运行时强制）」** 一节
 - Reconciler 调用顺序：[hostconfig-guide.md](./hostconfig-guide.md)
 - 阶段一 HostConfig 表：[phase-1-design.md §3](./phase-1-design.md)

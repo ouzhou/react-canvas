@@ -22,5 +22,6 @@ describe("algorithms", () => {
     const d = darkAlgorithm(base);
     expect(d.colorBgLayout).toBeDefined();
     expect(d.colorBgLayout).not.toBe(base.colorBgLayout);
+    expect(d.colorPrimary).not.toBe(base.colorPrimary);
   });
 });

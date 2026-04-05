@@ -1,6 +1,6 @@
 # React Canvas 开发阶段规划
 
-> 基于 [技术调研报告](./technical-research.md) 的结论，结合项目当前进度，制定分阶段开发计划。
+> 基于 [技术调研报告](./core/technical-research.md) 的结论，结合项目当前进度，制定分阶段开发计划。
 
 **说明：** 阶段一核心管线（ViewNode、Yoga、CanvasKit、Reconciler、`Canvas`/`CanvasProvider`）已落地；下列其余能力仍多为待实现。
 
@@ -29,7 +29,7 @@
 
 ## 结构约束（须运行时强制）
 
-> 下列规则 **必须通过代码在运行时生效**（抛错、invariant 或等价失败），**不能**仅靠文档或 TypeScript 类型「提醒」。此处记录 **规则 ID** 与 **建议落地阶段**；**检测点、抛错策略与测试建议** 见专文 [runtime-structure-constraints.md](./runtime-structure-constraints.md)。
+> 下列规则 **必须通过代码在运行时生效**（抛错、invariant 或等价失败），**不能**仅靠文档或 TypeScript 类型「提醒」。此处记录 **规则 ID** 与 **建议落地阶段**；**检测点、抛错策略与测试建议** 见专文 [runtime-structure-constraints.md](./react/runtime-structure-constraints.md)。
 
 ### 根与加载上下文
 
@@ -57,9 +57,9 @@
 
 ### 实现备忘
 
-- 完整检测设计见 [runtime-structure-constraints.md](./runtime-structure-constraints.md)。
+- 完整检测设计见 [runtime-structure-constraints.md](./react/runtime-structure-constraints.md)。
 - **推荐机制**：`getChildHostContext` 传递「是否在 `Text` 内」等标志；`createInstance` / `createTextInstance` / `appendChild` 路径上校验并抛错。
-- 与 [hostconfig-guide.md](./hostconfig-guide.md) 一致：**校验发生在 commit 路径**，不在 render 函数体里改场景树。
+- 与 [hostconfig-guide.md](./react/hostconfig-guide.md) 一致：**校验发生在 commit 路径**，不在 render 函数体里改场景树。
 
 ---
 
@@ -80,7 +80,7 @@
 
 > 目标：嵌套的 `<View style={...} />` 能在 Canvas 上按照 Flexbox 规则正确布局，并通过 CanvasKit (Skia WASM) 绘制。
 >
-> 详细设计规格见 [phase-1-design.md](./phase-1-design.md)。
+> 详细设计规格见 [phase-1-design.md](./react/phase-1-design.md)。
 
 ### Step 1 — Yoga 集成 + CanvasKit 初始化
 
@@ -399,7 +399,7 @@
 ### Step 16 — Tailwind / `className` 原子化样式（可选，**极低优先级**）
 
 > **定位：** 在核心 `style` API 稳定之后，再评估是否做；**不纳入 M6 必达范围**。  
-> **预期：** 无法复刻浏览器里「写 Tailwind = 写 Web」的体验；仅能覆盖 **映射到 Yoga / Skia / RN 语义** 的工具类子集，继承与层叠按 **React Native 规则**（`View` 不继承文字样式，嵌套 `Text` 继承），详见 [技术调研报告 §15.14](./technical-research.md)（「Tailwind CSS 与原子化工具类」）。
+> **预期：** 无法复刻浏览器里「写 Tailwind = 写 Web」的体验；仅能覆盖 **映射到 Yoga / Skia / RN 语义** 的工具类子集，继承与层叠按 **React Native 规则**（`View` 不继承文字样式，嵌套 `Text` 继承），详见 [技术调研报告 §15.14](./core/technical-research.md)（「Tailwind CSS 与原子化工具类」）。
 
 | 任务                 | 详情                                                                                                            |
 | -------------------- | --------------------------------------------------------------------------------------------------------------- |
@@ -431,7 +431,7 @@
 
 ## 技术决策速查
 
-在实现过程中遇到设计抉择时，参考以下决策表（详细论据见 [技术调研报告](./technical-research.md)）：
+在实现过程中遇到设计抉择时，参考以下决策表（详细论据见 [技术调研报告](./core/technical-research.md)）：
 
 | 决策点              | 方案                                                                    | 参考来源                       |
 | ------------------- | ----------------------------------------------------------------------- | ------------------------------ |

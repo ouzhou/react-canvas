@@ -1,6 +1,6 @@
 # Text 换行与行高（Skia Paragraph + Yoga 测量）
 
-本文说明 **`@Text` 如何折行、行距如何算**，与 [react-yoga-text-nodes.md](./react-yoga-text-nodes.md) 中的「两棵树对照」配套阅读：那里讲 **结构**，这里讲 **排版参数** 在代码里怎么走。
+本文说明 **`@Text` 如何折行、行距如何算**，与 [react-yoga-text-nodes.md](../react/react-yoga-text-nodes.md) 中的「两棵树对照」配套阅读：那里讲 **结构**，这里讲 **排版参数** 在代码里怎么走。
 
 ---
 

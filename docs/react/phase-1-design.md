@@ -6,17 +6,17 @@
 
 ## 决策记录
 
-| 决策点         | 选择                                                                                                         | 理由                                              |
-| -------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- |
-| 节点设计       | 单一 `ViewNode` 类型 + `type` 字段                                                                           | 简洁，前期代码少，后续通过 type 区分 Text / Image |
-| Yoga 加载      | WASM async (`yoga-layout/wasm-async`)                                                                        | 性能优先                                          |
-| 绘制后端       | 直接 CanvasKit (Skia WASM)，跳过 Canvas 2D                                                                   | 避免写两套绘制代码；Skia API 更强大               |
-| 根组件 API     | 显式 Provider (`CanvasProvider` + `Canvas`)                                                                  | 用户可控制初始化时机和加载 UI                     |
-| style 属性范围 | 宽集合（含 gap / flexWrap / min-max / display）                                                              | Yoga 原生支持，映射成本低                         |
-| 测试策略       | headless 布局断言 + 文档站 playground 可视化                                                                 | CI 友好 + 开发时人眼验证                          |
-| 帧调度         | rAF 去重（`surface.requestAnimationFrame`）                                                                  | 简单，React 18 batching 已覆盖大多数场景          |
-| 包职责分层     | `core` 不依赖 React（场景树 + 布局 + 绘制），`react` 做 Reconciler 桥接                                      | 关注点分离，core 可被 Vue 等框架复用              |
-| 阶段一实现澄清 | 见下表「实现收敛」与 [superpowers 澄清记录](./superpowers/specs/2026-04-04-phase-1-clarifications-design.md) | 经 2026-04-04 问答确认                            |
+| 决策点         | 选择                                                                                                          | 理由                                              |
+| -------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| 节点设计       | 单一 `ViewNode` 类型 + `type` 字段                                                                            | 简洁，前期代码少，后续通过 type 区分 Text / Image |
+| Yoga 加载      | WASM async (`yoga-layout/wasm-async`)                                                                         | 性能优先                                          |
+| 绘制后端       | 直接 CanvasKit (Skia WASM)，跳过 Canvas 2D                                                                    | 避免写两套绘制代码；Skia API 更强大               |
+| 根组件 API     | 显式 Provider (`CanvasProvider` + `Canvas`)                                                                   | 用户可控制初始化时机和加载 UI                     |
+| style 属性范围 | 宽集合（含 gap / flexWrap / min-max / display）                                                               | Yoga 原生支持，映射成本低                         |
+| 测试策略       | headless 布局断言 + 文档站 playground 可视化                                                                  | CI 友好 + 开发时人眼验证                          |
+| 帧调度         | rAF 去重（`surface.requestAnimationFrame`）                                                                   | 简单，React 18 batching 已覆盖大多数场景          |
+| 包职责分层     | `core` 不依赖 React（场景树 + 布局 + 绘制），`react` 做 Reconciler 桥接                                       | 关注点分离，core 可被 Vue 等框架复用              |
+| 阶段一实现澄清 | 见下表「实现收敛」与 [superpowers 澄清记录](../superpowers/specs/2026-04-04-phase-1-clarifications-design.md) | 经 2026-04-04 问答确认                            |
 
 **实现收敛（阶段一）：** `style` **仅对象**（不支持数组）；Reconciler **隐式容器根**；`<canvas>` **优先 ref** 接 Surface（必要时唯一 `id` 兜底）；**支持** `width`/`height` 等**百分比字符串**（相对父盒，首层 `View` 相对 `Canvas` 逻辑尺寸）；`<Canvas>` **仅允许单个子节点**（阶段一为单个 `<View>`）。
 
@@ -400,7 +400,7 @@ function queueLayoutPaintFrame(surface, canvasKit, rootNode, width, height, dpr)
 | 批处理   | 多次 setState 只触发一次 queueLayoutPaintFrame |
 | 单子约束 | `<Canvas>` 多子或非法结构 **抛错**             |
 
-**像素 / 图形回归：** [技术调研报告 §14](./technical-research.md) 建议的 dataURL 像素对比、在 Node 中跑完整 CanvasKit 管线等，对 CI 与 WASM 环境要求较高。**阶段一不列为必达**；以布局数值断言 + playground 人眼验收为主，像素级回归可在后续阶段或独立 harness（如浏览器/Playwright 截图）再引入。
+**像素 / 图形回归：** [技术调研报告 §14](../core/technical-research.md) 建议的 dataURL 像素对比、在 Node 中跑完整 CanvasKit 管线等，对 CI 与 WASM 环境要求较高。**阶段一不列为必达**；以布局数值断言 + playground 人眼验收为主，像素级回归可在后续阶段或独立 harness（如浏览器/Playwright 截图）再引入。
 
 ### 4.2 可视化验证 — playground 页面
 

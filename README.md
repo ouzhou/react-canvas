@@ -27,11 +27,13 @@ Skia / CanvasKit 绘制 → <canvas>
 
 ## 仓库结构
 
-| 路径             | 包名                  | 说明                                 |
-| ---------------- | --------------------- | ------------------------------------ |
-| `packages/core`  | `@react-canvas/core`  | 场景树、Yoga 布局、Skia 绘制管线     |
-| `packages/react` | `@react-canvas/react` | React reconciler、JSX 类型、入口 API |
-| `apps/website`   | —                     | 文档站（Astro Starlight）            |
+| 路径             | 包名                  | 说明                                                      |
+| ---------------- | --------------------- | --------------------------------------------------------- |
+| `packages/core`  | `@react-canvas/core`  | 场景树、Yoga 布局、Skia 绘制管线                          |
+| `packages/react` | `@react-canvas/react` | React reconciler、JSX 类型、入口 API                      |
+| `packages/ui`    | `@react-canvas/ui`    | 画布侧 UI 组件与主题（演进中）                            |
+| `docs/`          | —                     | 说明文档，按包分目录，见 [docs/README.md](docs/README.md) |
+| `apps/website`   | —                     | 文档站（Astro Starlight）                                 |
 
 ## 环境要求
 
