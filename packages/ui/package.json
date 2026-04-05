@@ -1,0 +1,41 @@
+{
+  "name": "@react-canvas/ui",
+  "version": "0.0.0",
+  "description": "Canvas UI components built on React Canvas primitives.",
+  "license": "MIT",
+  "author": "ouzhou",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test",
+    "check": "vp check"
+  },
+  "devDependencies": {
+    "@react-canvas/react": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "react": "catalog:",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "peerDependencies": {
+    "@react-canvas/react": "workspace:*",
+    "react": "^19.2.0"
+  }
+}

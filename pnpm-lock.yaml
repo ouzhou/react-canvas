@@ -160,6 +160,30 @@ importers:
         specifier: 'catalog:'
         version: 0.1.15(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.1)(typescript@5.9.3)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))(yaml@2.8.3)
 
+  packages/ui:
+    devDependencies:
+      '@react-canvas/react':
+        specifier: workspace:*
+        version: link:../react
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.12.2
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      '@typescript/native-preview':
+        specifier: 'catalog:'
+        version: 7.0.0-dev.20260403.1
+      react:
+        specifier: 'catalog:'
+        version: 19.2.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.1.15(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(jsdom@29.0.1)(typescript@5.9.3)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@24.12.2)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))(yaml@2.8.3)
+
 packages:
 
   '@asamuzakjp/css-color@5.1.4':
