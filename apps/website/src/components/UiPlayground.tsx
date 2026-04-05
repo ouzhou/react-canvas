@@ -2,7 +2,11 @@ import { Canvas, CanvasProvider, Text, View } from "@react-canvas/react";
 import { Button, CanvasThemeProvider, useCanvasToken } from "@react-canvas/ui";
 import { useState } from "react";
 
-function UiCanvasScreen() {
+/**
+ * `<Canvas>` 的直接子节点必须是宿主 `<View>`（见 `canvas.tsx` assertSingleViewChild），
+ * 不能把自定义组件当作 Canvas 的唯一子节点。
+ */
+function UiCanvasContent() {
   const token = useCanvasToken();
   const [clicks, setClicks] = useState(0);
   return (
@@ -84,7 +88,9 @@ export function UiPlayground() {
             if (!isReady) return <p>Loading Yoga + CanvasKit…</p>;
             return (
               <Canvas width={400} height={140}>
-                <UiCanvasScreen />
+                <View style={{ flex: 1 }}>
+                  <UiCanvasContent />
+                </View>
               </Canvas>
             );
           }}

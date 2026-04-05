@@ -25,19 +25,25 @@ pnpm add @react-canvas/ui
 ## 使用示例
 
 ```tsx
-import { Canvas, CanvasProvider } from "@react-canvas/react";
-import { CanvasThemeProvider, useCanvasToken, Button } from "@react-canvas/ui";
+import { Canvas, CanvasProvider, View } from "@react-canvas/react";
+import { CanvasThemeProvider, Button } from "@react-canvas/ui";
 
 <CanvasThemeProvider theme={{ appearance: "light", density: "default" }}>
-  <CanvasProvider width={800} height={600}>
-    <Canvas>
-      <Button variant="primary" size="md" />
-    </Canvas>
+  <CanvasProvider>
+    {({ isReady, error }) =>
+      error || !isReady ? null : (
+        <Canvas width={800} height={600}>
+          <View style={{ flex: 1 }}>
+            <Button variant="primary" size="md" />
+          </View>
+        </Canvas>
+      )
+    }
   </CanvasProvider>
 </CanvasThemeProvider>;
 ```
 
-**说明：** 在宿主上展示 **文字** 需阶段二的 **`<Text>`**；`Button` 的 `children` 可先留空或仅布局。
+**说明：** `<Canvas>` **只能有一个直接子节点，且必须是宿主 `<View>`**（见 `@react-canvas/react`）；`Button`、带 `useCanvasToken` 的屏幕等放在该 `View` 之下。展示 **文字** 需 **`<Text>`**（阶段二能力）。
 
 ## `mergeViewStyles`
 
