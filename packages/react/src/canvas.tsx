@@ -2,6 +2,7 @@ import { resetLayoutPaintQueue, ViewNode } from "@react-canvas/core";
 import { Children, isValidElement, useLayoutEffect, useRef, type ReactNode } from "react";
 import Reconciler from "react-reconciler";
 import { useCanvasRuntime } from "./context.ts";
+import { attachCanvasPointerHandlers } from "./canvas-pointer.ts";
 import {
   createCanvasHostConfig,
   type PaintFrameRef,
@@ -99,7 +100,10 @@ export function Canvas({ width, height, children }: CanvasProps) {
     );
     rootRef.current = root;
 
+    const detachPointer = attachCanvasPointerHandlers(canvas, sceneRoot, width, height);
+
     return () => {
+      detachPointer();
       reconciler.updateContainer(null, root, null, () => {});
       sceneRoot.destroy();
       reconcilerRef.current = null;

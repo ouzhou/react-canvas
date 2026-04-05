@@ -1,8 +1,14 @@
+import type { CanvasKit } from "canvaskit-wasm";
 import type { Direction } from "yoga-layout/load";
 import { Display } from "yoga-layout/load";
+import { clearLayoutCanvasKit, setLayoutCanvasKit } from "./layout-canvas-kit.ts";
 import type { ViewNode } from "./view-node.ts";
 
 export function syncLayoutFromYoga(node: ViewNode): void {
+  if (!node.yogaMounted) {
+    for (const c of node.children) syncLayoutFromYoga(c as ViewNode);
+    return;
+  }
   const l = node.yogaNode.getComputedLayout();
   node.layout = {
     left: l.left,
@@ -10,7 +16,7 @@ export function syncLayoutFromYoga(node: ViewNode): void {
     width: l.width,
     height: l.height,
   };
-  for (const c of node.children) syncLayoutFromYoga(c);
+  for (const c of node.children) syncLayoutFromYoga(c as ViewNode);
 }
 
 /** Root-only: runs Yoga layout then copies computed boxes onto each ViewNode. */
@@ -19,12 +25,21 @@ export function calculateLayoutRoot(
   width: number,
   height: number,
   direction: Direction,
+  canvasKit?: CanvasKit | null,
 ): void {
-  root.yogaNode.calculateLayout(width, height, direction);
-  syncLayoutFromYoga(root);
+  setLayoutCanvasKit(canvasKit ?? null);
+  try {
+    root.yogaNode.calculateLayout(width, height, direction);
+    syncLayoutFromYoga(root);
+  } finally {
+    clearLayoutCanvasKit();
+  }
 }
 
 export function isDisplayNone(node: ViewNode): boolean {
+  if (!node.yogaMounted) {
+    return false;
+  }
   if (node.props.display === "none") return true;
   return node.yogaNode.getDisplay() === Display.None;
 }

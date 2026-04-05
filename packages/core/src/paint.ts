@@ -1,6 +1,9 @@
 import type { Canvas, CanvasKit, Paint } from "canvaskit-wasm";
-import type { ViewNode } from "./view-node.ts";
+import { Edge } from "yoga-layout/load";
+import { buildParagraphFromSpans } from "./paragraph-build.ts";
+import type { TextNode } from "./text-node.ts";
 import { isDisplayNone } from "./layout.ts";
+import type { ViewNode } from "./view-node.ts";
 
 /**
  * Full-frame paint: scale by DPR, clear, recurse from root (phase-1-design §2.4).
@@ -77,6 +80,28 @@ export function paintNode(
     } else {
       skCanvas.drawRect(rect, paint);
     }
+  }
+
+  if (node.type === "Text") {
+    const tn = node as TextNode;
+    const spans = tn.getParagraphSpans();
+    if (spans.length > 0) {
+      const padL = tn.yogaNode.getComputedPadding(Edge.Left);
+      const padR = tn.yogaNode.getComputedPadding(Edge.Right);
+      const padT = tn.yogaNode.getComputedPadding(Edge.Top);
+      const boxW = Number.isFinite(w) ? w : 0;
+      const innerW = Math.max(0, boxW - padL - padR);
+      const p = buildParagraphFromSpans(canvasKit, tn.textProps, spans);
+      try {
+        p.layout(innerW);
+        skCanvas.drawParagraph(p, x + padL, y + padT);
+      } finally {
+        p.delete();
+      }
+    }
+    if (useLayer) skCanvas.restore();
+    skCanvas.restore();
+    return;
   }
 
   for (const c of node.children) {

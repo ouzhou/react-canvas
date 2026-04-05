@@ -180,4 +180,4 @@
 
 ## 13. 下一步
 
-经你审阅本规格无误后，使用 **writing-plans** 产出阶段三（Step 6，可选 Step 7）可执行任务清单；实现细节（文件名、具体 API 导出命名）在计划中展开。
+可执行任务清单见 [../plans/2026-04-05-phase-3-implementation.md](../plans/2026-04-05-phase-3-implementation.md)（Step 6，可选 Step 7 `Pressable`）；实现细节（文件名、具体 API 导出命名）在该计划中展开。

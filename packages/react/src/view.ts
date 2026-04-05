@@ -1,4 +1,4 @@
-import type { ViewStyle } from "@react-canvas/core";
+import type { InteractionHandlers, ViewStyle } from "@react-canvas/core";
 import type { ReactNode } from "react";
 
 /**
@@ -11,4 +11,4 @@ export const View = "View" as const;
 export type ViewProps = {
   style?: ViewStyle;
   children?: ReactNode;
-};
+} & InteractionHandlers;

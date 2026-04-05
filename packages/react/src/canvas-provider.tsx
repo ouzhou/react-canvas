@@ -1,4 +1,9 @@
-import { initCanvasRuntime, type CanvasKit, type Yoga } from "@react-canvas/core";
+import {
+  initCanvasRuntime,
+  type CanvasKit,
+  type InitCanvasRuntimeOptions,
+  type Yoga,
+} from "@react-canvas/core";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CanvasRuntimeContext } from "./context.ts";
 
@@ -9,17 +14,25 @@ export type CanvasProviderRenderState = {
 
 export type CanvasProviderProps = {
   children: (state: CanvasProviderRenderState) => ReactNode;
+  /** Passed to `initCanvasRuntime` (e.g. `loadDefaultParagraphFonts: false` in tests). */
+  runtimeOptions?: InitCanvasRuntimeOptions;
 };
 
-export function CanvasProvider({ children }: CanvasProviderProps) {
+export function CanvasProvider({ children, runtimeOptions }: CanvasProviderProps) {
   const [yoga, setYoga] = useState<Yoga | null>(null);
   const [canvasKit, setCanvasKit] = useState<CanvasKit | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
+  const loadDefaultParagraphFonts = runtimeOptions?.loadDefaultParagraphFonts !== false;
+  const defaultParagraphFontUrl = runtimeOptions?.defaultParagraphFontUrl;
+
   useEffect(() => {
     let cancelled = false;
     setError(null);
-    void initCanvasRuntime()
+    void initCanvasRuntime({
+      loadDefaultParagraphFonts: loadDefaultParagraphFonts,
+      defaultParagraphFontUrl: defaultParagraphFontUrl,
+    })
       .then(({ yoga: y, canvasKit: ck }) => {
         if (cancelled) return;
         setYoga(y);
@@ -31,7 +44,7 @@ export function CanvasProvider({ children }: CanvasProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadDefaultParagraphFonts, defaultParagraphFontUrl]);
 
   const isReady = yoga !== null && canvasKit !== null;
   const value = useMemo(() => (yoga && canvasKit ? { yoga, canvasKit } : null), [yoga, canvasKit]);

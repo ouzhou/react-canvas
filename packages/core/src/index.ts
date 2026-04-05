@@ -37,3 +37,13 @@ export {
   setParagraphFontForTests,
 } from "./paragraph-build.ts";
 export type { ParagraphSpan } from "./paragraph-build.ts";
+export type { CanvasSyntheticPointerEvent, InteractionHandlers } from "./pointer-types.ts";
+export { hitTest, buildPathToRoot } from "./hit-test.ts";
+export { dispatchBubble } from "./pointer-dispatch.ts";
+export { getWorldBounds, containsPagePoint, getWorldOffset } from "./world-bounds.ts";
+export {
+  shouldEmitClick,
+  DEFAULT_CLICK_MOVE_THRESHOLD_PX,
+  type PointerDownSnapshot,
+} from "./click-activation.ts";
+export { diffHoverEnterLeave, dispatchPointerEnterLeave } from "./pointer-hover.ts";

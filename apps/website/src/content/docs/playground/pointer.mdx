@@ -1,0 +1,10 @@
+---
+title: Pointer playground
+description: Demos for onClick, bubbling, stopPropagation, overlapping hits, Text, and pointer down/up.
+---
+
+import { PointerPlayground } from "../../../components/PointerPlayground.tsx";
+
+单画布内分区展示：**冒泡**、**stopPropagation**、**重叠兄弟**、**Text 单行**、**Text 内嵌套 Text + 混排文字**（外层/内层均绑 `onClick`，便于观察命中仅最外层）、**pointerdown / pointerup**。下方日志为 React state。
+
+<PointerPlayground client:load />

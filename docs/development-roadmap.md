@@ -209,7 +209,8 @@
 ## 阶段三：交互能力
 
 > 目标：用户可以点击 Canvas 上的元素，触发事件回调。  
-> **规格书：** [superpowers/specs/2026-04-05-phase-3-interaction-design.md](./superpowers/specs/2026-04-05-phase-3-interaction-design.md)
+> **规格书：** [superpowers/specs/2026-04-05-phase-3-interaction-design.md](./superpowers/specs/2026-04-05-phase-3-interaction-design.md)  
+> **实现计划：** [superpowers/plans/2026-04-05-phase-3-implementation.md](./superpowers/plans/2026-04-05-phase-3-implementation.md)
 
 ### 设计说明（v1 简化）
 

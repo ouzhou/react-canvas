@@ -8,6 +8,7 @@ import {
 } from "./yoga-map.ts";
 import type { CanvasKit } from "canvaskit-wasm";
 import type { SceneNode } from "./scene-node.ts";
+import type { InteractionHandlers } from "./pointer-types.ts";
 import type { ViewStyle } from "./view-style.ts";
 import { calculateLayoutRoot, syncLayoutFromYoga } from "./layout.ts";
 
@@ -28,6 +29,8 @@ export class ViewNode {
   props: ViewVisualProps = {};
   layout = { left: 0, top: 0, width: 0, height: 0 };
   dirty = false;
+  /** Pointer / click handlers (set by reconciler commit). */
+  interactionHandlers: InteractionHandlers = {};
   /**
    * When false, this node's Yoga node is not attached to the parent's Yoga tree (nested Text).
    * Used by layout/sync without importing `TextNode` (avoids layout ↔ text-node cycle).

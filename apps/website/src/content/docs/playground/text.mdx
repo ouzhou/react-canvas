@@ -1,0 +1,10 @@
+---
+title: Text playground
+description: Live demo of the Text host — nested styles, Yoga measure, and Skia Paragraph paint.
+---
+
+import { TextPlayground } from "../../../components/TextPlayground.tsx";
+
+展示 `<Text>`：字符串叶子、嵌套 `<Text>` 样式合并、以及与 `Canvas` / `View` 的布局关系。默认在 `initCanvasRuntime` 中加载内置段落字体，业务侧通常不必手写 `fetch`；若需完全离线或自定义字库，可 `setParagraphFontForTests` 或 `runtimeOptions.defaultParagraphFontUrl`。`style.fontFamily` 为逗号分隔回退，且只对已注册字族名生效（CanvasKit Web 仍无法像 DOM 那样用系统字体栈）。
+
+<TextPlayground client:load />

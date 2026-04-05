@@ -1,5 +1,6 @@
 import {
   type CanvasKit,
+  type InteractionHandlers,
   isTextInstance,
   queueLayoutPaintFrame,
   type SceneNode,
@@ -21,6 +22,29 @@ export type SceneContainer = {
 };
 
 type TextHostContext = { isInText: boolean };
+
+function pickInteraction(p: Record<string, unknown>): InteractionHandlers {
+  const h: InteractionHandlers = {};
+  if (typeof p.onPointerDown === "function") {
+    h.onPointerDown = p.onPointerDown as InteractionHandlers["onPointerDown"];
+  }
+  if (typeof p.onPointerUp === "function") {
+    h.onPointerUp = p.onPointerUp as InteractionHandlers["onPointerUp"];
+  }
+  if (typeof p.onPointerMove === "function") {
+    h.onPointerMove = p.onPointerMove as InteractionHandlers["onPointerMove"];
+  }
+  if (typeof p.onPointerEnter === "function") {
+    h.onPointerEnter = p.onPointerEnter as InteractionHandlers["onPointerEnter"];
+  }
+  if (typeof p.onPointerLeave === "function") {
+    h.onPointerLeave = p.onPointerLeave as InteractionHandlers["onPointerLeave"];
+  }
+  if (typeof p.onClick === "function") {
+    h.onClick = p.onClick as InteractionHandlers["onClick"];
+  }
+  return h;
+}
 
 function asHostContext(ctx: object): TextHostContext {
   return "isInText" in ctx && typeof (ctx as TextHostContext).isInText === "boolean"
@@ -224,7 +248,7 @@ export function createCanvasHostConfig(
 
     createInstance: (
       type: string,
-      props: { style?: ViewStyle | TextStyle },
+      props: { style?: ViewStyle | TextStyle } & InteractionHandlers,
       _rootContainer: SceneContainer,
       hostContext: object,
     ) => {
@@ -235,11 +259,13 @@ export function createCanvasHostConfig(
         }
         const node = new ViewNode(yoga, "View");
         node.setStyle(props.style ?? {});
+        node.interactionHandlers = pickInteraction(props as Record<string, unknown>);
         return node;
       }
       if (type === Text) {
         const node = new TextNode(yoga);
         node.setStyle((props.style ?? {}) as TextStyle);
+        node.interactionHandlers = pickInteraction(props as Record<string, unknown>);
         return node;
       }
       throw new Error(`[react-canvas] Unsupported host type "${String(type)}".`);
@@ -318,8 +344,8 @@ export function createCanvasHostConfig(
     commitUpdate: (
       instance: ViewNode,
       _type: string,
-      prevProps: { style?: ViewStyle | TextStyle },
-      nextProps: { style?: ViewStyle | TextStyle },
+      prevProps: { style?: ViewStyle | TextStyle } & InteractionHandlers,
+      nextProps: { style?: ViewStyle | TextStyle } & InteractionHandlers,
     ) => {
       if (instance.type === "Text") {
         (instance as TextNode).updateStyle(
@@ -329,6 +355,7 @@ export function createCanvasHostConfig(
       } else {
         instance.updateStyle(prevProps.style ?? {}, nextProps.style ?? {});
       }
+      instance.interactionHandlers = pickInteraction(nextProps as Record<string, unknown>);
     },
 
     resetTextContent: () => {},
