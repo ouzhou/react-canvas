@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 
-/** Rolldown 在部分环境下无法解析 pnpm workspace  symlink，显式指向源码入口。 */
+/** Workspace 包在 Rolldown 下需显式指向源码入口（pnpm symlink + exports 解析）。 */
 const reactCanvasReact = fileURLToPath(
   new URL("../../packages/react/src/index.ts", import.meta.url),
 );
