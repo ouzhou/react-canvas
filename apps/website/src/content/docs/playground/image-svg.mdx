@@ -1,0 +1,10 @@
+---
+title: Image & SVG playground
+description: Live demo of Image (decoded bitmap) and SvgPath (SVG path d + viewBox) on Canvas.
+---
+
+import { ImageSvgPlayground } from "../../../components/ImageSvgPlayground.tsx";
+
+测试 `<Image>`（`source.uri` 异步解码、`resizeMode`）与 `<SvgPath>`（`d`、`viewBox`、`size`、stroke/fill）。左列为 Canvas 宿主，右列为 HTML `img` / `svg` 对照。远程图片使用 picsum（需网络）。
+
+<ImageSvgPlayground client:load />

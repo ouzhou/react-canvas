@@ -42,6 +42,7 @@ export default defineConfig({
             { label: "Text playground", slug: "playground/text" },
             { label: "Button playground", slug: "playground/button" },
             { label: "Pointer playground", slug: "playground/pointer" },
+            { label: "Image & SVG playground", slug: "playground/image-svg" },
           ],
         },
         {

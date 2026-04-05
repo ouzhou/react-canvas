@@ -47,3 +47,15 @@ export {
   type PointerDownSnapshot,
 } from "./click-activation.ts";
 export { diffHoverEnterLeave, dispatchPointerEnterLeave } from "./pointer-hover.ts";
+export { computeImageSrcDestRects, type ImageRect, type ResizeMode } from "./image-rect.ts";
+export { parseViewBox, viewBoxToAffine, type ViewBox } from "./viewbox-transform.ts";
+export { peekCachedImage, putCachedImage, clearImageCacheForTests } from "./image-cache.ts";
+export { decodeImageFromEncoded, loadImageFromUri } from "./image-decode.ts";
+export { registerPaintFrameRequester, requestRedrawFromImage } from "./paint-frame-requester.ts";
+export { ImageNode, type ImageNodePropPayload, type ImageSource } from "./image-node.ts";
+export {
+  SvgPathNode,
+  type SvgPathPropPayload,
+  type SvgPathStrokeLinecap,
+  type SvgPathStrokeLinejoin,
+} from "./svg-path-node.ts";

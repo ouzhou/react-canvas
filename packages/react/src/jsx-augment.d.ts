@@ -1,4 +1,12 @@
-import type { InteractionHandlers, TextStyle, ViewStyle } from "@react-canvas/core";
+import type {
+  ImageSource,
+  InteractionHandlers,
+  ResizeMode,
+  SvgPathStrokeLinecap,
+  SvgPathStrokeLinejoin,
+  TextStyle,
+  ViewStyle,
+} from "@react-canvas/core";
 import type { ReactNode } from "react";
 
 declare module "react" {
@@ -10,6 +18,28 @@ declare module "react" {
       } & InteractionHandlers;
       Text: {
         style?: TextStyle;
+        children?: ReactNode;
+      } & InteractionHandlers;
+      Image: {
+        source: ImageSource;
+        style?: ViewStyle;
+        resizeMode?: ResizeMode;
+        onLoad?: () => void;
+        onError?: (error: unknown) => void;
+        children?: ReactNode;
+      } & InteractionHandlers;
+      SvgPath: {
+        d: string;
+        viewBox?: string;
+        size?: number;
+        color?: string;
+        stroke?: string;
+        fill?: string;
+        strokeWidth?: number;
+        strokeLinecap?: SvgPathStrokeLinecap;
+        strokeLinejoin?: SvgPathStrokeLinejoin;
+        style?: ViewStyle;
+        onError?: (error: unknown) => void;
         children?: ReactNode;
       } & InteractionHandlers;
     }

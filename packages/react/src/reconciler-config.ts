@@ -1,10 +1,13 @@
 import {
   type CanvasKit,
   type InteractionHandlers,
+  ImageNode,
   isTextInstance,
   queueLayoutPaintFrame,
+  registerPaintFrameRequester,
   type SceneNode,
   type Surface,
+  SvgPathNode,
   type TextInstance,
   TextNode,
   type TextStyle,
@@ -13,6 +16,10 @@ import {
   type Yoga,
 } from "@react-canvas/core";
 import { createContext } from "react";
+import type { ImageProps } from "./image.ts";
+import { Image } from "./image.ts";
+import type { SvgPathProps } from "./svg-path.ts";
+import { SvgPath } from "./svg-path.ts";
 import { Text } from "./text.ts";
 import { View } from "./view.ts";
 
@@ -114,8 +121,16 @@ function removeChildImpl(
 export type PaintFrameRef = {
   surface: Surface | null;
   canvasKit: CanvasKit | null;
+  /** Set by `<Canvas>` — used for async image redraw + layout/paint queue. */
+  sceneRoot: ViewNode | null;
   width: number;
   height: number;
+  /**
+   * Uniform scale from logical layout pixels → backing-store pixels (SkCanvas root `scale`).
+   * Usually ≈ `devicePixelRatio`, but chosen so integer `canvas.width` / `canvas.height` matches
+   * logical `width` / `height` exactly (see `canvasBackingStoreSize` + gcd) so `bw/lw === bh/lh`
+   * and a single `scale(dpr)` is not anisotropic.
+   */
   dpr: number;
 };
 
@@ -130,6 +145,9 @@ export function createCanvasHostConfig(
   yoga: Yoga,
   frameRef: PaintFrameRef,
 ): Record<string, unknown> {
+  let paintRequesterRegistered = false;
+  const pendingImageLoads: ImageNode[] = [];
+
   return {
     rendererVersion: "0.33.0",
     rendererPackageName: "@react-canvas/react",
@@ -236,6 +254,24 @@ export function createCanvasHostConfig(
     resetAfterCommit: (containerInfo: SceneContainer) => {
       const r = frameRef;
       if (!r.surface || !r.canvasKit) return;
+      if (!paintRequesterRegistered) {
+        registerPaintFrameRequester(() => {
+          if (!frameRef.surface || !frameRef.canvasKit || !frameRef.sceneRoot) return;
+          queueLayoutPaintFrame(
+            frameRef.surface,
+            frameRef.canvasKit,
+            frameRef.sceneRoot,
+            frameRef.width,
+            frameRef.height,
+            frameRef.dpr,
+          );
+        });
+        paintRequesterRegistered = true;
+      }
+      for (const n of pendingImageLoads) {
+        n.beginLoad(r.canvasKit);
+      }
+      pendingImageLoads.length = 0;
       queueLayoutPaintFrame(
         r.surface,
         r.canvasKit,
@@ -265,6 +301,43 @@ export function createCanvasHostConfig(
       if (type === Text) {
         const node = new TextNode(yoga);
         node.setStyle((props.style ?? {}) as TextStyle);
+        node.interactionHandlers = pickInteraction(props as Record<string, unknown>);
+        return node;
+      }
+      if (type === Image) {
+        if (ctx.isInText) {
+          throw new Error("[react-canvas] R-HOST-2: <Image> cannot be inside <Text>.");
+        }
+        const node = new ImageNode(yoga);
+        const p = props as ImageProps;
+        node.setImageProps(p.style, {
+          source: p.source,
+          resizeMode: p.resizeMode,
+          onLoad: p.onLoad,
+          onError: p.onError,
+        });
+        node.interactionHandlers = pickInteraction(props as Record<string, unknown>);
+        pendingImageLoads.push(node);
+        return node;
+      }
+      if (type === SvgPath) {
+        if (ctx.isInText) {
+          throw new Error("[react-canvas] R-HOST-2: <SvgPath> cannot be inside <Text>.");
+        }
+        const node = new SvgPathNode(yoga);
+        const p = props as SvgPathProps;
+        node.setSvgPathProps(p.style, {
+          d: p.d,
+          viewBox: p.viewBox,
+          size: p.size,
+          color: p.color,
+          stroke: p.stroke,
+          fill: p.fill,
+          strokeWidth: p.strokeWidth,
+          strokeLinecap: p.strokeLinecap,
+          strokeLinejoin: p.strokeLinejoin,
+          onError: p.onError,
+        });
         node.interactionHandlers = pickInteraction(props as Record<string, unknown>);
         return node;
       }
@@ -330,6 +403,8 @@ export function createCanvasHostConfig(
     },
 
     clearContainer: (container: SceneContainer) => {
+      registerPaintFrameRequester(null);
+      paintRequesterRegistered = false;
       const copy = [...container.sceneRoot.children];
       for (const c of copy) {
         container.sceneRoot.removeChild(c);
@@ -351,6 +426,18 @@ export function createCanvasHostConfig(
         (instance as TextNode).updateStyle(
           (prevProps.style ?? {}) as TextStyle,
           (nextProps.style ?? {}) as TextStyle,
+        );
+      } else if (instance.type === "Image") {
+        (instance as ImageNode).updateImageProps(prevProps as ImageProps, nextProps as ImageProps);
+        const img = instance as ImageNode;
+        if (img.loadState === "idle" && img.sourceUri) {
+          const ck = frameRef.canvasKit;
+          if (ck) img.beginLoad(ck);
+        }
+      } else if (instance.type === "SvgPath") {
+        (instance as SvgPathNode).updateSvgPathProps(
+          prevProps as SvgPathProps,
+          nextProps as SvgPathProps,
         );
       } else {
         instance.updateStyle(prevProps.style ?? {}, nextProps.style ?? {});

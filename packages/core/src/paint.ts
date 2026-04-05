@@ -1,9 +1,13 @@
 import type { Canvas, CanvasKit, Paint } from "canvaskit-wasm";
 import { Edge } from "yoga-layout/load";
 import { buildParagraphFromSpans } from "./paragraph-build.ts";
+import { computeImageSrcDestRects } from "./image-rect.ts";
+import type { ImageNode } from "./image-node.ts";
+import type { SvgPathNode } from "./svg-path-node.ts";
 import type { TextNode } from "./text-node.ts";
 import { isDisplayNone } from "./layout.ts";
 import type { ViewNode } from "./view-node.ts";
+import { parseViewBox, viewBoxToAffine } from "./viewbox-transform.ts";
 
 /**
  * Full-frame paint: scale by DPR, clear, recurse from root (phase-1-design §2.4).
@@ -98,6 +102,99 @@ export function paintNode(
       } finally {
         p.delete();
       }
+    }
+    if (useLayer) skCanvas.restore();
+    skCanvas.restore();
+    return;
+  }
+
+  if (node.type === "Image") {
+    const im = node as ImageNode;
+    const sk = im.skImage;
+    if (sk && !skipBackground) {
+      const iw = sk.width();
+      const ih = sk.height();
+      const { src, dst } = computeImageSrcDestRects(im.imageResizeMode, iw, ih, w, h);
+      if (src.width > 0 && dst.width > 0) {
+        const srcRect = canvasKit.LTRBRect(
+          src.left,
+          src.top,
+          src.left + src.width,
+          src.top + src.height,
+        );
+        const dstRect = canvasKit.LTRBRect(
+          x + dst.left,
+          y + dst.top,
+          x + dst.left + dst.width,
+          y + dst.top + dst.height,
+        );
+        paint.setStyle(canvasKit.PaintStyle.Fill);
+        paint.setAntiAlias(true);
+        skCanvas.drawImageRect(sk, srcRect, dstRect, paint, true);
+      }
+    }
+    for (const c of node.children) {
+      paintNode(c, skCanvas, canvasKit, paint, x, y);
+    }
+    if (useLayer) skCanvas.restore();
+    skCanvas.restore();
+    return;
+  }
+
+  if (node.type === "SvgPath") {
+    const sn = node as SvgPathNode;
+    const path = sn.getOrCreatePath(canvasKit);
+    if (path && !skipBackground) {
+      const vb = parseViewBox(sn.viewBoxStr) ?? parseViewBox("0 0 24 24");
+      if (vb) {
+        const aff = viewBoxToAffine(vb, w, h);
+        if (aff.scale > 0) {
+          skCanvas.save();
+          skCanvas.translate(x, y);
+          skCanvas.translate(aff.translateX, aff.translateY);
+          skCanvas.scale(aff.scale, aff.scale);
+          const fill = sn.fill;
+          const strokeCol = sn.stroke ?? sn.color ?? "#000000";
+          const sw = sn.strokeWidth;
+          if (fill !== undefined && fill !== "none") {
+            paint.setStyle(canvasKit.PaintStyle.Fill);
+            paint.setColor(canvasKit.parseColorString(fill));
+            paint.setAntiAlias(true);
+            skCanvas.drawPath(path, paint);
+          }
+          if (strokeCol && sw > 0) {
+            paint.setStyle(canvasKit.PaintStyle.Stroke);
+            paint.setStrokeWidth(sw);
+            paint.setColor(canvasKit.parseColorString(strokeCol));
+            paint.setAntiAlias(true);
+            if (sn.strokeLinecap) {
+              const cap = sn.strokeLinecap;
+              paint.setStrokeCap(
+                cap === "round"
+                  ? canvasKit.StrokeCap.Round
+                  : cap === "square"
+                    ? canvasKit.StrokeCap.Square
+                    : canvasKit.StrokeCap.Butt,
+              );
+            }
+            if (sn.strokeLinejoin) {
+              const j = sn.strokeLinejoin;
+              paint.setStrokeJoin(
+                j === "round"
+                  ? canvasKit.StrokeJoin.Round
+                  : j === "bevel"
+                    ? canvasKit.StrokeJoin.Bevel
+                    : canvasKit.StrokeJoin.Miter,
+              );
+            }
+            skCanvas.drawPath(path, paint);
+          }
+          skCanvas.restore();
+        }
+      }
+    }
+    for (const c of node.children) {
+      paintNode(c, skCanvas, canvasKit, paint, x, y);
     }
     if (useLayer) skCanvas.restore();
     skCanvas.restore();
