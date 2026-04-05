@@ -6,6 +6,9 @@ export default defineConfig({
       tsgo: true,
     },
     exports: true,
+    deps: {
+      neverBundle: ["react", "react/jsx-runtime", "@react-canvas/react", "@react-canvas/core"],
+    },
   },
   lint: {
     options: {
@@ -14,4 +17,8 @@ export default defineConfig({
     },
   },
   fmt: {},
+  test: {
+    environment: "jsdom",
+    setupFiles: ["./tests/setup.ts"],
+  },
 });
