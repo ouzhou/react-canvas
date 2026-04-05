@@ -6,6 +6,8 @@ import {
   resetAndApplyStyles,
   splitStyle,
 } from "./yoga-map.ts";
+import type { CanvasKit } from "canvaskit-wasm";
+import type { SceneNode } from "./scene-node.ts";
 import type { ViewStyle } from "./view-style.ts";
 import { calculateLayoutRoot, syncLayoutFromYoga } from "./layout.ts";
 
@@ -22,10 +24,17 @@ export class ViewNode {
   readonly type: string;
   readonly yogaNode: YogaNode;
   parent: ViewNode | null = null;
-  readonly children: ViewNode[] = [];
+  readonly children: SceneNode[] = [];
   props: ViewVisualProps = {};
   layout = { left: 0, top: 0, width: 0, height: 0 };
   dirty = false;
+  /**
+   * When false, this node's Yoga node is not attached to the parent's Yoga tree (nested Text).
+   * Used by layout/sync without importing `TextNode` (avoids layout ↔ text-node cycle).
+   */
+  yogaMounted = true;
+  /** Avoid double-free when React has already torn down a subtree under this node. */
+  private destroyed = false;
 
   constructor(
     readonly yoga: Yoga,
@@ -64,13 +73,13 @@ export class ViewNode {
     resetAndApplyStyles(this.yogaNode, merged);
   }
 
-  appendChild(child: ViewNode): void {
+  appendChild(child: SceneNode): void {
     child.parent = this;
     this.children.push(child);
     this.yogaNode.insertChild(child.yogaNode, this.children.length - 1);
   }
 
-  removeChild(child: ViewNode): void {
+  removeChild(child: SceneNode): void {
     const i = this.children.indexOf(child);
     if (i === -1) return;
     this.yogaNode.removeChild(child.yogaNode);
@@ -78,7 +87,7 @@ export class ViewNode {
     child.parent = null;
   }
 
-  insertBefore(child: ViewNode, before: ViewNode): void {
+  insertBefore(child: SceneNode, before: SceneNode): void {
     if (child === before) return;
     if (child.parent && child.parent !== this) {
       child.parent.removeChild(child);
@@ -105,8 +114,8 @@ export class ViewNode {
     this.yogaNode.insertChild(child.yogaNode, insertAt);
   }
 
-  calculateLayout(width: number, height: number): void {
-    calculateLayoutRoot(this, width, height, this.yoga.DIRECTION_LTR);
+  calculateLayout(width: number, height: number, canvasKit?: CanvasKit | null): void {
+    calculateLayoutRoot(this, width, height, this.yoga.DIRECTION_LTR, canvasKit);
   }
 
   syncLayoutFromYogaTree(): void {
@@ -114,8 +123,13 @@ export class ViewNode {
   }
 
   destroy(): void {
-    this.yogaNode.freeRecursive();
+    if (this.destroyed) return;
+    this.destroyed = true;
+    for (const c of this.children) {
+      c.destroy();
+    }
     this.children.length = 0;
+    this.yogaNode.free();
     this.parent = null;
   }
 }

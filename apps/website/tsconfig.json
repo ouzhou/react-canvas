@@ -1,5 +1,8 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "**/*"],
+  "compilerOptions": {
+    "customConditions": ["development"]
+  },
+  "include": [".astro/types.d.ts", "**/*", "../../packages/react/src/jsx-augment.d.ts"],
   "exclude": ["dist"]
 }

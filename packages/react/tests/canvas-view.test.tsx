@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { View } from "../src/view.ts";
 import { Canvas } from "../src/canvas.tsx";
 import { CanvasProvider } from "../src/canvas-provider.tsx";
-import { resetLayoutPaintQueueForTests } from "../src/queue-layout-paint-frame.ts";
+import { resetLayoutPaintQueueForTests } from "@react-canvas/core";
 
 afterEach(() => {
   resetLayoutPaintQueueForTests();
@@ -38,7 +38,7 @@ describe("Canvas + View", () => {
     await act(async () => {
       root.render(
         <TestErrorBoundary>
-          <CanvasProvider>
+          <CanvasProvider runtimeOptions={{ loadDefaultParagraphFonts: false }}>
             {({ isReady, error }) => {
               if (error) return <div data-testid="e">{String(error.message)}</div>;
               if (!isReady) return <div data-testid="l">loading</div>;
@@ -75,7 +75,7 @@ describe("Canvas + View", () => {
     await act(async () => {
       root.render(
         <StrictMode>
-          <CanvasProvider>
+          <CanvasProvider runtimeOptions={{ loadDefaultParagraphFonts: false }}>
             {({ isReady, error }) => {
               if (error) return <div data-testid="e">{String(error.message)}</div>;
               if (!isReady) return <div data-testid="l">loading</div>;

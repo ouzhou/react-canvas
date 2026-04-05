@@ -208,48 +208,55 @@
 
 ## 阶段三：交互能力
 
-> 目标：用户可以点击 Canvas 上的元素，触发事件回调。
+> 目标：用户可以点击 Canvas 上的元素，触发事件回调。  
+> **规格书：** [superpowers/specs/2026-04-05-phase-3-interaction-design.md](./superpowers/specs/2026-04-05-phase-3-interaction-design.md)
+
+### 设计说明（v1 简化）
+
+- **对外主 API**：合成 **`onClick`**（习惯对齐 React DOM）；底层仍由 `pointer*` + 命中检测实现。与 RN 文档中的 `onPress` 对应关系在文档中说明即可，**不强制**单独暴露 `onPress`。
+- **命中宿主**：**`View` 与 `Text`** 均可参与命中（对齐 RN：可点击文字、链接）；首版 `Text` 命中可用**整段布局包围盒**（glyph 级命中可后议）。
+- **hover / 按压**：**不提供 CSS `:hover` 或选择器引擎**；由交互层维护 **`hovered` / `pressed` 等状态**（或 `pointerenter` / `leave` 等价能力），业务侧用 **`style` 对象**切换外观。`:hover` 改 class、Tailwind 工具类见阶段六 Step 16（可选）。
+- **Step 7**：`Pressable` 类封装 **可选、后做**；v1 可用「带状态的 `View`」手写按钮。
 
 ### Step 6 — 事件系统
 
 **包：** `@react-canvas/core` + `@react-canvas/react`
 
-| 任务         | 详情                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------ |
-| DOM 事件监听 | Canvas 元素上监听 `pointerdown` / `pointermove` / `pointerup` / `wheel`                                |
-| 坐标转换     | DOM 事件坐标 → Canvas 逻辑坐标（考虑 DPR、Canvas 偏移）                                                |
-| 命中检测     | 基于 Yoga 布局结果的包围盒检测，从叶子节点向上遍历                                                     |
-| 事件传播     | 捕获阶段（根 → 叶）+ 冒泡阶段（叶 → 根），对齐 RN                                                      |
-| 合成事件     | 包装为统一事件对象：`locationX/Y`（相对节点）、`pageX/Y`（相对 Canvas）、`target`、`stopPropagation()` |
-| 事件 props   | View 支持 `onPointerDown` / `onPointerUp` / `onPointerMove`                                            |
+| 任务         | 详情                                                                                                                          |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| DOM 事件监听 | Canvas 元素上监听 `pointerdown` / `pointermove` / `pointerup` / `pointercancel`（`wheel` 可与阶段四 ScrollView 一并收紧语义） |
+| 坐标转换     | DOM 事件坐标 → Canvas 逻辑坐标（考虑 DPR、Canvas 偏移）                                                                       |
+| 命中检测     | 基于 Yoga 布局结果的包围盒检测，从叶子节点向上遍历；**View、Text** 均可为命中目标                                             |
+| 事件传播     | 捕获阶段（根 → 叶）+ 冒泡阶段（叶 → 根），对齐 RN                                                                             |
+| 合成事件     | 包装为统一事件对象：`locationX/Y`（相对节点）、`pageX/Y`（相对 Canvas）、`target`、`stopPropagation()`                        |
+| 事件 props   | `View` / `Text`：`onPointerDown` / `onPointerUp` / `onPointerMove`；**`onClick`**（一次完整激活，含位移/时间阈值等简单判定）  |
 
 **验收标准：**
 
 ```tsx
 <View
   style={{ width: 100, height: 100, backgroundColor: "blue" }}
-  onPointerDown={(e) => console.log("点击", e.locationX, e.locationY)}
+  onClick={() => console.log("clicked")}
 />
 ```
 
-### Step 7 — Pressable 组件
+### Step 7 — 可选：Pressable 式封装
 
 **包：** `@react-canvas/react`
 
-| 任务             | 详情                                                                         |
-| ---------------- | ---------------------------------------------------------------------------- |
-| `Pressable` 封装 | 基于底层事件 API 封装 `onPress` / `onLongPress` / `onPressIn` / `onPressOut` |
-| `hitSlop`        | 扩展触摸区域                                                                 |
-| 按压状态         | `pressed` 状态驱动样式变化（如 `opacity: 0.7`）                              |
-| 长按识别         | 定时器判断长按（默认 500ms）                                                 |
+| 任务             | 详情                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| 封装组件（可选） | 基于底层事件封装 **`onClick`** / 长按 / `hitSlop`；**`style` 可为函数**，参数含 `pressed`（及可选 `hovered`） |
+| 按压与悬停       | 内部维护状态，便于一行写出「按下变灰、hover 变色」                                                            |
+| 说明             | v1 可不交付；用户可先用 Step 6 的状态 + 自写 `style`                                                          |
 
-**验收标准：**
+**验收标准（若实现）：**
 
 ```tsx
 <Pressable
-  onPress={() => alert("clicked")}
-  style={({ pressed }) => ({
-    backgroundColor: pressed ? "#ddd" : "#fff",
+  onClick={() => alert("clicked")}
+  style={({ pressed, hovered }) => ({
+    backgroundColor: pressed ? "#ddd" : hovered ? "#f0f0f0" : "#fff",
     padding: 10,
   })}
 >
@@ -409,15 +416,15 @@
 
 ## 里程碑与交付物
 
-| 里程碑                     | 阶段              | 标志性能力                                                            | 预估复杂度   |
-| -------------------------- | ----------------- | --------------------------------------------------------------------- | ------------ |
-| **M1 — "看到矩形"**        | 阶段一 Step 1-3   | Yoga + CanvasKit + Reconciler，Flexbox 布局的嵌套 View 通过 Skia 绘制 | 中高         |
-| **M2 — "看到文字"**        | 阶段二 Step 4-5   | Text 换行（Skia Paragraph）、嵌套样式、省略号                         | 高           |
-| **M3 — "点得到"**          | 阶段三 Step 6-7   | 事件命中、Pressable 交互                                              | 中           |
-| **M4 — "完整 UI"**         | 阶段四 Step 8-9   | Image + ScrollView                                                    | 中           |
-| **M5 — "高级绘制"**        | 阶段五 Step 10    | 阴影、渐变、clipPath、transform                                       | 中           |
-| **M6 — "生产就绪"**        | 阶段六 Step 11-15 | 动画、无障碍、FlatList、DevTools                                      | 高           |
-| **M6+ — Tailwind（可选）** | 阶段六 Step 16    | 构建期 `className` → `style`，**极低优先级**，不阻塞发布              | 低（可不做） |
+| 里程碑                     | 阶段              | 标志性能力                                                                          | 预估复杂度   |
+| -------------------------- | ----------------- | ----------------------------------------------------------------------------------- | ------------ |
+| **M1 — "看到矩形"**        | 阶段一 Step 1-3   | Yoga + CanvasKit + Reconciler，Flexbox 布局的嵌套 View 通过 Skia 绘制               | 中高         |
+| **M2 — "看到文字"**        | 阶段二 Step 4-5   | Text 换行（Skia Paragraph）、嵌套样式、省略号                                       | 高           |
+| **M3 — "点得到"**          | 阶段三 Step 6-7   | 指针命中、`onClick` + 低级 `onPointer*`；hover/pressed 状态驱动样式；Pressable 可选 | 中           |
+| **M4 — "完整 UI"**         | 阶段四 Step 8-9   | Image + ScrollView                                                                  | 中           |
+| **M5 — "高级绘制"**        | 阶段五 Step 10    | 阴影、渐变、clipPath、transform                                                     | 中           |
+| **M6 — "生产就绪"**        | 阶段六 Step 11-15 | 动画、无障碍、FlatList、DevTools                                                    | 高           |
+| **M6+ — Tailwind（可选）** | 阶段六 Step 16    | 构建期 `className` → `style`，**极低优先级**，不阻塞发布                            | 低（可不做） |
 
 ---
 
@@ -433,6 +440,7 @@
 | 嵌套 Text           | 合并为单个段落绘制                                                      | 调研 §五（RN）                 |
 | 文字测量 × Yoga     | Yoga measure 回调                                                       | 调研 §十一（Reconciler）       |
 | 命中检测            | 包围盒（Yoga 布局结果）                                                 | 调研 §六（RN + canvas-engine） |
+| 交互对外 API        | v1 以 **`onClick`** 为主；hover 用状态而非 CSS `:hover`                 | 阶段三设计说明                 |
 | 事件传播            | 捕获 + 冒泡两阶段                                                       | 调研 §六（RN）                 |
 | 帧调度              | rAF 帧合并 + React 18 batching                                          | 调研 §七（Konva）              |
 | DPR 处理            | 自动 scale，style 统一逻辑像素                                          | 调研 §十三                     |

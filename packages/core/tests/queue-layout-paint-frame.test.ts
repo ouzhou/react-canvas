@@ -1,12 +1,12 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from "vite-plus/test";
-import type { CanvasKit, Surface } from "@react-canvas/core";
+import type { CanvasKit, Surface } from "canvaskit-wasm";
 
-vi.mock("@react-canvas/core", async (importOriginal) => {
-  const mod = await importOriginal<typeof import("@react-canvas/core")>();
+vi.mock("../src/paint.ts", async (importOriginal) => {
+  const mod = await importOriginal<typeof import("../src/paint.ts")>();
   return { ...mod, paintScene: vi.fn() };
 });
 
-import { initYoga, paintScene, ViewNode } from "@react-canvas/core";
+import { initYoga, paintScene, ViewNode } from "../src/index.ts";
 import {
   queueLayoutPaintFrame,
   resetLayoutPaintQueueForTests,
@@ -43,8 +43,9 @@ describe("queueLayoutPaintFrame", () => {
         return 0;
       },
     } as unknown as Surface;
-    queueLayoutPaintFrame(surface, minimalCanvasKit(), root, 100, 80, 1);
-    expect(spy).toHaveBeenCalledWith(100, 80);
+    const ck = minimalCanvasKit();
+    queueLayoutPaintFrame(surface, ck, root, 100, 80, 1);
+    expect(spy).toHaveBeenCalledWith(100, 80, ck);
     expect(paintScene).toHaveBeenCalledTimes(1);
     spy.mockRestore();
   });
@@ -63,6 +64,21 @@ describe("queueLayoutPaintFrame", () => {
     expect(raf).toHaveBeenCalledTimes(1);
     pending!({});
     expect(paintScene).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels a pending frame when resetLayoutPaintQueueForTests runs before the callback", () => {
+    const root = new ViewNode(yoga, "View");
+    const raf = vi.fn((_fn: (c: unknown) => void) => 42);
+    const surface = { requestAnimationFrame: raf } as unknown as Surface;
+    const cancel = vi.fn();
+    vi.stubGlobal("cancelAnimationFrame", cancel);
+
+    queueLayoutPaintFrame(surface, minimalCanvasKit(), root, 10, 10, 1);
+    resetLayoutPaintQueueForTests();
+    expect(cancel).toHaveBeenCalledWith(42);
+    expect(paintScene).not.toHaveBeenCalled();
+
+    vi.unstubAllGlobals();
   });
 
   it("can queue again after the frame callback runs", () => {

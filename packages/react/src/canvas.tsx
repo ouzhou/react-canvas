@@ -1,4 +1,4 @@
-import { ViewNode } from "@react-canvas/core";
+import { resetLayoutPaintQueue, ViewNode } from "@react-canvas/core";
 import { Children, isValidElement, useLayoutEffect, useRef, type ReactNode } from "react";
 import Reconciler from "react-reconciler";
 import { useCanvasRuntime } from "./context.ts";
@@ -105,6 +105,7 @@ export function Canvas({ width, height, children }: CanvasProps) {
       reconcilerRef.current = null;
       rootRef.current = null;
       containerRef.current = null;
+      resetLayoutPaintQueue();
       surface.delete();
       frameRef.current.surface = null;
     };
@@ -115,7 +116,7 @@ export function Canvas({ width, height, children }: CanvasProps) {
     const root = rootRef.current;
     if (!reconciler || !root) return;
     reconciler.updateContainer(children, root as never, null, () => {});
-  }, [children]);
+  }, [children, width, height]);
 
   return <canvas ref={canvasRef} />;
 }

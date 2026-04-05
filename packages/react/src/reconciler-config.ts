@@ -1,18 +1,91 @@
 import {
   type CanvasKit,
+  isTextInstance,
+  queueLayoutPaintFrame,
+  type SceneNode,
   type Surface,
+  type TextInstance,
+  TextNode,
+  type TextStyle,
   ViewNode,
   type ViewStyle,
   type Yoga,
 } from "@react-canvas/core";
 import { createContext } from "react";
+import { Text } from "./text.ts";
 import { View } from "./view.ts";
-import { queueLayoutPaintFrame } from "./queue-layout-paint-frame.ts";
 
 /** Implicit Reconciler root: user content mounts under this Yoga node (phase-1-design §3). */
 export type SceneContainer = {
   sceneRoot: ViewNode;
 };
+
+type TextHostContext = { isInText: boolean };
+
+function asHostContext(ctx: object): TextHostContext {
+  return "isInText" in ctx && typeof (ctx as TextHostContext).isInText === "boolean"
+    ? (ctx as TextHostContext)
+    : { isInText: false };
+}
+
+function appendChildImpl(
+  parent: ViewNode | TextNode,
+  child: ViewNode | TextNode | TextInstance,
+): void {
+  if (isTextInstance(child)) {
+    if (!(parent instanceof TextNode)) {
+      throw new Error("[react-canvas] R-HOST-4: Raw text must be inside <Text>.");
+    }
+    parent.appendTextSlot(child);
+    return;
+  }
+  parent.appendChild(child as SceneNode);
+}
+
+function insertBeforeImpl(
+  parent: ViewNode | TextNode,
+  child: ViewNode | TextNode | TextInstance,
+  beforeChild: ViewNode | TextNode | TextInstance | null,
+): void {
+  if (isTextInstance(child)) {
+    if (!(parent instanceof TextNode)) {
+      throw new Error("[react-canvas] R-HOST-4: Raw text must be inside <Text>.");
+    }
+    if (beforeChild == null) {
+      parent.appendTextSlot(child);
+      return;
+    }
+    if (!isTextInstance(beforeChild)) {
+      throw new Error("[react-canvas] Text instance insertBefore: expected TextInstance before.");
+    }
+    parent.insertTextBefore(child, beforeChild);
+    return;
+  }
+  if (beforeChild == null) {
+    parent.appendChild(child as SceneNode);
+    return;
+  }
+  if (parent instanceof TextNode) {
+    parent.insertBefore(child as SceneNode, beforeChild as SceneNode | TextInstance);
+  } else {
+    parent.insertBefore(child as SceneNode, beforeChild as SceneNode);
+  }
+}
+
+function removeChildImpl(
+  parent: ViewNode | TextNode,
+  child: ViewNode | TextNode | TextInstance,
+): void {
+  if (isTextInstance(child)) {
+    if (!(parent instanceof TextNode)) {
+      throw new Error("[react-canvas] removeChild: TextInstance not under Text.");
+    }
+    parent.removeChild(child);
+    return;
+  }
+  parent.removeChild(child as SceneNode);
+  (child as ViewNode).destroy();
+}
 
 export type PaintFrameRef = {
   surface: Surface | null;
@@ -22,7 +95,7 @@ export type PaintFrameRef = {
   dpr: number;
 };
 
-const NO_CONTEXT = {};
+const ROOT_HOST_CONTEXT: TextHostContext = { isInText: false };
 
 let currentUpdatePriority = 0;
 
@@ -125,10 +198,15 @@ export function createCanvasHostConfig(
     cancelTimeout: (id: unknown) => clearTimeout(id as number),
     noTimeout: -1,
 
-    getPublicInstance: (instance: ViewNode) => instance,
+    getPublicInstance: (instance: ViewNode | TextInstance) => instance,
 
-    getRootHostContext: () => NO_CONTEXT,
-    getChildHostContext: (parentHostContext: object) => parentHostContext,
+    getRootHostContext: () => ROOT_HOST_CONTEXT,
+    getChildHostContext: (parentHostContext: object, type: string) => {
+      const parent = asHostContext(parentHostContext);
+      if (type === Text) return { isInText: true };
+      if (parent.isInText) return { isInText: true };
+      return { isInText: false };
+    },
 
     prepareForCommit: () => null,
     resetAfterCommit: (containerInfo: SceneContainer) => {
@@ -146,58 +224,78 @@ export function createCanvasHostConfig(
 
     createInstance: (
       type: string,
-      props: { style?: ViewStyle },
+      props: { style?: ViewStyle | TextStyle },
       _rootContainer: SceneContainer,
-      _hostContext: object,
+      hostContext: object,
     ) => {
-      if (type !== View) {
-        throw new Error(`[react-canvas] Unsupported host type "${String(type)}".`);
+      const ctx = asHostContext(hostContext);
+      if (type === View) {
+        if (ctx.isInText) {
+          throw new Error("[react-canvas] R-HOST-2: <View> cannot be inside <Text>.");
+        }
+        const node = new ViewNode(yoga, "View");
+        node.setStyle(props.style ?? {});
+        return node;
       }
-      const node = new ViewNode(yoga, "View");
-      node.setStyle(props.style ?? {});
-      return node;
+      if (type === Text) {
+        const node = new TextNode(yoga);
+        node.setStyle((props.style ?? {}) as TextStyle);
+        return node;
+      }
+      throw new Error(`[react-canvas] Unsupported host type "${String(type)}".`);
     },
 
-    createTextInstance: () => {
-      throw new Error(
-        "[react-canvas] R-HOST-5: Raw text is not allowed under <View>; use a future <Text> host when available.",
-      );
+    createTextInstance: (
+      text: string,
+      _root: SceneContainer,
+      hostContext: object,
+    ): TextInstance => {
+      if (!asHostContext(hostContext).isInText) {
+        throw new Error("[react-canvas] R-HOST-4: Raw text must be inside <Text>.");
+      }
+      return { nodeValue: text };
     },
 
     cloneMutableInstance: (instance: ViewNode) => instance,
-    cloneMutableTextInstance: (t: string) => t,
+    cloneMutableTextInstance: (instance: TextInstance) => instance,
 
-    appendInitialChild: (parent: ViewNode, child: ViewNode) => {
-      parent.appendChild(child);
+    appendInitialChild: (
+      parent: ViewNode | TextNode,
+      child: ViewNode | TextNode | TextInstance,
+    ) => {
+      appendChildImpl(parent, child);
     },
 
     finalizeInitialChildren: () => false,
 
     shouldSetTextContent: () => false,
 
-    appendChild: (parent: ViewNode, child: ViewNode) => {
-      parent.appendChild(child);
+    appendChild: (parent: ViewNode | TextNode, child: ViewNode | TextNode | TextInstance) => {
+      appendChildImpl(parent, child);
     },
 
     appendChildToContainer: (container: SceneContainer, child: ViewNode) => {
       container.sceneRoot.appendChild(child);
     },
 
-    insertBefore: (parent: ViewNode, child: ViewNode, beforeChild: ViewNode) => {
-      parent.insertBefore(child, beforeChild);
+    insertBefore: (
+      parent: ViewNode | TextNode,
+      child: ViewNode | TextNode | TextInstance,
+      beforeChild: ViewNode | TextNode | TextInstance | null,
+    ) => {
+      insertBeforeImpl(parent, child, beforeChild);
     },
 
     insertInContainerBefore: (
       container: SceneContainer,
-      child: ViewNode,
-      beforeChild: ViewNode,
+      child: ViewNode | TextNode,
+      beforeChild: ViewNode | TextNode | null,
     ) => {
-      container.sceneRoot.insertBefore(child, beforeChild);
+      insertBeforeImpl(container.sceneRoot, child, beforeChild);
     },
 
-    removeChild: (parent: ViewNode, child: ViewNode) => {
-      parent.removeChild(child);
-      child.destroy();
+    removeChild: (parent: ViewNode | TextNode, child: ViewNode | TextNode | TextInstance) => {
+      removeChildImpl(parent, child);
     },
 
     removeChildFromContainer: (container: SceneContainer, child: ViewNode) => {
@@ -213,15 +311,24 @@ export function createCanvasHostConfig(
       }
     },
 
-    commitTextUpdate: () => {},
+    commitTextUpdate: (textInstance: TextInstance, _oldText: string, newText: string) => {
+      textInstance.nodeValue = newText;
+    },
     commitMount: () => {},
     commitUpdate: (
       instance: ViewNode,
       _type: string,
-      prevProps: { style?: ViewStyle },
-      nextProps: { style?: ViewStyle },
+      prevProps: { style?: ViewStyle | TextStyle },
+      nextProps: { style?: ViewStyle | TextStyle },
     ) => {
-      instance.updateStyle(prevProps.style ?? {}, nextProps.style ?? {});
+      if (instance.type === "Text") {
+        (instance as TextNode).updateStyle(
+          (prevProps.style ?? {}) as TextStyle,
+          (nextProps.style ?? {}) as TextStyle,
+        );
+      } else {
+        instance.updateStyle(prevProps.style ?? {}, nextProps.style ?? {});
+      }
     },
 
     resetTextContent: () => {},

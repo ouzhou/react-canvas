@@ -1,14 +1,15 @@
 import type { CanvasKit, CanvasKitInitOptions } from "canvaskit-wasm";
+import * as canvaskitWasm from "canvaskit-wasm";
 
 import { canvasKitLocateFile } from "./canvaskit-locate.ts";
 
 type CanvasKitLoader = (opts?: CanvasKitInitOptions) => Promise<CanvasKit>;
 
+const loadCanvasKit = canvaskitWasm.default as unknown as CanvasKitLoader;
+
 /** Load CanvasKit with default `locateFile` (local wasm next to `canvaskit-wasm`). */
 export async function initCanvasKit(options?: CanvasKitInitOptions): Promise<CanvasKit> {
-  const m = await import("canvaskit-wasm");
-  const load = (m as unknown as { default: CanvasKitLoader }).default;
-  return load({
+  return loadCanvasKit({
     ...options,
     locateFile:
       options?.locateFile != null
