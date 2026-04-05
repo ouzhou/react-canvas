@@ -1,13 +1,13 @@
 import { Canvas, CanvasProvider, Text, View } from "@react-canvas/react";
 import { Button, CanvasThemeProvider, useCanvasToken } from "@react-canvas/ui";
+import type { CanvasToken } from "@react-canvas/ui";
 import { useState } from "react";
 
 /**
- * `<Canvas>` 的直接子节点必须是宿主 `<View>`（见 `canvas.tsx` assertSingleViewChild），
- * 不能把自定义组件当作 Canvas 的唯一子节点。
+ * `<Canvas>` 使用独立 reconciler 根，**不会**继承外层 `CanvasThemeProvider` 的 React Context，
+ * 须在 DOM 侧取 `token` 并传入画布内组件（如 `Button token={...}`）。
  */
-function UiCanvasContent() {
-  const token = useCanvasToken();
+function UiCanvasContent({ token }: { token: CanvasToken }) {
   const [clicks, setClicks] = useState(0);
   return (
     <View
@@ -21,15 +21,35 @@ function UiCanvasContent() {
         backgroundColor: token.colorBgLayout,
       }}
     >
-      <Button variant="primary" size="md" onClick={() => setClicks((c) => c + 1)}>
+      <Button token={token} variant="primary" size="md" onClick={() => setClicks((c) => c + 1)}>
         <Text style={{ fontSize: token.fontSizeMD, fontWeight: "600", color: "#ffffff" }}>
           Primary ({clicks})
         </Text>
       </Button>
-      <Button variant="ghost" size="sm">
+      <Button token={token} variant="ghost" size="sm">
         <Text style={{ fontSize: token.fontSizeSM, color: token.colorText }}>Ghost</Text>
       </Button>
     </View>
+  );
+}
+
+/** 在 `CanvasThemeProvider` 下取 token，再渲染 `<Canvas>`（画布与 DOM 非同一条 React 树）。 */
+function UiPlaygroundCanvas() {
+  const token = useCanvasToken();
+  return (
+    <CanvasProvider>
+      {({ isReady, error }) => {
+        if (error) return <p>Failed to load runtime: {error.message}</p>;
+        if (!isReady) return <p>Loading Yoga + CanvasKit…</p>;
+        return (
+          <Canvas width={400} height={140}>
+            <View style={{ flex: 1 }}>
+              <UiCanvasContent token={token} />
+            </View>
+          </Canvas>
+        );
+      }}
+    </CanvasProvider>
   );
 }
 
@@ -47,9 +67,10 @@ export function UiPlayground() {
       <p style={{ fontSize: "0.8125rem", color: "#94a3b8", margin: 0 }}>
         <code style={{ color: "#e2e8f0" }}>@react-canvas/ui</code>：{" "}
         <code style={{ color: "#e2e8f0" }}>CanvasThemeProvider</code>、token 与{" "}
-        <code style={{ color: "#e2e8f0" }}>Button</code>（内部为{" "}
+        <code style={{ color: "#e2e8f0" }}>Button</code>（画布内需传{" "}
+        <code style={{ color: "#e2e8f0" }}>token=</code>）。内部为{" "}
         <code style={{ color: "#e2e8f0" }}>View</code>+{" "}
-        <code style={{ color: "#e2e8f0" }}>Text</code>）。
+        <code style={{ color: "#e2e8f0" }}>Text</code>。
       </p>
       <div
         style={{
@@ -82,19 +103,7 @@ export function UiPlayground() {
         </label>
       </div>
       <CanvasThemeProvider theme={{ appearance }}>
-        <CanvasProvider>
-          {({ isReady, error }) => {
-            if (error) return <p>Failed to load runtime: {error.message}</p>;
-            if (!isReady) return <p>Loading Yoga + CanvasKit…</p>;
-            return (
-              <Canvas width={400} height={140}>
-                <View style={{ flex: 1 }}>
-                  <UiCanvasContent />
-                </View>
-              </Canvas>
-            );
-          }}
-        </CanvasProvider>
+        <UiPlaygroundCanvas />
       </CanvasThemeProvider>
     </div>
   );

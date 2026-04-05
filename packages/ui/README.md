@@ -26,24 +26,34 @@ pnpm add @react-canvas/ui
 
 ```tsx
 import { Canvas, CanvasProvider, View } from "@react-canvas/react";
-import { CanvasThemeProvider, Button } from "@react-canvas/ui";
+import { CanvasThemeProvider, Button, useCanvasToken } from "@react-canvas/ui";
+
+function Example() {
+  const token = useCanvasToken();
+  return (
+    <CanvasProvider>
+      {({ isReady, error }) =>
+        error || !isReady ? null : (
+          <Canvas width={800} height={600}>
+            <View style={{ flex: 1 }}>
+              <Button token={token} variant="primary" size="md" />
+            </View>
+          </Canvas>
+        )
+      }
+    </CanvasProvider>
+  );
+}
 
 <CanvasThemeProvider theme={{ appearance: "light", density: "default" }}>
-  <CanvasProvider>
-    {({ isReady, error }) =>
-      error || !isReady ? null : (
-        <Canvas width={800} height={600}>
-          <View style={{ flex: 1 }}>
-            <Button variant="primary" size="md" />
-          </View>
-        </Canvas>
-      )
-    }
-  </CanvasProvider>
+  <Example />
 </CanvasThemeProvider>;
 ```
 
-**说明：** `<Canvas>` **只能有一个直接子节点，且必须是宿主 `<View>`**（见 `@react-canvas/react`）；`Button`、带 `useCanvasToken` 的屏幕等放在该 `View` 之下。展示 **文字** 需 **`<Text>`**（阶段二能力）。
+**说明：**
+
+- `<Canvas>` **只能有一个直接子节点，且必须是宿主 `<View>`**（见 `@react-canvas/react`）；`Button` 等放在该 `View` 之下。展示 **文字** 需 **`<Text>`**（阶段二能力）。
+- `<Canvas>` 使用 **独立的 react-reconciler 根**，**不会**继承外层 `CanvasThemeProvider` 的 Context。在画布内使用 `Button` 时须传入 **`token={...}`**（在外层用 `useCanvasToken()` 或 `getCanvasToken(config)` 取得后再传入）。
 
 ## `mergeViewStyles`
 
