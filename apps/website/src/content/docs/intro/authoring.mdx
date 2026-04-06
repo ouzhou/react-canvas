@@ -7,11 +7,20 @@ description: Starlight MDX 与内置组件的默认用法。
 
 每页至少包含 `title` 与 `description`。
 
-## 组件
+## 内置组件：先查文档，再使用
+
+撰写或修改 MDX 时，若需要使用 **Starlight 内置组件**（如 `Card`、`CardGrid`、`Tabs`、`TabItem`、`Steps`、`Badge`、`LinkCard`、`Aside` 等），**必须先通过 Context7** 查询官方库 **`/withastro/starlight`**（或 [Starlight 文档](https://starlight.astro.build/) 对应页面），确认 **import 路径、props、推荐用法** 后再写入。
+
+- **禁止**：为已有内置能力 **自造** Astro/React 包装组件替代（除非规格明确要求定制，且与 Starlight 升级策略一致）。
+- **目的**：与上游 API 保持一致，减少维护成本与行为偏差。
+
+## 组件（常见用途速查）
+
+以下仅为方向性提示；具体 API 以 Context7 / 官方文档为准。
 
 - **Steps**：安装与分步操作。
-- **Tabs**：同一能力下 Core（TS）与 React 并列。
-- **Card**：提示、延伸阅读、跨页导航。
+- **Tabs** / **TabItem**：同一能力下 Core（TS）与 React 并列。
+- **Card** / **CardGrid**：提示、延伸阅读、跨页导航。
 
 ## 正文顺序
 
