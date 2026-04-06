@@ -9,6 +9,9 @@ hero:
     - text: 安装与开发
       link: /intro/installation/
       icon: right-arrow
+    - text: 快速上手
+      link: /intro/quickstart/
+      icon: rocket
     - text: Core 概览
       link: /core/
       icon: document
@@ -26,7 +29,11 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
 
 <CardGrid stagger>
   <Card title="入门" icon="rocket">
-    从 [安装与开发](/intro/installation/) 开始，并阅读 [路线图导读](/intro/roadmap/)。
+    [安装与开发](/intro/installation/) → [快速上手](/intro/quickstart/) →
+    [路线图导读](/intro/roadmap/)。
+  </Card>
+  <Card title="教程" icon="open-book">
+    [运行时与布局](/guides/runtime-layout/) 起，按侧栏 **教程** 顺序阅读（Core / React 同页 Tabs）。
   </Card>
   <Card title="Core（原生 TS）" icon="document">
     [Core 概览](/core/) 与仓库 `docs/core` 专文。
