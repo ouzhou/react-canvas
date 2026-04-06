@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { act, Component, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
-import { useCanvasRuntime } from "../src/context.ts";
+import { useCanvasRuntime } from "../../src/canvas/context.ts";
 
 class TestErrorBoundary extends Component<{ children: ReactNode }, { message: string | null }> {
   state: { message: string | null } = { message: null };

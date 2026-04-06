@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { act, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { Text } from "../src/text.ts";
-import { View } from "../src/view.ts";
-import { Canvas } from "../src/canvas.tsx";
-import { CanvasProvider } from "../src/canvas-provider.tsx";
+import { Text } from "../../src/hosts/text.ts";
+import { View } from "../../src/hosts/view.ts";
+import { Canvas } from "../../src/canvas/canvas.tsx";
+import { CanvasProvider } from "../../src/canvas/canvas-provider.tsx";
 import { resetLayoutPaintQueueForTests } from "@react-canvas/core";
 
 afterEach(() => {

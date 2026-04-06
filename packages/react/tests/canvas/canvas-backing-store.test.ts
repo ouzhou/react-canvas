@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vite-plus/test";
-import { canvasBackingStoreSize, gcd } from "../src/canvas-backing-store.ts";
+import { canvasBackingStoreSize, gcd } from "../../src/canvas/canvas-backing-store.ts";
 
 describe("gcd", () => {
   test("computes greatest common divisor", () => {

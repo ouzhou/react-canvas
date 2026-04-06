@@ -1,13 +1,13 @@
-export { Canvas } from "./canvas.tsx";
-export type { CanvasProps } from "./canvas.tsx";
-export { CanvasProvider } from "./canvas-provider.tsx";
-export type { CanvasProviderProps, CanvasProviderRenderState } from "./canvas-provider.tsx";
-export { CanvasRuntimeContext, useCanvasRuntime } from "./context.ts";
-export type { CanvasRuntimeValue } from "./context.ts";
-export { View, type ViewProps } from "./view.ts";
-export { Text, type TextProps } from "./text.ts";
-export { Image, type ImageProps } from "./image.ts";
-export { SvgPath, type SvgPathProps } from "./svg-path.ts";
+export { Canvas } from "./canvas/canvas.tsx";
+export type { CanvasProps } from "./canvas/canvas.tsx";
+export { CanvasProvider } from "./canvas/canvas-provider.tsx";
+export type { CanvasProviderProps, CanvasProviderRenderState } from "./canvas/canvas-provider.tsx";
+export { CanvasRuntimeContext, useCanvasRuntime } from "./canvas/context.ts";
+export type { CanvasRuntimeValue } from "./canvas/context.ts";
+export { View, type ViewProps } from "./hosts/view.ts";
+export { Text, type TextProps } from "./hosts/text.ts";
+export { Image, type ImageProps } from "./hosts/image.ts";
+export { SvgPath, type SvgPathProps } from "./hosts/svg-path.ts";
 export type {
   CanvasSyntheticPointerEvent,
   InitCanvasRuntimeOptions,

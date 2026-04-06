@@ -16,12 +16,12 @@ import {
   type Yoga,
 } from "@react-canvas/core";
 import { createContext } from "react";
-import type { ImageProps } from "./image.ts";
-import { Image } from "./image.ts";
-import type { SvgPathProps } from "./svg-path.ts";
-import { SvgPath } from "./svg-path.ts";
-import { Text } from "./text.ts";
-import { View } from "./view.ts";
+import type { ImageProps } from "../hosts/image.ts";
+import { Image } from "../hosts/image.ts";
+import type { SvgPathProps } from "../hosts/svg-path.ts";
+import { SvgPath } from "../hosts/svg-path.ts";
+import { Text } from "../hosts/text.ts";
+import { View } from "../hosts/view.ts";
 
 /** Implicit Reconciler root: user content mounts under this Yoga node (phase-1-design §3). */
 export type SceneContainer = {

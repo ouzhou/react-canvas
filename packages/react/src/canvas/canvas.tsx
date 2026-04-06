@@ -3,13 +3,13 @@ import { Children, isValidElement, useLayoutEffect, useRef, type ReactNode } fro
 import Reconciler from "react-reconciler";
 import { canvasBackingStoreSize } from "./canvas-backing-store.ts";
 import { useCanvasRuntime } from "./context.ts";
-import { attachCanvasPointerHandlers } from "./canvas-pointer.ts";
+import { attachCanvasPointerHandlers } from "../input/canvas-pointer.ts";
 import {
   createCanvasHostConfig,
   type PaintFrameRef,
   type SceneContainer,
-} from "./reconciler-config.ts";
-import { View } from "./view.ts";
+} from "../reconciler/host-config.ts";
+import { View } from "../hosts/view.ts";
 
 export type CanvasProps = {
   width: number;
