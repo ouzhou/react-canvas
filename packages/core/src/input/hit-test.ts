@@ -1,10 +1,24 @@
 import { isDisplayNone } from "../layout/layout.ts";
 import type { TextNode } from "../scene/text-node.ts";
 import type { ViewNode } from "../scene/view-node.ts";
+import { isLocalPointInsideTransformBounds } from "../style/transform.ts";
 
-function pointInRect(px: number, py: number, x: number, y: number, w: number, h: number): boolean {
+function pointInNodeBounds(
+  pageX: number,
+  pageY: number,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  transform: ViewNode["props"]["transform"],
+): boolean {
   if (w <= 0 || h <= 0) return false;
-  return px >= x && py >= y && px < x + w && py < y + h;
+  const lx = pageX - x;
+  const ly = pageY - y;
+  if (transform === undefined || transform.length === 0) {
+    return lx >= 0 && ly >= 0 && lx < w && ly < h;
+  }
+  return isLocalPointInsideTransformBounds(lx, ly, w, h, transform);
 }
 
 /**
@@ -33,7 +47,7 @@ function hitTestRecursive(
   const h = node.layout.height;
 
   if (node.type === "Text") {
-    if (!pointInRect(pageX, pageY, x, y, w, h)) return null;
+    if (!pointInNodeBounds(pageX, pageY, x, y, w, h, node.props.transform)) return null;
     return node as TextNode;
   }
 
@@ -43,7 +57,7 @@ function hitTestRecursive(
     if (hit) return hit;
   }
 
-  if (pointInRect(pageX, pageY, x, y, w, h)) return node;
+  if (pointInNodeBounds(pageX, pageY, x, y, w, h, node.props.transform)) return node;
   return null;
 }
 

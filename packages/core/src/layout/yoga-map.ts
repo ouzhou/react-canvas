@@ -164,6 +164,7 @@ const VISUAL_KEYS = new Set([
   "borderColor",
   "opacity",
   "cursor",
+  "transform",
 ]);
 
 export function splitStyle(style: ViewStyle): {

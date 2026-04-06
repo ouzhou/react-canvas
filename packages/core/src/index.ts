@@ -33,10 +33,19 @@ export {
 export { calculateLayoutRoot, isDisplayNone, syncLayoutFromYoga } from "./layout/layout.ts";
 export { paintNode, paintScene } from "./render/paint.ts";
 export type { DimensionValue, ViewStyle } from "./style/view-style.ts";
+export type { Affine2D, TransformOp, TransformStyle } from "./style/transform.ts";
+export {
+  applyViewTransform,
+  applyAffine2D,
+  invertAffine2D,
+  isLocalPointInsideTransformBounds,
+  localTransformMatrix,
+} from "./style/transform.ts";
 export type { TextOnlyProps, TextStyle } from "./style/text-style.ts";
 export { mergeTextProps, splitTextStyle } from "./style/text-style.ts";
 export {
   queueLayoutPaintFrame,
+  queuePaintOnlyFrame,
   resetLayoutPaintQueue,
   resetLayoutPaintQueueForTests,
 } from "./runtime/frame-queue.ts";
