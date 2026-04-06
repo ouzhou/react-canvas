@@ -15,6 +15,7 @@ import {
 } from "react";
 import Reconciler from "react-reconciler";
 import { canvasBackingStoreSize } from "./canvas-backing-store.ts";
+import { registerCanvasFrame, unregisterCanvasFrame } from "./canvas-frame-registry.ts";
 import { useCanvasRuntime } from "./context.ts";
 import { attachCanvasPointerHandlers } from "../input/canvas-pointer.ts";
 import {
@@ -82,6 +83,9 @@ export function Canvas({ width, height, children }: CanvasProps) {
   }>({ w: 0, h: 0, yoga: null, canvasKit: null });
 
   const destroySurface = (): void => {
+    const canvasEl = canvasRef.current;
+    if (canvasEl) unregisterCanvasFrame(canvasEl);
+
     const reconciler = reconcilerRef.current;
     const root = rootRef.current;
     const surface = frameRef.current.surface;
@@ -186,7 +190,7 @@ export function Canvas({ width, height, children }: CanvasProps) {
 
       layoutKeyRef.current = { w: lw, h: lh, yoga, canvasKit };
 
-      detachPointerRef.current = attachCanvasPointerHandlers(canvas, sceneRoot, lw, lh);
+      detachPointerRef.current = attachCanvasPointerHandlers(canvas, sceneRoot, lw, lh, canvasKit);
     }
 
     const reconciler = reconcilerRef.current;
@@ -195,8 +199,18 @@ export function Canvas({ width, height, children }: CanvasProps) {
 
     reconciler.updateContainer(children, root as never, null, () => {});
 
-    /** 与 host resetAfterCommit 内 queueLayoutPaintFrame 一致；若某次 commit 触发 resetAfterCommit 时 frameRef 尚无 surface 会漏排队，此处补一次（frame-queue 内会合并重复）。 */
+    /** 供 `useCanvasClickAway` 等与 DOM canvas 关联的命中逻辑（逻辑坐标与 sceneRoot 同步）。 */
     const fr = frameRef.current;
+    if (canvas && fr.surface && fr.sceneRoot && fr.canvasKit) {
+      registerCanvasFrame(canvas, {
+        sceneRoot: fr.sceneRoot,
+        canvasKit: fr.canvasKit,
+        logicalWidth: fr.width,
+        logicalHeight: fr.height,
+      });
+    }
+
+    /** 与 host resetAfterCommit 内 queueLayoutPaintFrame 一致；若某次 commit 触发 resetAfterCommit 时 frameRef 尚无 surface 会漏排队，此处补一次（frame-queue 内会合并重复）。 */
     const sr = fr.sceneRoot;
     if (fr.surface && fr.canvasKit && sr) {
       queueLayoutPaintFrame(fr.surface, fr.canvasKit, sr, fr.width, fr.height, fr.dpr);

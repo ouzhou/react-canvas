@@ -5,6 +5,8 @@ import {
   Button,
   CanvasThemeProvider,
   Checkbox,
+  Loading,
+  Select,
   Switch,
   useCanvasToken,
 } from "@react-canvas/ui";
@@ -28,6 +30,7 @@ function UiCanvasContent({ token }: { token: CanvasToken }) {
   const [checkA, setCheckA] = useState(false);
   const [checkB, setCheckB] = useState(false);
   const [indeterminateB, setIndeterminateB] = useState(true);
+  const [selectValue, setSelectValue] = useState("b");
   return (
     <View
       style={{
@@ -87,13 +90,39 @@ function UiCanvasContent({ token }: { token: CanvasToken }) {
           </Text>
         </Avatar>
       </View>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "flex-end",
+          flexWrap: "wrap",
+          gap: 20,
+          flexShrink: 0,
+        }}
+      >
+        <Loading token={token} size="sm" description="sm" />
+        <Loading token={token} size="md" description="md" />
+        <Loading token={token} size="lg" description="lg" />
+      </View>
+      <View style={{ flex: 1, alignSelf: "stretch", minHeight: 56 }}>
+        <Select
+          token={token}
+          value={selectValue}
+          onChange={setSelectValue}
+          placeholder="选择"
+          options={[
+            { value: "a", label: "选项 A" },
+            { value: "b", label: "选项 B" },
+            { value: "c", label: "选项 C" },
+          ]}
+        />
+      </View>
     </View>
   );
 }
 
 /** 紧凑模式画布略矮，与 token 内边距缩小一致。 */
 function canvasHeightForDensity(density: CanvasThemeConfig["density"]): number {
-  return density === "compact" ? 220 : 260;
+  return density === "compact" ? 360 : 400;
 }
 
 /** 捕获画布子树抛错，避免整岛白屏无信息 */

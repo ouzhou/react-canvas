@@ -4,6 +4,20 @@
  */
 export type DimensionValue = number | "auto" | `${number}%`;
 
+/** 与 `render/transform.ts` 中 `TransformStyle` 一致；此处单独声明避免 style ↔ render 循环依赖。 */
+export type TransformStyle = {
+  perspective?: number;
+  translateX?: number;
+  translateY?: number;
+  scale?: number;
+  scaleX?: number;
+  scaleY?: number;
+  rotate?: string;
+  rotateZ?: string;
+  skewX?: string;
+  skewY?: string;
+};
+
 export type ViewStyle = {
   width?: DimensionValue;
   height?: DimensionValue;
@@ -65,4 +79,11 @@ export type ViewStyle = {
   opacity?: number;
   /** 悬停时由指针管线同步到 `<canvas>` 的 `style.cursor`（如 `pointer`、`default`）。 */
   cursor?: string;
+  /** RN 风格变换；不驱动 Yoga，仅影响绘制与命中（见 Step 12-0）。 */
+  transform?: TransformStyle[];
+  /**
+   * 仅影响**同一父节点下**子节点的绘制与命中顺序（不改变 Yoga 子节点顺序）。
+   * 数值越大越在上层；未设置视为 `0`。
+   */
+  zIndex?: number;
 };

@@ -1,7 +1,7 @@
 {
   "name": "@react-canvas/ui",
   "version": "0.0.0",
-  "description": "Canvas UI components (Button, Icon, theme). Icon requires peer @lucide/icons.",
+  "description": "Canvas UI components (Button, Icon, Loading, theme). Icon/Loading require peer @lucide/icons.",
   "license": "MIT",
   "author": "ouzhou",
   "files": [

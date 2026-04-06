@@ -7,6 +7,7 @@ import {
 } from "@react-canvas/core";
 import { useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { CanvasRuntimeContext } from "./context.ts";
+import { OverlayZIndexProvider } from "./overlay-z-index.tsx";
 
 export type CanvasProviderRenderState = {
   isReady: boolean;
@@ -46,7 +47,7 @@ export function CanvasProvider({ children, runtimeOptions }: CanvasProviderProps
 
   return (
     <CanvasRuntimeContext.Provider value={value}>
-      {children({ isReady, error })}
+      <OverlayZIndexProvider>{children({ isReady, error })}</OverlayZIndexProvider>
     </CanvasRuntimeContext.Provider>
   );
 }

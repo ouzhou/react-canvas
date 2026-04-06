@@ -31,12 +31,15 @@ export {
   splitStyle,
 } from "./layout/yoga-map.ts";
 export { calculateLayoutRoot, isDisplayNone, syncLayoutFromYoga } from "./layout/layout.ts";
+export { getSortedChildrenForPaint } from "./render/children-z-order.ts";
 export { paintNode, paintScene } from "./render/paint.ts";
-export type { DimensionValue, ViewStyle } from "./style/view-style.ts";
+export type { DimensionValue, TransformStyle, ViewStyle } from "./style/view-style.ts";
+export { buildLocalTransformMatrix } from "./render/transform.ts";
 export type { TextOnlyProps, TextStyle } from "./style/text-style.ts";
 export { mergeTextProps, splitTextStyle } from "./style/text-style.ts";
 export {
   queueLayoutPaintFrame,
+  queuePaintOnlyFrame,
   resetLayoutPaintQueue,
   resetLayoutPaintQueueForTests,
 } from "./runtime/frame-queue.ts";

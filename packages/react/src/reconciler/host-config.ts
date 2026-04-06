@@ -16,13 +16,59 @@ import {
   type ViewStyle,
   type Yoga,
 } from "@react-canvas/core";
-import { createContext } from "react";
+import { createContext, type MutableRefObject } from "react";
 import type { ImageProps } from "../hosts/image.ts";
 import { Image } from "../hosts/image.ts";
 import type { SvgPathProps } from "../hosts/svg-path.ts";
 import { SvgPath } from "../hosts/svg-path.ts";
 import { Text } from "../hosts/text.ts";
 import { View } from "../hosts/view.ts";
+
+/** 由 `viewNodeRef` prop 写入，卸载时必须在 `destroy` 前清空。 */
+const viewNodeRefs = new WeakMap<ViewNode, MutableRefObject<ViewNode | null>>();
+
+function attachViewNodeRef(instance: ViewNode, props: Record<string, unknown>): void {
+  const r = props.viewNodeRef as MutableRefObject<ViewNode | null> | undefined;
+  if (!r) return;
+  viewNodeRefs.set(instance, r);
+  r.current = instance;
+}
+
+function updateViewNodeRef(
+  instance: ViewNode,
+  prevProps: Record<string, unknown>,
+  nextProps: Record<string, unknown>,
+): void {
+  if (instance.type !== "View") return;
+  const pr = prevProps.viewNodeRef as MutableRefObject<ViewNode | null> | undefined;
+  const nr = nextProps.viewNodeRef as MutableRefObject<ViewNode | null> | undefined;
+  if (pr === nr) return;
+  if (pr) {
+    pr.current = null;
+    viewNodeRefs.delete(instance);
+  }
+  if (nr) {
+    viewNodeRefs.set(instance, nr);
+    nr.current = instance;
+  }
+}
+
+function detachSubtreeViewNodeRefs(node: ViewNode): void {
+  const r = viewNodeRefs.get(node);
+  if (r) {
+    r.current = null;
+    viewNodeRefs.delete(node);
+  }
+  for (const c of node.children) {
+    if (!isTextInstance(c)) detachSubtreeViewNodeRefs(c as ViewNode);
+  }
+  if (node.type === "Text") {
+    const tn = node as TextNode;
+    for (const s of tn.slots) {
+      if (s.kind === "text") detachSubtreeViewNodeRefs(s.node);
+    }
+  }
+}
 
 /** Implicit Reconciler root: user content mounts under this Yoga node (phase-1-design §3). */
 export type SceneContainer = {
@@ -116,6 +162,7 @@ function removeChildImpl(
     return;
   }
   parent.removeChild(child as SceneNode);
+  detachSubtreeViewNodeRefs(child as ViewNode);
   (child as ViewNode).destroy();
 }
 
@@ -369,7 +416,16 @@ export function createCanvasHostConfig(
       appendChildImpl(parent, child);
     },
 
-    finalizeInitialChildren: () => false,
+    finalizeInitialChildren: (
+      instance: ViewNode | TextInstance,
+      type: string,
+      props: { style?: ViewStyle | TextStyle } & InteractionHandlers,
+    ) => {
+      if (type === View && (props as Record<string, unknown>).viewNodeRef) {
+        attachViewNodeRef(instance as ViewNode, props as Record<string, unknown>);
+      }
+      return false;
+    },
 
     shouldSetTextContent: () => false,
 
@@ -403,6 +459,7 @@ export function createCanvasHostConfig(
 
     removeChildFromContainer: (container: SceneContainer, child: ViewNode) => {
       container.sceneRoot.removeChild(child);
+      detachSubtreeViewNodeRefs(child);
       child.destroy();
     },
 
@@ -415,6 +472,7 @@ export function createCanvasHostConfig(
       const copy = [...container.sceneRoot.children];
       for (const c of copy) {
         container.sceneRoot.removeChild(c);
+        detachSubtreeViewNodeRefs(c);
         c.destroy();
       }
     },
@@ -447,6 +505,11 @@ export function createCanvasHostConfig(
           nextProps as SvgPathProps,
         );
       } else {
+        updateViewNodeRef(
+          instance,
+          prevProps as Record<string, unknown>,
+          nextProps as Record<string, unknown>,
+        );
         instance.updateStyle(prevProps.style ?? {}, nextProps.style ?? {});
       }
       instance.interactionHandlers = pickInteraction(nextProps as Record<string, unknown>);

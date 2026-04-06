@@ -1,5 +1,5 @@
-import type { InteractionHandlers, ViewStyle } from "@react-canvas/core";
-import type { ReactNode } from "react";
+import type { InteractionHandlers, ViewNode, ViewStyle } from "@react-canvas/core";
+import type { ReactNode, RefObject } from "react";
 
 /**
  * Host type string for the canvas `react-reconciler` (`createInstance`), same idea as
@@ -11,4 +11,6 @@ export const View = "View" as const;
 export type ViewProps = {
   style?: ViewStyle;
   children?: ReactNode;
+  /** 由 reconciler 写入对应场景 `ViewNode`，卸载时清空；供 `useCanvasClickAway` 等做命中边界。 */
+  viewNodeRef?: RefObject<ViewNode | null>;
 } & InteractionHandlers;

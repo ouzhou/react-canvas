@@ -8,6 +8,8 @@ import type { TextNode } from "../scene/text-node.ts";
 import { isDisplayNone } from "../layout/layout.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 import { parseViewBox, viewBoxToAffine } from "../geometry/viewbox.ts";
+import { getSortedChildrenForPaint } from "./children-z-order.ts";
+import { buildLocalTransformMatrix } from "./transform.ts";
 
 /**
  * Full-frame paint: scale by DPR, clear, recurse from root (phase-1-design §2.4).
@@ -23,28 +25,33 @@ export function paintScene(
   skCanvas.save();
   skCanvas.scale(dpr, dpr);
   skCanvas.clear(canvasKit.TRANSPARENT);
-  paintNode(root, skCanvas, canvasKit, paint, 0, 0);
+  paintNode(root, skCanvas, canvasKit, paint);
   skCanvas.restore();
 }
 
+/**
+ * 子树绘制：每层 `save` 后 `concat(translate(layout) * localTransform)`，在 **局部坐标**（0…width × 0…height）下绘制，
+ * 与 Yoga 布局盒一致；子节点递归时继续叠加，避免世界坐标与局部坐标混用。
+ */
 export function paintNode(
   node: ViewNode,
   skCanvas: Canvas,
   canvasKit: CanvasKit,
   paint: Paint,
-  offsetX: number,
-  offsetY: number,
 ): void {
   if (isDisplayNone(node)) return;
 
-  const x = offsetX + node.layout.left;
-  const y = offsetY + node.layout.top;
+  const lx = node.layout.left;
+  const ly = node.layout.top;
   const w = node.layout.width;
   const h = node.layout.height;
-
   const skipBackground = w <= 0 || h <= 0;
 
+  const localT = buildLocalTransformMatrix(canvasKit, w, h, node.props.transform);
+  const incremental = canvasKit.Matrix.multiply(canvasKit.Matrix.translated(lx, ly), localT);
+
   skCanvas.save();
+  skCanvas.concat(incremental);
 
   const op = node.props.opacity;
   const useLayer = op !== undefined && op < 1;
@@ -56,11 +63,15 @@ export function paintNode(
     layerPaint.delete();
   }
 
-  if (!skipBackground && node.props.backgroundColor) {
-    paint.setColor(canvasKit.parseColorString(node.props.backgroundColor));
+  const bg = node.props.backgroundColor;
+  /** `"transparent"` is truthy in JS but CanvasKit may paint it as opaque black; skip fill. */
+  const skipTransparentBg = typeof bg === "string" && bg.trim().toLowerCase() === "transparent";
+
+  if (!skipBackground && bg && !skipTransparentBg) {
+    paint.setColor(canvasKit.parseColorString(bg));
     paint.setStyle(canvasKit.PaintStyle.Fill);
     paint.setAntiAlias(true);
-    const rect = canvasKit.LTRBRect(x, y, x + w, y + h);
+    const rect = canvasKit.LTRBRect(0, 0, w, h);
     const r = node.props.borderRadius ?? 0;
     if (r > 0) {
       const rrect = canvasKit.RRectXY(rect, r, r);
@@ -76,7 +87,7 @@ export function paintNode(
     paint.setStrokeWidth(bw);
     paint.setColor(canvasKit.parseColorString(node.props.borderColor));
     paint.setAntiAlias(true);
-    const rect = canvasKit.LTRBRect(x, y, x + w, y + h);
+    const rect = canvasKit.LTRBRect(0, 0, w, h);
     const r = node.props.borderRadius ?? 0;
     if (r > 0) {
       const rrect = canvasKit.RRectXY(rect, r, r);
@@ -98,7 +109,7 @@ export function paintNode(
       const p = buildParagraphFromSpans(canvasKit, tn.textProps, spans);
       try {
         p.layout(innerW);
-        skCanvas.drawParagraph(p, x + padL, y + padT);
+        skCanvas.drawParagraph(p, padL, padT);
       } finally {
         p.delete();
       }
@@ -123,18 +134,18 @@ export function paintNode(
           src.top + src.height,
         );
         const dstRect = canvasKit.LTRBRect(
-          x + dst.left,
-          y + dst.top,
-          x + dst.left + dst.width,
-          y + dst.top + dst.height,
+          dst.left,
+          dst.top,
+          dst.left + dst.width,
+          dst.top + dst.height,
         );
         paint.setStyle(canvasKit.PaintStyle.Fill);
         paint.setAntiAlias(true);
         skCanvas.drawImageRect(sk, srcRect, dstRect, paint, true);
       }
     }
-    for (const c of node.children) {
-      paintNode(c, skCanvas, canvasKit, paint, x, y);
+    for (const c of getSortedChildrenForPaint(node)) {
+      paintNode(c, skCanvas, canvasKit, paint);
     }
     if (useLayer) skCanvas.restore();
     skCanvas.restore();
@@ -150,7 +161,6 @@ export function paintNode(
         const aff = viewBoxToAffine(vb, w, h);
         if (aff.scale > 0) {
           skCanvas.save();
-          skCanvas.translate(x, y);
           skCanvas.translate(aff.translateX, aff.translateY);
           skCanvas.scale(aff.scale, aff.scale);
           const fill = sn.fill;
@@ -193,16 +203,16 @@ export function paintNode(
         }
       }
     }
-    for (const c of node.children) {
-      paintNode(c, skCanvas, canvasKit, paint, x, y);
+    for (const c of getSortedChildrenForPaint(node)) {
+      paintNode(c, skCanvas, canvasKit, paint);
     }
     if (useLayer) skCanvas.restore();
     skCanvas.restore();
     return;
   }
 
-  for (const c of node.children) {
-    paintNode(c, skCanvas, canvasKit, paint, x, y);
+  for (const c of getSortedChildrenForPaint(node)) {
+    paintNode(c, skCanvas, canvasKit, paint);
   }
 
   if (useLayer) skCanvas.restore();

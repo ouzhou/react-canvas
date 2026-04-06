@@ -16,7 +16,7 @@
 
 ## `@react-canvas/core` — [docs/core/](./core/README.md)
 
-场景树、Yoga、Skia、测量与排版相关说明。
+场景树、Yoga、Skia、测量与排版相关说明。叠放与 `zIndex` 见 [core/z-index.md](./core/z-index.md)。
 
 ---
 

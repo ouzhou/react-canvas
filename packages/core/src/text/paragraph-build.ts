@@ -36,6 +36,7 @@ export function hasParagraphFontsRegistered(): boolean {
 
 /** Clears embedded paragraph fonts (tests only). */
 export function resetParagraphFontStateForTests(): void {
+  disposeEmbeddedFontCollectionCache();
   paragraphFontBuffers = null;
   paragraphEmbeddedRegisterNames = [];
   paragraphFontFamilies = ["sans-serif"];
@@ -51,6 +52,7 @@ export function setParagraphFontForTests(
 ): void {
   const buffers = Array.isArray(buffer) ? buffer : [buffer];
   if (buffers.length === 0) {
+    disposeEmbeddedFontCollectionCache();
     paragraphFontBuffers = null;
     paragraphEmbeddedRegisterNames = [];
     return;
@@ -60,9 +62,26 @@ export function setParagraphFontForTests(
       `[react-canvas] setParagraphFontForTests: families.length (${families.length}) must match buffer count (${buffers.length}).`,
     );
   }
+  disposeEmbeddedFontCollectionCache();
   paragraphFontBuffers = buffers;
   paragraphEmbeddedRegisterNames = [...families];
   paragraphFontFamilies = [...families];
+}
+
+/**
+ * Re-registering large embedded fonts on every Paragraph build exhausts or corrupts CanvasKit WASM
+ * memory; keep one FontCollection per CanvasKit instance for the current embedded font bytes.
+ */
+let embeddedFontCollectionCache: {
+  ck: CanvasKit;
+  fc: FontCollection;
+  dispose: () => void;
+} | null = null;
+
+function disposeEmbeddedFontCollectionCache(): void {
+  if (!embeddedFontCollectionCache) return;
+  embeddedFontCollectionCache.dispose();
+  embeddedFontCollectionCache = null;
 }
 
 function createEmbeddedFontCollection(ck: CanvasKit): { fc: FontCollection; dispose: () => void } {
@@ -71,7 +90,7 @@ function createEmbeddedFontCollection(ck: CanvasKit): { fc: FontCollection; disp
   }
   const tfp = ck.TypefaceFontProvider.Make();
   for (let i = 0; i < paragraphFontBuffers.length; i++) {
-    tfp.registerFont(paragraphFontBuffers[i], paragraphEmbeddedRegisterNames[i]!);
+    tfp.registerFont(paragraphFontBuffers[i]!, paragraphEmbeddedRegisterNames[i]!);
   }
   const fc = ck.FontCollection.Make();
   fc.setDefaultFontManager(tfp);
@@ -83,6 +102,18 @@ function createEmbeddedFontCollection(ck: CanvasKit): { fc: FontCollection; disp
       tfp.delete();
     },
   };
+}
+
+function getOrCreateEmbeddedFontCollection(ck: CanvasKit): FontCollection {
+  if (embeddedFontCollectionCache && embeddedFontCollectionCache.ck !== ck) {
+    disposeEmbeddedFontCollectionCache();
+  }
+  if (embeddedFontCollectionCache) {
+    return embeddedFontCollectionCache.fc;
+  }
+  const { fc, dispose } = createEmbeddedFontCollection(ck);
+  embeddedFontCollectionCache = { ck, fc, dispose };
+  return fc;
 }
 
 /**
@@ -193,16 +224,12 @@ function paragraphShellForMultiSpans(
 export function buildParagraph(ck: CanvasKit, body: string, text: TextOnlyProps): Paragraph {
   const style = toParagraphStyle(ck, text);
   if (paragraphFontBuffers && paragraphFontBuffers.length > 0) {
-    const { fc, dispose } = createEmbeddedFontCollection(ck);
-    try {
-      const pb = ck.ParagraphBuilder.MakeFromFontCollection(style, fc);
-      pb.addText(body);
-      const p = pb.build();
-      pb.delete();
-      return p;
-    } finally {
-      dispose();
-    }
+    const fc = getOrCreateEmbeddedFontCollection(ck);
+    const pb = ck.ParagraphBuilder.MakeFromFontCollection(style, fc);
+    pb.addText(body);
+    const p = pb.build();
+    pb.delete();
+    return p;
   }
   const fontSrc = ck.TypefaceFontProvider.Make();
   const pb = ck.ParagraphBuilder.MakeFromFontProvider(style, fontSrc);
@@ -224,21 +251,17 @@ export function buildParagraphFromSpans(
   }
   const shell = paragraphShellForMultiSpans(ck, outer, spans[0].style);
   if (paragraphFontBuffers && paragraphFontBuffers.length > 0) {
-    const { fc, dispose } = createEmbeddedFontCollection(ck);
-    try {
-      const pb = ck.ParagraphBuilder.MakeFromFontCollection(shell, fc);
-      pb.addText(spans[0].text);
-      for (let i = 1; i < spans.length; i++) {
-        pb.pushStyle(toSkTextStyle(ck, spans[i].style));
-        pb.addText(spans[i].text);
-        pb.pop();
-      }
-      const p = pb.build();
-      pb.delete();
-      return p;
-    } finally {
-      dispose();
+    const fc = getOrCreateEmbeddedFontCollection(ck);
+    const pb = ck.ParagraphBuilder.MakeFromFontCollection(shell, fc);
+    pb.addText(spans[0].text);
+    for (let i = 1; i < spans.length; i++) {
+      pb.pushStyle(toSkTextStyle(ck, spans[i].style));
+      pb.addText(spans[i].text);
+      pb.pop();
     }
+    const p = pb.build();
+    pb.delete();
+    return p;
   }
   const fontSrc = ck.TypefaceFontProvider.Make();
   const pb = ck.ParagraphBuilder.MakeFromFontProvider(shell, fontSrc);

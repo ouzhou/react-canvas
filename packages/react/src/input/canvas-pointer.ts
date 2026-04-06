@@ -5,6 +5,7 @@ import {
   dispatchPointerEnterLeave,
   hitTest,
   shouldEmitClick,
+  type CanvasKit,
   type PointerDownSnapshot,
   type ViewNode,
 } from "@react-canvas/core";
@@ -59,6 +60,7 @@ export function attachCanvasPointerHandlers(
   sceneRoot: ViewNode,
   logicalWidth: number,
   logicalHeight: number,
+  canvasKit: CanvasKit,
 ): () => void {
   const down = new Map<number, PointerDownSnapshot>();
   /** Deepest hit under the mouse for hover (mouse / pen only). */
@@ -70,7 +72,7 @@ export function attachCanvasPointerHandlers(
 
   const onPointerDown = (ev: PointerEvent) => {
     const { x: pageX, y: pageY } = route(ev);
-    const hit = hitTest(sceneRoot, pageX, pageY);
+    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
     if (!hit) return;
     down.set(ev.pointerId, { pageX, pageY, target: hit });
     const path = buildPathToRoot(hit, sceneRoot);
@@ -107,7 +109,7 @@ export function attachCanvasPointerHandlers(
     const { x: pageX, y: pageY } = route(ev);
     lastPage = { x: pageX, y: pageY };
 
-    const hit = hitTest(sceneRoot, pageX, pageY);
+    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
     if (hit) {
       const path = buildPathToRoot(hit, sceneRoot);
       dispatchBubble(path, sceneRoot, "pointermove", pageX, pageY, ev.pointerId, ev.timeStamp);
@@ -151,7 +153,7 @@ export function attachCanvasPointerHandlers(
     const kind: "pointerup" | "pointercancel" =
       ev.type === "pointercancel" ? "pointercancel" : "pointerup";
 
-    const hit = hitTest(sceneRoot, pageX, pageY);
+    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
     const pathForEnd = hit
       ? buildPathToRoot(hit, sceneRoot)
       : snap
@@ -162,7 +164,7 @@ export function attachCanvasPointerHandlers(
     }
 
     if (kind === "pointercancel" || !snap) return;
-    if (shouldEmitClick(snap, pageX, pageY, sceneRoot)) {
+    if (shouldEmitClick(snap, pageX, pageY, sceneRoot, canvasKit)) {
       const pathClick = buildPathToRoot(snap.target, sceneRoot);
       dispatchBubble(pathClick, sceneRoot, "click", pageX, pageY, ev.pointerId, ev.timeStamp);
     }

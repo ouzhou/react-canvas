@@ -9,7 +9,7 @@ import {
 import type { CanvasKit } from "canvaskit-wasm";
 import type { SceneNode } from "./scene-node.ts";
 import type { InteractionHandlers } from "../input/types.ts";
-import type { ViewStyle } from "../style/view-style.ts";
+import type { TransformStyle, ViewStyle } from "../style/view-style.ts";
 import { calculateLayoutRoot, syncLayoutFromYoga } from "../layout/layout.ts";
 
 export type ViewVisualProps = {
@@ -21,6 +21,9 @@ export type ViewVisualProps = {
   /** 见 `ViewStyle.cursor`；由指针管线同步到画布 DOM `cursor`。 */
   cursor?: string;
   display?: "flex" | "none";
+  transform?: TransformStyle[];
+  /** 见 `ViewStyle.zIndex`；由 paint / hit-test 读取。 */
+  zIndex?: number;
 };
 
 export class ViewNode {

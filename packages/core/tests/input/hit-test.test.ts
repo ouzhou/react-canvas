@@ -1,13 +1,18 @@
 import { describe, it, expect, beforeAll } from "vite-plus/test";
-import { hitTest, buildPathToRoot } from "../../src/input/hit-test.ts";
+import { hitTest, buildPathToRoot } from "../../src/index.ts";
+import type { CanvasKit } from "canvaskit-wasm";
+import { createMatrixMockCanvasKit } from "../helpers/matrix-mock-canvas-kit.ts";
 import { initYoga } from "../../src/layout/yoga.ts";
 import { TextNode } from "../../src/scene/text-node.ts";
 import { ViewNode } from "../../src/scene/view-node.ts";
 
 describe("hitTest", () => {
   let yoga: Awaited<ReturnType<typeof initYoga>>;
+  let canvasKit: CanvasKit;
+
   beforeAll(async () => {
     yoga = await initYoga();
+    canvasKit = createMatrixMockCanvasKit();
   });
 
   it("returns the deepest node containing the point", () => {
@@ -16,8 +21,8 @@ describe("hitTest", () => {
     const child = new ViewNode(yoga, "View");
     child.layout = { left: 10, top: 10, width: 80, height: 80 };
     root.appendChild(child);
-    expect(hitTest(root, 50, 50)).toBe(child);
-    expect(hitTest(root, 5, 5)).toBe(root);
+    expect(hitTest(root, 50, 50, canvasKit)).toBe(child);
+    expect(hitTest(root, 5, 5, canvasKit)).toBe(root);
   });
 
   it("prefers last sibling (top paint order) when overlapping", () => {
@@ -29,7 +34,20 @@ describe("hitTest", () => {
     b.layout = { left: 0, top: 0, width: 50, height: 50 };
     root.appendChild(a);
     root.appendChild(b);
-    expect(hitTest(root, 10, 10)).toBe(b);
+    expect(hitTest(root, 10, 10, canvasKit)).toBe(b);
+  });
+
+  it("prefers higher zIndex over later sibling when overlapping", () => {
+    const root = new ViewNode(yoga, "View");
+    root.layout = { left: 0, top: 0, width: 100, height: 100 };
+    const a = new ViewNode(yoga, "View");
+    a.setStyle({ zIndex: 10 });
+    a.layout = { left: 0, top: 0, width: 50, height: 50 };
+    const b = new ViewNode(yoga, "View");
+    b.layout = { left: 0, top: 0, width: 50, height: 50 };
+    root.appendChild(a);
+    root.appendChild(b);
+    expect(hitTest(root, 10, 10, canvasKit)).toBe(a);
   });
 
   it("buildPathToRoot returns root-to-target chain", () => {
@@ -49,7 +67,22 @@ describe("hitTest", () => {
     const inner = new TextNode(yoga);
     root.appendChild(outer);
     outer.appendChild(inner);
-    expect(hitTest(root, 50, 30)).toBe(outer);
-    expect(hitTest(root, 100, 25)).toBe(outer);
+    expect(hitTest(root, 50, 30, canvasKit)).toBe(outer);
+    expect(hitTest(root, 100, 25, canvasKit)).toBe(outer);
+  });
+
+  it("respects translate transform for hit target", () => {
+    const root = new ViewNode(yoga, "View");
+    root.setStyle({ width: "100%", height: "100%" });
+    const box = new ViewNode(yoga, "View");
+    box.setStyle({
+      width: 40,
+      height: 40,
+      transform: [{ translateX: 50 }, { translateY: 30 }],
+    });
+    root.appendChild(box);
+    root.calculateLayout(200, 200, canvasKit);
+    expect(hitTest(root, 10, 10, canvasKit)).toBe(root);
+    expect(hitTest(root, 55, 35, canvasKit)).toBe(box);
   });
 });
