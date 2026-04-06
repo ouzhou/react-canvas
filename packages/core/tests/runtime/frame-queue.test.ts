@@ -81,6 +81,33 @@ describe("queueLayoutPaintFrame", () => {
     vi.unstubAllGlobals();
   });
 
+  it("allows two different surfaces to queue independently (no global coalescing)", () => {
+    const rootA = new ViewNode(yoga, "View");
+    const rootB = new ViewNode(yoga, "View");
+    rootA.setStyle({ width: 10, height: 10 });
+    rootB.setStyle({ width: 10, height: 10 });
+    let pendingA: ((c: unknown) => void) | null = null;
+    let pendingB: ((c: unknown) => void) | null = null;
+    const rafA = vi.fn((fn: (c: unknown) => void) => {
+      pendingA = fn;
+      return 1;
+    });
+    const rafB = vi.fn((fn: (c: unknown) => void) => {
+      pendingB = fn;
+      return 2;
+    });
+    const surfaceA = { requestAnimationFrame: rafA } as unknown as Surface;
+    const surfaceB = { requestAnimationFrame: rafB } as unknown as Surface;
+    const ck = minimalCanvasKit();
+    queueLayoutPaintFrame(surfaceA, ck, rootA, 10, 10, 1);
+    queueLayoutPaintFrame(surfaceB, ck, rootB, 20, 20, 1);
+    expect(rafA).toHaveBeenCalledTimes(1);
+    expect(rafB).toHaveBeenCalledTimes(1);
+    pendingA!({});
+    pendingB!({});
+    expect(paintScene).toHaveBeenCalledTimes(2);
+  });
+
   it("can queue again after the frame callback runs", () => {
     const root = new ViewNode(yoga, "View");
     const raf = vi.fn((fn: (c: unknown) => void) => {

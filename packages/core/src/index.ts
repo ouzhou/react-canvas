@@ -53,6 +53,7 @@ export { peekCachedImage, putCachedImage, clearImageCacheForTests } from "./imag
 export { decodeImageFromEncoded, loadImageFromUri } from "./image/image-decode.ts";
 export {
   registerPaintFrameRequester,
+  unregisterPaintFrameRequester,
   requestRedrawFromImage,
 } from "./render/paint-frame-requester.ts";
 export { ImageNode, type ImageNodePropPayload, type ImageSource } from "./scene/image-node.ts";

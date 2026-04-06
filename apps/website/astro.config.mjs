@@ -85,6 +85,8 @@ export default defineConfig({
             { label: "@react-canvas/ui", slug: "playground/ui" },
             { label: "Pointer", slug: "playground/pointer" },
             { label: "Image & SVG", slug: "playground/image-svg" },
+            { label: "Icon", slug: "playground/icon" },
+            { label: "Multi-canvas", slug: "playground/multi-canvas" },
           ],
         },
         {

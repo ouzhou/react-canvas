@@ -5,6 +5,7 @@ import {
   isTextInstance,
   queueLayoutPaintFrame,
   registerPaintFrameRequester,
+  unregisterPaintFrameRequester,
   type SceneNode,
   type Surface,
   SvgPathNode,
@@ -146,6 +147,8 @@ export function createCanvasHostConfig(
   frameRef: PaintFrameRef,
 ): Record<string, unknown> {
   let paintRequesterRegistered = false;
+  /** Stable ref for {@link unregisterPaintFrameRequester} on clearContainer / unmount. */
+  let paintFrameRequestFn: (() => void) | null = null;
   const pendingImageLoads: ImageNode[] = [];
 
   return {
@@ -255,7 +258,7 @@ export function createCanvasHostConfig(
       const r = frameRef;
       if (!r.surface || !r.canvasKit) return;
       if (!paintRequesterRegistered) {
-        registerPaintFrameRequester(() => {
+        paintFrameRequestFn = () => {
           if (!frameRef.surface || !frameRef.canvasKit || !frameRef.sceneRoot) return;
           queueLayoutPaintFrame(
             frameRef.surface,
@@ -265,7 +268,8 @@ export function createCanvasHostConfig(
             frameRef.height,
             frameRef.dpr,
           );
-        });
+        };
+        registerPaintFrameRequester(paintFrameRequestFn);
         paintRequesterRegistered = true;
       }
       for (const n of pendingImageLoads) {
@@ -403,7 +407,10 @@ export function createCanvasHostConfig(
     },
 
     clearContainer: (container: SceneContainer) => {
-      registerPaintFrameRequester(null);
+      if (paintFrameRequestFn) {
+        unregisterPaintFrameRequester(paintFrameRequestFn);
+        paintFrameRequestFn = null;
+      }
       paintRequesterRegistered = false;
       const copy = [...container.sceneRoot.children];
       for (const c of copy) {

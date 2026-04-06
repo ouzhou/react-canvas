@@ -1,0 +1,25 @@
+---
+description: 文档站（Starlight）页面与 Playground 的写法：内置组件、Tailwind、Context7
+globs: apps/website/**/*
+alwaysApply: false
+---
+
+# 文档站 `apps/website` 撰写规范
+
+## Starlight 内置组件
+
+- 在 **MDX**（`src/content/docs/**/*.mdx`）中优先使用 `@astrojs/starlight/components`：`Card`、`Aside`、`Tabs` / `TabItem`、`Steps`、`Badge`、`LinkCard`、`CardGrid` 等。
+- **新增或修改**内置组件用法前，用 **Context7** 查库 **`/withastro/starlight`**，核对 import 路径、props 与示例，避免与上游 API 漂移。
+- 与仓库 `intro/authoring.mdx` 一致：**不要**为已有内置能力自造等价 Astro/React 包装，除非规格明确要求且可维护。
+
+## Playground 与 React 岛
+
+- 交互式画布逻辑放在 `src/components/*.tsx`（`client:load`），**画布内**仍使用 `@react-canvas/react` 的 `View` / `Text` / `style`（画布布局 API）。
+- **DOM 外壳**（容器、表单、排版）优先用 **Tailwind** 工具类（`className`），避免在 TSX 里大量 `style={{ ... }}` 写死像素与颜色；站点已启用 `@tailwindcss/vite` 与 `global.css`。
+- 文档内 React 岛的**文字与边框**应随亮/暗主题可读：优先使用 Starlight 变量（如 `text-[var(--sl-color-text)]`、`text-[var(--sl-color-gray-3)]`、`border-[var(--sl-color-hairline)]`），勿使用面向深色底的固定 `text-slate-200` / `text-slate-400` 等。
+- 包裹 `<Canvas>` 输出的 DOM 时，使用 `[&_canvas]:block`（或等价）避免 `canvas` 为 `inline` 时的基线空隙导致某一格高度异常。
+- 版式说明、提示、标题卡片：放在 **MDX** 里用 Starlight 组件与 Markdown 标题；必要时用 `<div class="not-prose">` 包裹含自定义排版的 React 岛，避免 prose 干扰。
+
+## 语气与结构
+
+- 面向读者的技术说明：少用口语化导航话术（如「下方」「不跳转某页」）；结构为概念 → 示例 → 注意点。

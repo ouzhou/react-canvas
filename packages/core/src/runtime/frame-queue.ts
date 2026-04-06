@@ -4,9 +4,24 @@ import { paintScene } from "../render/paint.ts";
 import { resetParagraphFontStateForTests } from "../text/paragraph-build.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
-let layoutPaintFrameQueued = false;
-/** Browser rAF id from the last {@link Surface.requestAnimationFrame} scheduled by us. */
-let pendingLayoutPaintRafId: number | null = null;
+type SurfaceQueueState = {
+  layoutPaintFrameQueued: boolean;
+  pendingLayoutPaintRafId: number | null;
+};
+
+const queueStateBySurface = new WeakMap<Surface, SurfaceQueueState>();
+
+/** Strong refs for {@link resetLayoutPaintQueueForTests} (WeakMap 不可遍历). */
+const surfacesWithPendingWork = new Set<Surface>();
+
+function getQueueState(surface: Surface): SurfaceQueueState {
+  let st = queueStateBySurface.get(surface);
+  if (!st) {
+    st = { layoutPaintFrameQueued: false, pendingLayoutPaintRafId: null };
+    queueStateBySurface.set(surface, st);
+  }
+  return st;
+}
 
 export function queueLayoutPaintFrame(
   surface: Surface,
@@ -16,37 +31,46 @@ export function queueLayoutPaintFrame(
   height: number,
   dpr: number,
 ): void {
-  if (layoutPaintFrameQueued) return;
-  layoutPaintFrameQueued = true;
+  const st = getQueueState(surface);
+  if (st.layoutPaintFrameQueued) return;
+  st.layoutPaintFrameQueued = true;
+  surfacesWithPendingWork.add(surface);
   const rafId = surface.requestAnimationFrame((skCanvas) => {
-    layoutPaintFrameQueued = false;
-    pendingLayoutPaintRafId = null;
+    st.layoutPaintFrameQueued = false;
+    st.pendingLayoutPaintRafId = null;
+    surfacesWithPendingWork.delete(surface);
     rootNode.calculateLayout(width, height, canvasKit);
     const paint = new canvasKit.Paint();
     paint.setAntiAlias(true);
     paintScene(rootNode, skCanvas, canvasKit, dpr, paint);
     paint.delete();
   });
-  pendingLayoutPaintRafId = typeof rafId === "number" ? rafId : null;
+  st.pendingLayoutPaintRafId = typeof rafId === "number" ? rafId : null;
 }
 
 /**
- * Cancel any in-flight layout/paint frame and reset coalescing state.
+ * Cancel any in-flight layout/paint frame for **this** surface and reset its coalescing state.
  * Call **before** {@link Surface.delete} so a pending callback cannot run on a freed canvas (WASM
  * "function signature mismatch" on e.g. {@link Canvas.scale}).
  */
-export function resetLayoutPaintQueue(): void {
+export function resetLayoutPaintQueue(surface: Surface): void {
+  const st = queueStateBySurface.get(surface);
+  if (!st) return;
   const cancel = (globalThis as { cancelAnimationFrame?: (id: number) => void })
     .cancelAnimationFrame;
-  if (pendingLayoutPaintRafId !== null && typeof cancel === "function") {
-    cancel(pendingLayoutPaintRafId);
+  if (st.pendingLayoutPaintRafId !== null && typeof cancel === "function") {
+    cancel(st.pendingLayoutPaintRafId);
   }
-  pendingLayoutPaintRafId = null;
-  layoutPaintFrameQueued = false;
+  st.pendingLayoutPaintRafId = null;
+  st.layoutPaintFrameQueued = false;
+  surfacesWithPendingWork.delete(surface);
 }
 
 export function resetLayoutPaintQueueForTests(): void {
-  resetLayoutPaintQueue();
+  for (const surface of Array.from(surfacesWithPendingWork)) {
+    resetLayoutPaintQueue(surface);
+  }
+  surfacesWithPendingWork.clear();
   resetParagraphFontStateForTests();
   resetDefaultParagraphFontLoaderForTests();
 }

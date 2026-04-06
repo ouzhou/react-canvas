@@ -3,13 +3,45 @@ title: Icon
 description: "@react-canvas/ui 的 Icon 组件（Lucide 图标数据 + SvgPath）。"
 ---
 
-import { IconDocDemo } from "../../../components/IconDocDemo.tsx";
+import { Card } from "@astrojs/starlight/components";
+
+import {
+  IconDemoBasic,
+  IconDemoColorStroke,
+  IconDemoFill,
+  IconDemoOnError,
+  IconDemoSize,
+  IconDemoStrokeWidth,
+  IconDemoStyleSize,
+} from "../../../components/IconDocDemos.tsx";
 
 `Icon` 将 [`@lucide/icons`](https://lucide.dev/guide/packages/icons) 单文件导出的矢量数据（`path` / `circle` 等）绘制为画布上的 `<SvgPath>`。应用需安装 **`@lucide/icons`**（与 `@react-canvas/ui` 的 peer 版本一致）。
 
 ## 用法
 
-按需导入图标模块，再传给 `icon`：
+从 `@lucide/icons` 按图标路径导入模块，将默认导出作为 `icon` 传入。具体示例见「代码示例与预览」中的「基础」一节。
+
+## 参数（Props）
+
+| 属性          | 类型                       | 说明                                                                                       |
+| ------------- | -------------------------- | ------------------------------------------------------------------------------------------ |
+| `icon`        | `LucideIconData`           | **必填**。来自 `@lucide/icons/icons/<name>` 的默认导出。                                   |
+| `size`        | `number`                   | 可选。正方形边长（逻辑像素）。未传时依次尝试 `style.width` / `style.height`，默认 **24**。 |
+| `color`       | `string`                   | 可选。描边颜色；会传给 `SvgPath` 的 `stroke`（若未单独设 `stroke`）。                      |
+| `stroke`      | `string`                   | 可选。显式描边色，**优先于** `color`。                                                     |
+| `fill`        | `string`                   | 可选。填充色（Lucide 线框图标多为空心，效果因图标而异）。                                  |
+| `strokeWidth` | `number`                   | 可选。线宽，默认 **1**。                                                                   |
+| `style`       | `ViewStyle`                | 可选。外层 `View` 样式；可与 `size` 配合，或用 **数值** `width`/`height` 代替 `size`。     |
+| `onError`     | `(error: unknown) => void` | 可选。路径解析失败或 `SvgPath` 报错时调用；失败时**不绘制**矢量。                          |
+| 交互          | —                          | 其余与 `View` 相同（如 `onPress` 等），会透传到外层 `View`。                               |
+
+## 代码示例与预览
+
+Starlight 提供的 `<Code>` 组件与 Markdown 围栏代码块基于 [Expressive Code](https://expressive-code.com/)，用于**语法高亮**与静态展示。官方文档**不包含**在页面内编辑 TSX 源码并热更新的交互式沙箱；若需该能力，通常另行集成 Sandpack、CodeSandbox 嵌入等方案。
+
+通过**表单控件**调整 props 并查看画布预览的独立页面：[Icon playground](/playground/icon/)。
+
+### 基础：`icon` + `size` + `color` + `strokeWidth`
 
 ```tsx
 import camera from "@lucide/icons/icons/camera";
@@ -18,15 +50,133 @@ import { Icon } from "@react-canvas/ui";
 <Icon icon={camera} size={48} color="#e2e8f0" strokeWidth={1.5} />;
 ```
 
-常用 props：`size`、`color`（默认作用在 **stroke**）、`stroke` / `fill`、`strokeWidth`、`style` 以及画布交互回调（与 `View` 一致）。
+<Card title="基础：icon、size、color、strokeWidth">
+  <div class="not-prose">
+    <IconDemoBasic client:load />
+  </div>
+</Card>
 
-## 示例
+### 用 `size` 控制大小
 
-下方画布内为 **camera** 与 **house** 两个图标（同一页内嵌，不跳转 Playground）。
+未传入 `size` 时，边长由 `style` 中的数值型 `width` / `height` 推导，仍缺省则为 24：
 
-<IconDocDemo client:load />
+```tsx
+import star from "@lucide/icons/icons/star";
+import { Icon } from "@react-canvas/ui";
+
+<Icon icon={star} size={32} color="#fbbf24" strokeWidth={1.5} />
+<Icon icon={star} size={44} color="#fbbf24" strokeWidth={1.5} />
+<Icon icon={star} size={56} color="#fbbf24" strokeWidth={1.5} />
+```
+
+<Card title="用 size 控制大小">
+  <div class="not-prose">
+    <IconDemoSize client:load />
+  </div>
+</Card>
+
+### `strokeWidth`（线宽）
+
+```tsx
+import house from "@lucide/icons/icons/house";
+import { Icon } from "@react-canvas/ui";
+
+<Icon icon={house} size={48} color="#a78bfa" strokeWidth={1} />
+<Icon icon={house} size={48} color="#a78bfa" strokeWidth={2} />
+<Icon icon={house} size={48} color="#a78bfa" strokeWidth={3} />
+```
+
+<Card title="strokeWidth（线宽）">
+  <div class="not-prose">
+    <IconDemoStrokeWidth client:load />
+  </div>
+</Card>
+
+### `color` 与 `stroke`（描边色）
+
+描边颜色由 `stroke ?? color` 决定：若传入 `stroke`，则 `SvgPath` 的描边使用该值；否则使用 `color`。
+
+```tsx
+import camera from "@lucide/icons/icons/camera";
+import { Icon } from "@react-canvas/ui";
+
+<Icon icon={camera} size={44} color="#64748b" strokeWidth={1.5} />
+
+<Icon
+  icon={camera}
+  size={44}
+  color="#64748b"
+  stroke="#f472b6"
+  strokeWidth={1.5}
+/>
+```
+
+<Card title="color 与 stroke（描边色）">
+  <div class="not-prose">
+    <IconDemoColorStroke client:load />
+  </div>
+</Card>
+
+### 用 `style.width` / `style.height` 代替 `size`
+
+边长解析顺序：`size` → 数值型 `style.width` → 数值型 `style.height` → `24`。未传 `size` 时，仅当对应字段为数字时才会被采用：
+
+```tsx
+import camera from "@lucide/icons/icons/camera";
+import { Icon } from "@react-canvas/ui";
+
+<Icon icon={camera} style={{ width: 40, height: 40 }} color="#34d399" strokeWidth={1.5} />
+<Icon icon={camera} style={{ width: 56, height: 56 }} color="#34d399" strokeWidth={1.5} />
+```
+
+<Card title="用 style.width / style.height 代替 size">
+  <div class="not-prose">
+    <IconDemoStyleSize client:load />
+  </div>
+</Card>
+
+### `fill`（填充）
+
+多数 Lucide 线框图标以描边为主，填充效果因路径而异；需要填充色时传入 `fill`：
+
+```tsx
+import heart from "@lucide/icons/icons/heart";
+import { Icon } from "@react-canvas/ui";
+
+<Icon icon={heart} size={40} stroke="#f43f5e" fill="#fda4af" strokeWidth={1.5} />;
+```
+
+<Card title="fill（填充）">
+  <div class="not-prose">
+    <IconDemoFill client:load />
+  </div>
+</Card>
+
+### `onError`（解析或绘制失败）
+
+在 `icon.node` 无法生成可绘制路径（当前实现仅解析 `path` 与 `circle`），或 `SvgPath` 报告错误时调用：
+
+```tsx
+import camera from "@lucide/icons/icons/camera";
+import { Icon } from "@react-canvas/ui";
+
+<Icon
+  icon={camera}
+  size={40}
+  color="#e2e8f0"
+  onError={(err) => {
+    console.error("[Icon]", err);
+  }}
+/>;
+```
+
+<Card title="onError（解析或绘制失败）">
+  <div class="not-prose">
+    <IconDemoOnError client:load />
+  </div>
+</Card>
 
 ## 说明
 
-- 与 DOM 版 `lucide-react` 不同：Canvas 侧使用 **图标数据包** `@lucide/icons`，便于 tree-shake。
-- 若 `icon.node` 无法解析出可绘制路径，会触发 `onError`（若传入），且该次不绘制矢量。
+- 与面向 DOM 的 `lucide-react` 不同：画布场景使用 **`@lucide/icons`** 图标数据包，以支持按模块裁剪依赖。
+- 当 `icon.node` 无法解析为可绘制路径时，若提供了 `onError` 则调用该回调，且该次渲染不输出矢量图形。

@@ -1,4 +1,4 @@
-import { registerPaintFrameRequester, resetLayoutPaintQueue, ViewNode } from "@react-canvas/core";
+import { resetLayoutPaintQueue, ViewNode } from "@react-canvas/core";
 import { Children, isValidElement, useLayoutEffect, useRef, type ReactNode } from "react";
 import Reconciler from "react-reconciler";
 import { canvasBackingStoreSize } from "./canvas-backing-store.ts";
@@ -110,14 +110,13 @@ export function Canvas({ width, height, children }: CanvasProps) {
 
     return () => {
       detachPointer();
-      registerPaintFrameRequester(null);
       reconciler.updateContainer(null, root, null, () => {});
       sceneRoot.destroy();
       reconcilerRef.current = null;
       rootRef.current = null;
       containerRef.current = null;
       frameRef.current.sceneRoot = null;
-      resetLayoutPaintQueue();
+      resetLayoutPaintQueue(surface);
       surface.delete();
       frameRef.current.surface = null;
       frameRef.current.canvasKit = null;
@@ -131,5 +130,6 @@ export function Canvas({ width, height, children }: CanvasProps) {
     reconciler.updateContainer(children, root as never, null, () => {});
   }, [children, width, height]);
 
-  return <canvas ref={canvasRef} />;
+  /** `canvas` 默认为 inline 替换元素，易产生基线下方空隙，导致与 flex/grid 同排时高度不一致 */
+  return <canvas ref={canvasRef} style={{ display: "block" }} />;
 }
