@@ -71,6 +71,7 @@ export default defineConfig({
           label: "UI 组件库",
           items: [
             { label: "概览", slug: "ui" },
+            { label: "主题与密度", slug: "ui/theme" },
             { label: "Button", slug: "ui/button" },
             { label: "Icon", slug: "ui/icon" },
           ],
