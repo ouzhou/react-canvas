@@ -6,6 +6,7 @@ import type { ImageNode } from "../scene/image-node.ts";
 import type { SvgPathNode } from "../scene/svg-path-node.ts";
 import type { TextNode } from "../scene/text-node.ts";
 import { isDisplayNone } from "../layout/layout.ts";
+import type { ScrollViewNode } from "../scene/scroll-view-node.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 import { parseViewBox, viewBoxToAffine } from "../geometry/viewbox.ts";
 import { getSortedChildrenForPaint } from "./children-z-order.ts";
@@ -239,6 +240,31 @@ export function paintNode(
       paintNode(c, skCanvas, canvasKit, paint);
     }
     if (clipSvgChildren) skCanvas.restore();
+    if (useLayer) skCanvas.restore();
+    skCanvas.restore();
+    return;
+  }
+
+  if (node.type === "ScrollView") {
+    const sv = node as ScrollViewNode;
+    const sx = sv.scrollX;
+    const sy = sv.scrollY;
+    if (!skipBackground) {
+      skCanvas.save();
+      clipToLayoutRoundedRect(skCanvas, canvasKit, w, h, node.props.borderRadius ?? 0);
+      skCanvas.translate(-sx, -sy);
+      for (const c of getSortedChildrenForPaint(node)) {
+        paintNode(c, skCanvas, canvasKit, paint);
+      }
+      skCanvas.restore();
+    } else {
+      skCanvas.save();
+      skCanvas.translate(-sx, -sy);
+      for (const c of getSortedChildrenForPaint(node)) {
+        paintNode(c, skCanvas, canvasKit, paint);
+      }
+      skCanvas.restore();
+    }
     if (useLayer) skCanvas.restore();
     skCanvas.restore();
     return;
