@@ -11,7 +11,8 @@ const docTheme: CanvasThemeConfig = {
   seed: { colorPrimary: "#1677ff" },
 };
 
-function UiDemoCanvas({
+/** 文档站画布演示外壳：`CanvasThemeProvider` + `CanvasProvider` + `Canvas`。 */
+export function UiDemoCanvas({
   height,
   children,
 }: {
