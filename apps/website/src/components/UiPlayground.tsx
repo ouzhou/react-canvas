@@ -1,7 +1,7 @@
 import { Canvas, CanvasProvider, Text, View } from "@react-canvas/react";
 import { Button, CanvasThemeProvider, useCanvasToken } from "@react-canvas/ui";
 import type { CanvasThemeConfig, CanvasToken } from "@react-canvas/ui";
-import { useState } from "react";
+import { Component, type ErrorInfo, type ReactNode, useState } from "react";
 
 const PRIMARY_PRESETS: { label: string; colorPrimary: string }[] = [
   { label: "默认蓝", colorPrimary: "#1677ff" },
@@ -43,6 +43,41 @@ function UiCanvasContent({ token }: { token: CanvasToken }) {
 /** 紧凑模式画布略矮，与 token 内边距缩小一致。 */
 function canvasHeightForDensity(density: CanvasThemeConfig["density"]): number {
   return density === "compact" ? 120 : 150;
+}
+
+/** 捕获画布子树抛错，避免整岛白屏无信息；随 height key 重挂载以清除错误态 */
+class UiPlaygroundCanvasErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error): { error: Error } {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo): void {
+    console.error("[UiPlayground canvas]", error, info.componentStack);
+  }
+
+  render(): ReactNode {
+    if (this.state.error) {
+      return (
+        <p
+          role="alert"
+          style={{
+            margin: 0,
+            fontSize: "0.875rem",
+            color: "var(--sl-color-red, #f87171)",
+            maxWidth: "28rem",
+          }}
+        >
+          {this.state.error.message}
+        </p>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 export function UiPlayground() {
@@ -203,11 +238,14 @@ function UiPlaygroundCanvasWithHeight({ token, height }: { token: CanvasToken; h
         if (error) return <p>Failed to load runtime: {error.message}</p>;
         if (!isReady) return <p>Loading Yoga + CanvasKit…</p>;
         return (
-          <Canvas width={420} height={height}>
-            <View style={{ flex: 1 }}>
-              <UiCanvasContent token={token} />
-            </View>
-          </Canvas>
+          /* key：尺寸变化时整棵 Canvas 卸载再挂，避免同一 canvas DOM 上快速删建 WebGL surface 导致白屏 */
+          <UiPlaygroundCanvasErrorBoundary key={height}>
+            <Canvas width={420} height={height}>
+              <View style={{ flex: 1 }}>
+                <UiCanvasContent token={token} />
+              </View>
+            </Canvas>
+          </UiPlaygroundCanvasErrorBoundary>
         );
       }}
     </CanvasProvider>
