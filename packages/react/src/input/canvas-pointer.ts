@@ -10,6 +10,28 @@ import {
 } from "@react-canvas/core";
 
 /**
+ * 自命中叶沿父链查找首个 `props.cursor`，用于同步 `<canvas style="cursor">`。
+ */
+function resolveCursorFromHitLeaf(leaf: ViewNode | null, sceneRoot: ViewNode): string {
+  let n: ViewNode | null = leaf;
+  while (n) {
+    const c = n.props.cursor;
+    if (typeof c === "string" && c.length > 0) return c;
+    if (n === sceneRoot) break;
+    n = n.parent as ViewNode | null;
+  }
+  return "default";
+}
+
+function syncCanvasCursor(
+  canvas: HTMLCanvasElement,
+  leaf: ViewNode | null,
+  sceneRoot: ViewNode,
+): void {
+  canvas.style.cursor = resolveCursorFromHitLeaf(leaf, sceneRoot);
+}
+
+/**
  * Map DOM `clientX/Y` to canvas **logical** coordinates (same space as `ViewNode.layout`).
  */
 export function clientToCanvasLogical(
@@ -76,6 +98,7 @@ export function attachCanvasPointerHandlers(
             );
           }
           hoverLeaf = null;
+          syncCanvasCursor(canvas, hoverLeaf, sceneRoot);
         }
       }
       return;
@@ -116,6 +139,7 @@ export function attachCanvasPointerHandlers(
         );
       }
       hoverLeaf = hit;
+      syncCanvasCursor(canvas, hoverLeaf, sceneRoot);
     }
   };
 
@@ -154,5 +178,6 @@ export function attachCanvasPointerHandlers(
     document.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("pointerup", onPointerUpOrCancel);
     document.removeEventListener("pointercancel", onPointerUpOrCancel);
+    canvas.style.cursor = "";
   };
 }

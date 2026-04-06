@@ -35,6 +35,8 @@ import {
 | `children` | `ReactNode`            | 通常为 **`Text`**。                                              |
 | 交互       | —                      | 与 `View` 相同（如 **`onClick`**），会透传到外层 `View`。        |
 
+**光标：** 未禁用时 **`Button`** 会合并 **`style.cursor: 'pointer'`**，指针悬停由运行时同步到 **`<canvas>`** 的 DOM **`cursor`**；**`disabled`** 时为 **`'default'`**。需要其它手势时可通过 **`style={{ cursor: '…' }}`** 覆盖（与全局 **`ViewStyle.cursor`** 一致）。
+
 样式辅助函数 **`getButtonStyles`** 与类型 **`ButtonVariant`**、**`ButtonSize`** 由包导出，便于单测或与 **`mergeViewStyles`** 组合。
 
 ## 代码示例与预览

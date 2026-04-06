@@ -40,4 +40,13 @@ describe("splitStyle", () => {
     expect(layout).toEqual({ width: 10, display: "none" });
     expect(visual).toEqual({});
   });
+
+  it("cursor is visual-only (no Yoga)", () => {
+    const { layout, visual } = splitStyle({
+      width: 100,
+      cursor: "pointer",
+    });
+    expect(layout).toEqual({ width: 100 });
+    expect(visual).toEqual({ cursor: "pointer" });
+  });
 });

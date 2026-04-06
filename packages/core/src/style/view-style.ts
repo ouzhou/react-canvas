@@ -63,4 +63,6 @@ export type ViewStyle = {
   borderWidth?: number;
   borderColor?: string;
   opacity?: number;
+  /** 悬停时由指针管线同步到 `<canvas>` 的 `style.cursor`（如 `pointer`、`default`）。 */
+  cursor?: string;
 };

@@ -18,6 +18,8 @@ export type ViewVisualProps = {
   borderWidth?: number;
   borderColor?: string;
   opacity?: number;
+  /** 见 `ViewStyle.cursor`；由指针管线同步到画布 DOM `cursor`。 */
+  cursor?: string;
   display?: "flex" | "none";
 };
 

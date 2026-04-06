@@ -45,6 +45,7 @@ export function Button(props: ButtonProps) {
     base,
     getButtonStyles(variant, size, token),
     disabled ? { opacity: 0.5 } : {},
+    { cursor: disabled ? "default" : "pointer" },
     style,
   );
   return (
