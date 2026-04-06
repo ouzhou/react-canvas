@@ -73,6 +73,11 @@ export type ViewStyle = {
   display?: "flex" | "none";
   aspectRatio?: number;
   backgroundColor?: string;
+  /**
+   * `hidden`：子节点按本盒与 `borderRadius` 裁剪（Skia `clipRRect` / `clipRect`），与 RN `overflow: hidden` + 圆角一致。
+   * 未设置或 `visible`：不裁剪子绘制（默认）。
+   */
+  overflow?: "visible" | "hidden";
   borderRadius?: number;
   borderWidth?: number;
   borderColor?: string;

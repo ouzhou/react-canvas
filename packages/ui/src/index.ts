@@ -1,6 +1,7 @@
 import "./types/augment.ts";
 
 export { Avatar, type AvatarProps } from "./components/avatar/avatar.tsx";
+export { AvatarGroup, type AvatarGroupProps } from "./components/avatar/avatar-group.tsx";
 export { Button, type ButtonProps } from "./components/button/button.tsx";
 export { Checkbox, type CheckboxProps } from "./components/checkbox/checkbox.tsx";
 export { Divider, type DividerProps } from "./components/divider/divider.tsx";
@@ -15,6 +16,7 @@ export { Loading, type LoadingProps } from "./components/loading/loading.tsx";
 export { getLoadingMetrics, type LoadingSize } from "./components/loading/variants.ts";
 export {
   getAvatarContainerStyle,
+  getAvatarGroupRingStyle,
   resolveAvatarPixelSize,
   type AvatarSizePreset,
 } from "./components/avatar/variants.ts";

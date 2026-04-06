@@ -11,6 +11,25 @@ import { parseViewBox, viewBoxToAffine } from "../geometry/viewbox.ts";
 import { getSortedChildrenForPaint } from "./children-z-order.ts";
 import { buildLocalTransformMatrix } from "./transform.ts";
 
+/** 将绘制限制在布局盒内；圆角与背景 `drawRRect` 使用同一套半径（经 `min` 钳制）。 */
+function clipToLayoutRoundedRect(
+  skCanvas: Canvas,
+  canvasKit: CanvasKit,
+  w: number,
+  h: number,
+  borderRadius: number,
+): void {
+  const rect = canvasKit.LTRBRect(0, 0, w, h);
+  const r = borderRadius ?? 0;
+  if (r > 0) {
+    const rr = Math.min(r, w / 2, h / 2);
+    const rrect = canvasKit.RRectXY(rect, rr, rr);
+    skCanvas.clipRRect(rrect, canvasKit.ClipOp.Intersect, true);
+  } else {
+    skCanvas.clipRect(rect, canvasKit.ClipOp.Intersect, true);
+  }
+}
+
 /**
  * Full-frame paint: scale by DPR, clear, recurse from root (phase-1-design §2.4).
  * Caller owns `paint` lifecycle (`delete()` after).
@@ -122,6 +141,12 @@ export function paintNode(
   if (node.type === "Image") {
     const im = node as ImageNode;
     const sk = im.skImage;
+    const br = node.props.borderRadius ?? 0;
+    const clipImage = !skipBackground && (node.props.overflow === "hidden" || br > 0);
+    if (clipImage) {
+      skCanvas.save();
+      clipToLayoutRoundedRect(skCanvas, canvasKit, w, h, br);
+    }
     if (sk && !skipBackground) {
       const iw = sk.width();
       const ih = sk.height();
@@ -147,6 +172,7 @@ export function paintNode(
     for (const c of getSortedChildrenForPaint(node)) {
       paintNode(c, skCanvas, canvasKit, paint);
     }
+    if (clipImage) skCanvas.restore();
     if (useLayer) skCanvas.restore();
     skCanvas.restore();
     return;
@@ -203,17 +229,31 @@ export function paintNode(
         }
       }
     }
+    let clipSvgChildren = false;
+    if (node.props.overflow === "hidden" && !skipBackground) {
+      skCanvas.save();
+      clipToLayoutRoundedRect(skCanvas, canvasKit, w, h, node.props.borderRadius ?? 0);
+      clipSvgChildren = true;
+    }
     for (const c of getSortedChildrenForPaint(node)) {
       paintNode(c, skCanvas, canvasKit, paint);
     }
+    if (clipSvgChildren) skCanvas.restore();
     if (useLayer) skCanvas.restore();
     skCanvas.restore();
     return;
   }
 
+  let clipViewChildren = false;
+  if (node.props.overflow === "hidden" && !skipBackground) {
+    skCanvas.save();
+    clipToLayoutRoundedRect(skCanvas, canvasKit, w, h, node.props.borderRadius ?? 0);
+    clipViewChildren = true;
+  }
   for (const c of getSortedChildrenForPaint(node)) {
     paintNode(c, skCanvas, canvasKit, paint);
   }
+  if (clipViewChildren) skCanvas.restore();
 
   if (useLayer) skCanvas.restore();
   skCanvas.restore();

@@ -159,6 +159,7 @@ export function applyRNLayoutDefaults(node: YogaNode): void {
 
 const VISUAL_KEYS = new Set([
   "backgroundColor",
+  "overflow",
   "borderRadius",
   "borderWidth",
   "borderColor",

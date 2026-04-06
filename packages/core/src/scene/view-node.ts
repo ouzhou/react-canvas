@@ -14,6 +14,7 @@ import { calculateLayoutRoot, syncLayoutFromYoga } from "../layout/layout.ts";
 
 export type ViewVisualProps = {
   backgroundColor?: string;
+  overflow?: "visible" | "hidden";
   borderRadius?: number;
   borderWidth?: number;
   borderColor?: string;

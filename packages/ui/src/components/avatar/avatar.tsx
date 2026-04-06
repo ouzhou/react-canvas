@@ -7,8 +7,10 @@ import { mergeViewStyles } from "../../style/merge.ts";
 import { CanvasThemeContext } from "../../theme/context.tsx";
 import type { CanvasToken } from "../../theme/types.ts";
 import { resolveAvatarVisibleLayer, type AvatarLoadState } from "./resolve-avatar-content.ts";
+import { AvatarGroupContext } from "./avatar-group.tsx";
 import {
   getAvatarContainerStyle,
+  getAvatarGroupRingStyle,
   resolveAvatarPixelSize,
   type AvatarSizePreset,
 } from "./variants.ts";
@@ -24,6 +26,7 @@ export type AvatarProps = {
 
 export function Avatar(props: AvatarProps) {
   const ctx = useContext(CanvasThemeContext);
+  const inGroup = useContext(AvatarGroupContext);
   const { token: tokenProp, style, size: sizeProp, source, icon, children, ...handlers } = props;
 
   const token = tokenProp ?? ctx?.token;
@@ -62,7 +65,11 @@ export function Avatar(props: AvatarProps) {
 
   const iconDim = Math.round(px * 0.55);
 
-  const base = mergeViewStyles(getAvatarContainerStyle(px, token), style ?? {});
+  const base = mergeViewStyles(
+    getAvatarContainerStyle(px, token),
+    inGroup ? getAvatarGroupRingStyle(token) : {},
+    style ?? {},
+  );
 
   const showImage = source && loadState !== "error";
   const imageOpaque = loadState === "loaded";

@@ -85,9 +85,29 @@ export function Checkbox(props: CheckboxProps) {
     onClick?.(e);
   };
 
+  /**
+   * 画布合成 `click` 要求 down/up 命中同一节点；方框与 `children`（文案）为兄弟时会失败。
+   * 用透明层盖住整行，使整段交互区命中一致（等价于 DOM `<label>` 包一整行）。
+   */
+  const hitLayerStyle: ViewStyle = {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  };
+
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: token.paddingSM }}>
-      <View style={merged} onClick={handleClick} {...restHandlers}>
+    <View
+      style={{
+        position: "relative",
+        flexDirection: "row",
+        alignItems: "center",
+        gap: token.paddingSM,
+      }}
+    >
+      <View style={merged}>
         {showIndeterminate ? (
           <View
             style={{
@@ -111,6 +131,7 @@ export function Checkbox(props: CheckboxProps) {
         ) : null}
       </View>
       {children}
+      <View style={hitLayerStyle} onClick={handleClick} {...restHandlers} />
     </View>
   );
 }

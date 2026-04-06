@@ -1,4 +1,5 @@
 import type { CanvasKit } from "canvaskit-wasm";
+import { pointInRoundedRectLocal } from "../geometry/rounded-rect-hit.ts";
 import { getSortedChildrenForPaint } from "../render/children-z-order.ts";
 import { buildLocalTransformMatrix } from "../render/transform.ts";
 import { isDisplayNone } from "../layout/layout.ts";
@@ -8,6 +9,21 @@ import type { ViewNode } from "../scene/view-node.ts";
 function pointInRect(px: number, py: number, x: number, y: number, w: number, h: number): boolean {
   if (w <= 0 || h <= 0) return false;
   return px >= x && py >= y && px < x + w && py < y + h;
+}
+
+/** 与 `paint.ts` 中 `overflow` / `Image`+圆角 的可视区域一致。 */
+function localPointHitsNodeBounds(node: ViewNode, localX: number, localY: number): boolean {
+  const w = node.layout.width;
+  const h = node.layout.height;
+  if (w <= 0 || h <= 0) return false;
+  const r = node.props.borderRadius ?? 0;
+  if (node.props.overflow === "hidden") {
+    return pointInRoundedRectLocal(localX, localY, w, h, r);
+  }
+  if (node.type === "Image" && r > 0) {
+    return pointInRoundedRectLocal(localX, localY, w, h, r);
+  }
+  return pointInRect(localX, localY, 0, 0, w, h);
 }
 
 /**
@@ -51,6 +67,10 @@ function hitTestRecursive(
   canvasKit.Matrix.mapPoints(inv, pts);
   const localX = pts[0]!;
   const localY = pts[1]!;
+
+  if (!localPointHitsNodeBounds(node, localX, localY)) {
+    return null;
+  }
 
   if (node.type === "Text") {
     if (!pointInRect(localX, localY, 0, 0, w, h)) return null;

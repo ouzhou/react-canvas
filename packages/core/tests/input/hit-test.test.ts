@@ -71,6 +71,17 @@ describe("hitTest", () => {
     expect(hitTest(root, 100, 25, canvasKit)).toBe(outer);
   });
 
+  it("overflow hidden: miss outside rounded corner, hit inside", () => {
+    const card = new ViewNode(yoga, "View");
+    card.setStyle({ overflow: "hidden", borderRadius: 10, width: 100, height: 100 });
+    card.layout = { left: 0, top: 0, width: 100, height: 100 };
+    const inner = new ViewNode(yoga, "View");
+    inner.layout = { left: 0, top: 0, width: 100, height: 100 };
+    card.appendChild(inner);
+    expect(hitTest(card, 2, 2, canvasKit)).toBe(null);
+    expect(hitTest(card, 50, 50, canvasKit)).toBe(inner);
+  });
+
   it("respects translate transform for hit target", () => {
     const root = new ViewNode(yoga, "View");
     root.setStyle({ width: "100%", height: "100%" });

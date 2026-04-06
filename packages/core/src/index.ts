@@ -63,6 +63,7 @@ export {
 export { diffHoverEnterLeave, dispatchPointerEnterLeave } from "./input/hover.ts";
 export { computeImageSrcDestRects, type ImageRect, type ResizeMode } from "./image/image-rect.ts";
 export { parseViewBox, viewBoxToAffine, type ViewBox } from "./geometry/viewbox.ts";
+export { pointInRoundedRectLocal } from "./geometry/rounded-rect-hit.ts";
 export { peekCachedImage, putCachedImage, clearImageCacheForTests } from "./image/image-cache.ts";
 export { decodeImageFromEncoded, loadImageFromUri } from "./image/image-decode.ts";
 export {

@@ -1,6 +1,13 @@
 import userIcon from "@lucide/icons/icons/user";
 import { Canvas, CanvasProvider, Text, View } from "@react-canvas/react";
-import { Avatar, CanvasThemeProvider, Checkbox, Switch, useCanvasToken } from "@react-canvas/ui";
+import {
+  Avatar,
+  AvatarGroup,
+  CanvasThemeProvider,
+  Checkbox,
+  Switch,
+  useCanvasToken,
+} from "@react-canvas/ui";
 import type { CanvasThemeConfig, CanvasToken } from "@react-canvas/ui";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -227,6 +234,33 @@ export function AvatarDocDemoSizes() {
             <Avatar token={token} icon={userIcon} size="md" />
             <Avatar token={token} icon={userIcon} size="lg" />
           </View>
+        )}
+      </UiDemoCanvas>
+    </div>
+  );
+}
+
+/** `AvatarGroup`：横向重叠 + 组内头像描边 */
+export function AvatarDocDemoGroup() {
+  return (
+    <div style={{ maxWidth: "min(100%, 40rem)" }}>
+      <UiDemoCanvas height={120}>
+        {(token) => (
+          <AvatarGroup overlap={10}>
+            <Avatar
+              token={token}
+              size="md"
+              source={{ uri: "https://picsum.photos/seed/rc-group-1/96/96" }}
+              icon={userIcon}
+            />
+            <Avatar
+              token={token}
+              size="md"
+              source={{ uri: "https://picsum.photos/seed/rc-group-2/96/96" }}
+              icon={userIcon}
+            />
+            <Avatar token={token} size="md" icon={userIcon} />
+          </AvatarGroup>
         )}
       </UiDemoCanvas>
     </div>
