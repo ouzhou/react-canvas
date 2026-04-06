@@ -9,7 +9,6 @@ vi.mock("../../src/render/paint.ts", async (importOriginal) => {
 import { initYoga, paintScene, ViewNode } from "../../src/index.ts";
 import {
   queueLayoutPaintFrame,
-  queuePaintOnlyFrame,
   resetLayoutPaintQueueForTests,
 } from "../../src/runtime/frame-queue.ts";
 
@@ -107,64 +106,6 @@ describe("queueLayoutPaintFrame", () => {
     pendingA!({});
     pendingB!({});
     expect(paintScene).toHaveBeenCalledTimes(2);
-  });
-
-  it("queuePaintOnlyFrame skips calculateLayout", () => {
-    const root = new ViewNode(yoga, "View");
-    root.setStyle({ width: 10, height: 10 });
-    const spy = vi.spyOn(root, "calculateLayout");
-    const surface = {
-      requestAnimationFrame(fn: (c: unknown) => void) {
-        fn({});
-        return 0;
-      },
-    } as unknown as Surface;
-    const ck = minimalCanvasKit();
-    queuePaintOnlyFrame(surface, ck, root, 100, 80, 1);
-    expect(spy).not.toHaveBeenCalled();
-    expect(paintScene).toHaveBeenCalledTimes(1);
-    spy.mockRestore();
-  });
-
-  it("queuePaintOnlyFrame then queueLayoutPaintFrame before RAF upgrades to layout", () => {
-    const root = new ViewNode(yoga, "View");
-    root.setStyle({ width: 10, height: 10 });
-    const spy = vi.spyOn(root, "calculateLayout");
-    let pending: ((c: unknown) => void) | null = null;
-    const surface = {
-      requestAnimationFrame(fn: (c: unknown) => void) {
-        pending = fn;
-        return 1;
-      },
-    } as unknown as Surface;
-    const ck = minimalCanvasKit();
-    queuePaintOnlyFrame(surface, ck, root, 10, 10, 1);
-    queueLayoutPaintFrame(surface, ck, root, 99, 99, 1);
-    expect(spy).not.toHaveBeenCalled();
-    pending!({});
-    expect(spy).toHaveBeenCalledWith(99, 99, ck);
-    expect(paintScene).toHaveBeenCalledTimes(1);
-    spy.mockRestore();
-  });
-
-  it("queueLayoutPaintFrame then queuePaintOnlyFrame coalesces; layout still runs once", () => {
-    const root = new ViewNode(yoga, "View");
-    root.setStyle({ width: 10, height: 10 });
-    const spy = vi.spyOn(root, "calculateLayout");
-    let pending: ((c: unknown) => void) | null = null;
-    const surface = {
-      requestAnimationFrame(fn: (c: unknown) => void) {
-        pending = fn;
-        return 1;
-      },
-    } as unknown as Surface;
-    const ck = minimalCanvasKit();
-    queueLayoutPaintFrame(surface, ck, root, 10, 10, 1);
-    queuePaintOnlyFrame(surface, ck, root, 88, 88, 1);
-    pending!({});
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(paintScene).toHaveBeenCalledTimes(1);
-    spy.mockRestore();
   });
 
   it("can queue again after the frame callback runs", () => {

@@ -2,8 +2,6 @@
  * Subset of RN/Web flex style keys supported in phase 1.
  * Values are numbers (points), percentage strings, or enumerated strings.
  */
-import type { TransformStyle } from "./transform.ts";
-
 export type DimensionValue = number | "auto" | `${number}%`;
 
 export type ViewStyle = {
@@ -67,6 +65,4 @@ export type ViewStyle = {
   opacity?: number;
   /** 悬停时由指针管线同步到 `<canvas>` 的 `style.cursor`（如 `pointer`、`default`）。 */
   cursor?: string;
-  /** Visual-only transform (not Yoga). See {@link applyViewTransform}. */
-  transform?: TransformStyle;
 };

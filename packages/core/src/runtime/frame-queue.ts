@@ -4,26 +4,9 @@ import { paintScene } from "../render/paint.ts";
 import { resetParagraphFontStateForTests } from "../text/paragraph-build.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
-type PendingFrame = {
-  canvasKit: CanvasKit;
-  rootNode: ViewNode;
-  width: number;
-  height: number;
-  dpr: number;
-};
-
 type SurfaceQueueState = {
   layoutPaintFrameQueued: boolean;
   pendingLayoutPaintRafId: number | null;
-  /** Latest dimensions and nodes for the next RAF callback (updated on every queue call). */
-  pendingFrame: PendingFrame | null;
-  /**
-   * When the next RAF callback runs, whether to run Yoga (`calculateLayout`) before paint.
-   * `queueLayoutPaintFrame` sets true; `queuePaintOnlyFrame` sets false only when it is the
-   * first request that schedules this callback — if a layout frame is already queued, this
-   * stays true.
-   */
-  needsLayout: boolean;
 };
 
 const queueStateBySurface = new WeakMap<Surface, SurfaceQueueState>();
@@ -34,39 +17,10 @@ const surfacesWithPendingWork = new Set<Surface>();
 function getQueueState(surface: Surface): SurfaceQueueState {
   let st = queueStateBySurface.get(surface);
   if (!st) {
-    st = {
-      layoutPaintFrameQueued: false,
-      pendingLayoutPaintRafId: null,
-      pendingFrame: null,
-      needsLayout: false,
-    };
+    st = { layoutPaintFrameQueued: false, pendingLayoutPaintRafId: null };
     queueStateBySurface.set(surface, st);
   }
   return st;
-}
-
-function scheduleLayoutPaintFrame(surface: Surface, st: SurfaceQueueState): void {
-  st.layoutPaintFrameQueued = true;
-  surfacesWithPendingWork.add(surface);
-  const rafId = surface.requestAnimationFrame((skCanvas) => {
-    st.layoutPaintFrameQueued = false;
-    st.pendingLayoutPaintRafId = null;
-    surfacesWithPendingWork.delete(surface);
-    const runLayout = st.needsLayout;
-    st.needsLayout = false;
-    const pf = st.pendingFrame;
-    st.pendingFrame = null;
-    if (!pf) return;
-    const { canvasKit, rootNode, width, height, dpr } = pf;
-    if (runLayout) {
-      rootNode.calculateLayout(width, height, canvasKit);
-    }
-    const paint = new canvasKit.Paint();
-    paint.setAntiAlias(true);
-    paintScene(rootNode, skCanvas, canvasKit, dpr, paint);
-    paint.delete();
-  });
-  st.pendingLayoutPaintRafId = typeof rafId === "number" ? rafId : null;
 }
 
 export function queueLayoutPaintFrame(
@@ -78,29 +32,20 @@ export function queueLayoutPaintFrame(
   dpr: number,
 ): void {
   const st = getQueueState(surface);
-  st.pendingFrame = { canvasKit, rootNode, width, height, dpr };
-  st.needsLayout = true;
   if (st.layoutPaintFrameQueued) return;
-  scheduleLayoutPaintFrame(surface, st);
-}
-
-/**
- * Schedule a single paint pass without running Yoga layout. Coalesces with {@link queueLayoutPaintFrame}
- * on the same surface: if a layout frame is already queued, the next callback still runs layout.
- */
-export function queuePaintOnlyFrame(
-  surface: Surface,
-  canvasKit: CanvasKit,
-  rootNode: ViewNode,
-  width: number,
-  height: number,
-  dpr: number,
-): void {
-  const st = getQueueState(surface);
-  st.pendingFrame = { canvasKit, rootNode, width, height, dpr };
-  if (st.layoutPaintFrameQueued) return;
-  st.needsLayout = false;
-  scheduleLayoutPaintFrame(surface, st);
+  st.layoutPaintFrameQueued = true;
+  surfacesWithPendingWork.add(surface);
+  const rafId = surface.requestAnimationFrame((skCanvas) => {
+    st.layoutPaintFrameQueued = false;
+    st.pendingLayoutPaintRafId = null;
+    surfacesWithPendingWork.delete(surface);
+    rootNode.calculateLayout(width, height, canvasKit);
+    const paint = new canvasKit.Paint();
+    paint.setAntiAlias(true);
+    paintScene(rootNode, skCanvas, canvasKit, dpr, paint);
+    paint.delete();
+  });
+  st.pendingLayoutPaintRafId = typeof rafId === "number" ? rafId : null;
 }
 
 /**
@@ -118,8 +63,6 @@ export function resetLayoutPaintQueue(surface: Surface): void {
   }
   st.pendingLayoutPaintRafId = null;
   st.layoutPaintFrameQueued = false;
-  st.pendingFrame = null;
-  st.needsLayout = false;
   surfacesWithPendingWork.delete(surface);
 }
 

@@ -8,7 +8,6 @@ import type { TextNode } from "../scene/text-node.ts";
 import { isDisplayNone } from "../layout/layout.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 import { parseViewBox, viewBoxToAffine } from "../geometry/viewbox.ts";
-import { applyViewTransform } from "../style/transform.ts";
 
 /**
  * Full-frame paint: scale by DPR, clear, recurse from root (phase-1-design §2.4).
@@ -46,8 +45,6 @@ export function paintNode(
   const skipBackground = w <= 0 || h <= 0;
 
   skCanvas.save();
-  skCanvas.translate(x, y);
-  applyViewTransform(skCanvas, node.props.transform, w, h);
 
   const op = node.props.opacity;
   const useLayer = op !== undefined && op < 1;
@@ -63,7 +60,7 @@ export function paintNode(
     paint.setColor(canvasKit.parseColorString(node.props.backgroundColor));
     paint.setStyle(canvasKit.PaintStyle.Fill);
     paint.setAntiAlias(true);
-    const rect = canvasKit.LTRBRect(0, 0, w, h);
+    const rect = canvasKit.LTRBRect(x, y, x + w, y + h);
     const r = node.props.borderRadius ?? 0;
     if (r > 0) {
       const rrect = canvasKit.RRectXY(rect, r, r);
@@ -79,7 +76,7 @@ export function paintNode(
     paint.setStrokeWidth(bw);
     paint.setColor(canvasKit.parseColorString(node.props.borderColor));
     paint.setAntiAlias(true);
-    const rect = canvasKit.LTRBRect(0, 0, w, h);
+    const rect = canvasKit.LTRBRect(x, y, x + w, y + h);
     const r = node.props.borderRadius ?? 0;
     if (r > 0) {
       const rrect = canvasKit.RRectXY(rect, r, r);
@@ -101,7 +98,7 @@ export function paintNode(
       const p = buildParagraphFromSpans(canvasKit, tn.textProps, spans);
       try {
         p.layout(innerW);
-        skCanvas.drawParagraph(p, padL, padT);
+        skCanvas.drawParagraph(p, x + padL, y + padT);
       } finally {
         p.delete();
       }
@@ -126,10 +123,10 @@ export function paintNode(
           src.top + src.height,
         );
         const dstRect = canvasKit.LTRBRect(
-          dst.left,
-          dst.top,
-          dst.left + dst.width,
-          dst.top + dst.height,
+          x + dst.left,
+          y + dst.top,
+          x + dst.left + dst.width,
+          y + dst.top + dst.height,
         );
         paint.setStyle(canvasKit.PaintStyle.Fill);
         paint.setAntiAlias(true);
@@ -153,6 +150,7 @@ export function paintNode(
         const aff = viewBoxToAffine(vb, w, h);
         if (aff.scale > 0) {
           skCanvas.save();
+          skCanvas.translate(x, y);
           skCanvas.translate(aff.translateX, aff.translateY);
           skCanvas.scale(aff.scale, aff.scale);
           const fill = sn.fill;
