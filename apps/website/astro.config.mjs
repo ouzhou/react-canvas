@@ -34,6 +34,12 @@ export default defineConfig({
     react(),
     starlight({
       title: "React Canvas",
+      description: "基于 CanvasKit（Skia WASM）与 Yoga 的 React 画布：布局、文字、交互与多媒体。",
+      logo: {
+        src: "./src/assets/logo.svg",
+        alt: "React Canvas",
+      },
+      favicon: "/favicon.svg",
       customCss: ["./src/styles/global.css", "./src/styles/custom.css"],
       social: [
         {
