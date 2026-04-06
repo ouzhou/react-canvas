@@ -4,6 +4,7 @@ import type { CanvasKit } from "canvaskit-wasm";
 import { createMatrixMockCanvasKit } from "../helpers/matrix-mock-canvas-kit.ts";
 import { initYoga } from "../../src/layout/yoga.ts";
 import { TextNode } from "../../src/scene/text-node.ts";
+import { ScrollViewNode } from "../../src/scene/scroll-view-node.ts";
 import { ViewNode } from "../../src/scene/view-node.ts";
 
 describe("hitTest", () => {
@@ -80,6 +81,19 @@ describe("hitTest", () => {
     card.appendChild(inner);
     expect(hitTest(card, 2, 2, canvasKit)).toBe(null);
     expect(hitTest(card, 50, 50, canvasKit)).toBe(inner);
+  });
+
+  it("ScrollView: scrollY keeps child hit aligned with visible content", () => {
+    const root = new ViewNode(yoga, "View");
+    root.layout = { left: 0, top: 0, width: 200, height: 200 };
+    const scroll = new ScrollViewNode(yoga);
+    scroll.layout = { left: 0, top: 0, width: 100, height: 100 };
+    scroll.scrollY = 80;
+    const content = new ViewNode(yoga, "View");
+    content.layout = { left: 0, top: 0, width: 100, height: 300 };
+    scroll.appendChild(content);
+    root.appendChild(scroll);
+    expect(hitTest(root, 50, 50, canvasKit)).toBe(content);
   });
 
   it("respects translate transform for hit target", () => {

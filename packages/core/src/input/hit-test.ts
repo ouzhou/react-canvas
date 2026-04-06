@@ -4,6 +4,7 @@ import { getSortedChildrenForPaint } from "../render/children-z-order.ts";
 import { buildLocalTransformMatrix } from "../render/transform.ts";
 import { isDisplayNone } from "../layout/layout.ts";
 import type { TextNode } from "../scene/text-node.ts";
+import type { ScrollViewNode } from "../scene/scroll-view-node.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
 function pointInRect(px: number, py: number, x: number, y: number, w: number, h: number): boolean {
@@ -77,10 +78,19 @@ function hitTestRecursive(
     return node as TextNode;
   }
 
+  let worldForChildren = world;
+  if (node.type === "ScrollView") {
+    const sv = node as ScrollViewNode;
+    worldForChildren = canvasKit.Matrix.multiply(
+      world,
+      canvasKit.Matrix.translated(-sv.scrollX, -sv.scrollY),
+    );
+  }
+
   const ordered = getSortedChildrenForPaint(node);
   for (let i = ordered.length - 1; i >= 0; i--) {
     const c = ordered[i]!;
-    const hit = hitTestRecursive(c as ViewNode, pageX, pageY, canvasKit, world);
+    const hit = hitTestRecursive(c as ViewNode, pageX, pageY, canvasKit, worldForChildren);
     if (hit) return hit;
   }
 
