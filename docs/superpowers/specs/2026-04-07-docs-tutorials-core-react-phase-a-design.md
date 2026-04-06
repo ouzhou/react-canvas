@@ -37,9 +37,9 @@
 | 4    | 指针与事件   | `guides/pointer.mdx`        | `guides/pointer`        | 阶段三         | pointer                         |
 | 5    | 图片与 SVG   | `guides/image-svg.mdx`      | `guides/image-svg`      | 阶段四 Step 8  | image-svg                       |
 
-**保留** 现有 **`core/`**、**`react/`** 的 **概览** 页：在 `core/index.mdx` / `react/index.mdx` 中用 **Card** 指向 **`guides/`** 各章（实现时写清链接）。
+**不再提供** 独立路由 **`/core/`**、**`/react/`** 概览页：Core 与 React 入口统一为 **`/guides/*`** 教程（单页 **Tabs**）及首页 / 入门链接。
 
-**侧栏：** 在 `astro.config.mjs` 的 `starlight.sidebar` 中 **入门** 组内 **`intro/quickstart`** 紧接安装/路线图/撰写指南之后；**新增** 分组 **教程**，`items` 为上表 `guides/*` 五条（label 可用中文短名）。
+**侧栏：** 在 `astro.config.mjs` 的 `starlight.sidebar` 中 **入门** 组内含 **`intro/quickstart`**；**教程** 分组 `items` 为上表 `guides/*` 五条；**不包含** 单独的 Core / React 分组。
 
 ---
 

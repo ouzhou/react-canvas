@@ -62,14 +62,6 @@ export default defineConfig({
           ],
         },
         {
-          label: "Core（原生 TS）",
-          items: [{ label: "概览", slug: "core" }],
-        },
-        {
-          label: "React",
-          items: [{ label: "概览", slug: "react" }],
-        },
-        {
           label: "UI 组件库",
           items: [
             { label: "概览", slug: "ui" },

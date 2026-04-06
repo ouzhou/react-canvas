@@ -111,16 +111,9 @@ import { Tabs, TabItem } from "@astrojs/starlight/components";
 
 ---
 
-### Task 5：更新 `core/index.mdx` 与 `react/index.mdx`
+### Task 5：（已随 IA 调整废弃）~~更新 `core/index.mdx` 与 `react/index.mdx`~~
 
-**Files：**
-
-- Modify: `apps/website/src/content/docs/core/index.mdx`
-- Modify: `apps/website/src/content/docs/react/index.mdx`
-
-- [ ] **Step 1：** 在 `core/index.mdx` 增加 **Card**（或段落 + 列表）指向 **`/guides/runtime-layout/`** 等教程入口。
-
-- [ ] **Step 2：** 在 `react/index.mdx` 同样指向 **`/intro/quickstart/`** 与 **`guides/`** 各章。
+独立 **`/core`**、**`/react`** 概览已删除；教程入口以 **`guides/`** 与首页为准。
 
 ---
 

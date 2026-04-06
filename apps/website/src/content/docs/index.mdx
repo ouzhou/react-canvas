@@ -12,12 +12,9 @@ hero:
     - text: 快速上手
       link: /intro/quickstart/
       icon: rocket
-    - text: Core 概览
-      link: /core/
-      icon: document
-    - text: React 概览
-      link: /react/
-      icon: document
+    - text: 教程
+      link: /guides/runtime-layout/
+      icon: open-book
     - text: UI 组件库
       link: /ui/
       icon: document
@@ -33,15 +30,13 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
     [路线图导读](/intro/roadmap/)。
   </Card>
   <Card title="教程" icon="open-book">
-    [运行时与布局](/guides/runtime-layout/) 起，按侧栏 **教程** 顺序阅读（Core / React 同页 Tabs）。
-  </Card>
-  <Card title="Core（原生 TS）" icon="document">
-    [Core 概览](/core/) 与仓库 `docs/core` 专文。
-  </Card>
-  <Card title="React" icon="document">
-    [React 概览](/react/) 与 Playground 示例。
+    [运行时与布局](/guides/runtime-layout/) 起，侧栏 **教程** 内各章用 **Tabs** 并列 **Core（TS）**
+    与 **React**；仓库设计长文见 GitHub `docs/`。
   </Card>
   <Card title="Playground" icon="laptop">
     交互示例见侧栏 **Playground**。
+  </Card>
+  <Card title="UI 组件库" icon="document">
+    [@react-canvas/ui](/ui/) 主题与组件（画布内 UI，非文档站壳）。
   </Card>
 </CardGrid>

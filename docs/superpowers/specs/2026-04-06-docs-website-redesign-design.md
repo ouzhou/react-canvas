@@ -26,17 +26,17 @@
 
 ## 2. 信息架构（侧栏顶层）
 
-下列 **5 组**为已定稿的顶层分组（顺序可在实现时微调）。
+下列分组为已定稿（顺序可在实现时微调）。**修订说明（2026-04-07）：** 不再使用独立 **`/core`**、**`/react`** 侧栏分区；**类型 ① / ②** 的教程统一落在 **`guides/`**，单页用 **`Tabs`（TS | React）**（见 [2026-04-07-docs-tutorials-core-react-phase-a-design.md](./2026-04-07-docs-tutorials-core-react-phase-a-design.md)）。
 
-| 分组                | 含义                                                                      | 与 roadmap / 内容类型                                                                                                 |
-| ------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **入门**            | 项目简介、安装、最小示例、路线图导读（摘要 + 链至 `development-roadmap`） | 全局                                                                                                                  |
-| **Core（原生 TS）** | 直接使用 `@react-canvas/core` 的概念与示例                                | 路线图阶段一～四中与 core 直接相关的章节；内容类型 **①**                                                              |
-| **React**           | `Canvas` / `CanvasProvider`、宿主组件、交互等                             | 阶段二～四等；与 Core **同构**的示例与说明；内容类型 **②**                                                            |
-| **UI 组件库**       | `@react-canvas/ui`：主题、各导出组件                                      | 路线图并行演进部分；内容类型 **③**，**一组件一章（或 autogenerate 目录下一页一项）**                                  |
-| **参考 / 附录**     | API 索引、运行时结构约束（R-\*）、术语、外链至仓库专文                    | `autogenerate` 或手写索引；与 [runtime-structure-constraints.md](../../react/runtime-structure-constraints.md) 等互链 |
+| 分组            | 含义                                                                                | 与 roadmap / 内容类型                                                                                                 |
+| --------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **入门**        | 项目简介、安装、快速上手、路线图导读、撰写指南（摘要 + 链至 `development-roadmap`） | 全局                                                                                                                  |
+| **教程**        | **`guides/`**：按阶段的可跟做章节；**Tabs** 并列 Core（TS）与 React                 | 路线图 M1→M4 等；内容类型 **① + ②** 同页呈现                                                                          |
+| **UI 组件库**   | `@react-canvas/ui`：主题、各导出组件                                                | 路线图并行演进部分；内容类型 **③**，**一组件一章（或 autogenerate 目录下一页一项）**                                  |
+| **Playground**  | 在线交互示例                                                                        | 与教程互链                                                                                                            |
+| **参考 / 附录** | API 索引、运行时结构约束（R-\*）、术语、外链至仓库专文                              | `autogenerate` 或手写索引；与 [runtime-structure-constraints.md](../../react/runtime-structure-constraints.md) 等互链 |
 
-**Core 与 React 的「同构」约定：** 同一能力优先在单页内用 **`Tabs`** 呈现「TS | React」；若拆成两页，文首用 **`Card`** 互链。  
+**Core 与 React 的「同构」约定：** 同一能力在 **`guides/`** 单页内用 **`Tabs`** 呈现「TS | React」；一般不再拆成 **`/core/*`** 与 **`/react/*`** 两套路由。  
 **UI 组件库** 单页建议结构：**依赖与主题 → 最小示例 → 变体 / API 表**（可用 **`Steps`** 引导流程）。
 
 ---
@@ -80,12 +80,11 @@ apps/website/src/content/docs/
   intro/                       # 入门
     installation.mdx
     roadmap.mdx                # 路线图导读（链至仓库 development-roadmap）
+    quickstart.mdx             # 快速上手
 
-  core/                        # 原生 TS + core（类型 ①）
-    ...                        # 按 roadmap 能力分文件，命名与侧栏 slug 对齐
-
-  react/                       # React（类型 ②）
-    ...                        # 与 core 同主题时可同名不同路径，或单页 Tabs
+  guides/                      # 教程（Tabs：Core TS | React）
+    runtime-layout.mdx
+    ...
 
   ui/                          # @react-canvas/ui（类型 ③）
     ...                        # 每组件一文件，或子目录 + autogenerate
