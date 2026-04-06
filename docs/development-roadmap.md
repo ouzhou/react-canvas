@@ -2,7 +2,7 @@
 
 > 基于 [技术调研报告](./core/technical-research.md) 的结论，结合项目当前进度，制定分阶段开发计划。
 
-**说明：** 阶段一～三及阶段四的 **Image / SvgPath** 已落地；**`@react-canvas/ui`**（主题、画布侧组件如 `Button` 等）在演进中，专项设计见 [react-canvas-ui-phase-1-design.md](./superpowers/specs/2026-04-05-react-canvas-ui-phase-1-design.md)。**滚动 / overflow 裁剪（阶段四 Step 9）**、动画、无障碍等仍多为待实现。
+**说明：** 阶段一～三及阶段四的 **Image / SvgPath** 已落地；**`@react-canvas/ui`**（主题、画布侧组件如 `Button` 等）在演进中，专项设计见 [react-canvas-ui-phase-1-design.md](./superpowers/specs/2026-04-05-react-canvas-ui-phase-1-design.md)。**阶段四 Step 9** 已交付 **`ScrollView` V1**（纵向、拖拽与滚轮；规格见 [step-9-scrollview-design.md](./superpowers/specs/2026-04-06-step-9-scrollview-design.md)）；**惯性滚动**等仍为后续。动画、无障碍等仍多为待实现。
 
 ---
 
@@ -11,14 +11,14 @@
 > 按 **路线图阶段（一～六）** 与 **Step 编号** 汇总整体完成度；与下文 **[当前进度](#当前进度)**（按能力模块拆解）互为补充。  
 > **`@react-canvas/ui`** 为主题与复合组件库，**不绑定单一阶段编号**，与阶段六「完善与打磨」并行演进。
 
-| 阶段             | 规划 Step | 状态            | 说明                                                                                            |
-| ---------------- | --------- | --------------- | ----------------------------------------------------------------------------------------------- |
-| 一、核心渲染管线 | 1–3       | ✅ **已完成**   | Yoga、CanvasKit、Reconciler、`Canvas` / `CanvasProvider`、帧调度等                              |
-| 二、文字能力     | 4–5       | ✅ **已完成**   | `Text`、Paragraph 测量/绘制、嵌套 Text、换行、`numberOfLines` 等                                |
-| 三、交互能力     | 6         | ✅ **已完成**   | 指针、`hitTest`、`onPointer*` / `onClick`、合成 `pointerenter`/`leave` 等                       |
-| 四、多媒体与滚动 | 8–9       | 🔶 **部分完成** | **Step 8** `Image` / `SvgPath` 已交付；**Step 9** `overflow` 裁剪、ScrollView **未开始**        |
-| 五、高级绘制能力 | 10        | ❌ **未开始**   | 阴影、渐变、`clipPath`、`transform`、自定义字体等                                               |
-| 六、完善与打磨   | 11–16     | ❌ **未开始**   | StyleSheet、动画、无障碍、FlatList、DevTools、文档与 Playground 等；**Step 16** Tailwind 为可选 |
+| 阶段             | 规划 Step | 状态            | 说明                                                                                                                                         |
+| ---------------- | --------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 一、核心渲染管线 | 1–3       | ✅ **已完成**   | Yoga、CanvasKit、Reconciler、`Canvas` / `CanvasProvider`、帧调度等                                                                           |
+| 二、文字能力     | 4–5       | ✅ **已完成**   | `Text`、Paragraph 测量/绘制、嵌套 Text、换行、`numberOfLines` 等                                                                             |
+| 三、交互能力     | 6         | ✅ **已完成**   | 指针、`hitTest`、`onPointer*` / `onClick`、合成 `pointerenter`/`leave` 等                                                                    |
+| 四、多媒体与滚动 | 8–9       | 🔶 **部分完成** | **Step 8** `Image` / `SvgPath` 已交付；**Step 9** `overflow: hidden` 已有；**`ScrollView` V1**（纵向、指针/滚轮）已交付；惯性/弹性等仍为后续 |
+| 五、高级绘制能力 | 10        | ❌ **未开始**   | 阴影、渐变、`clipPath`、`transform`、自定义字体等                                                                                            |
+| 六、完善与打磨   | 11–16     | ❌ **未开始**   | StyleSheet、动画、无障碍、FlatList、DevTools、文档与 Playground 等；**Step 16** Tailwind 为可选                                              |
 
 ---
 
@@ -26,24 +26,24 @@
 
 > 按 **模块/能力** 列状态；**阶段与 Step 粒度**见上节 [阶段进度](#阶段进度)。
 
-| 模块                  | 状态          | 说明                                                                                    |
-| --------------------- | ------------- | --------------------------------------------------------------------------------------- |
-| monorepo 结构         | ✅ 完成       | `packages/core` + `packages/react` + `packages/ui` + `apps/website`                     |
-| `ViewNode` 场景树     | ✅ 阶段一基线 | `packages/core`：树操作、样式拆分、布局回写、基础绘制                                   |
-| Reconciler HostConfig | ✅ 持续演进   | `packages/react`：`View` / `Text` / `Image` / `SvgPath` 等宿主、`commitUpdate`、场景根  |
-| 绘制管线              | ✅ 阶段一基线 | `paintScene` / `paintNode`；站内在线 demo 见 playground 等页                            |
-| Yoga 布局             | ✅ 阶段一基线 | `yoga-layout`（WASM async，版本见根目录 `pnpm-workspace.yaml` catalog）                 |
-| CanvasKit (Skia)      | ✅ 阶段一基线 | 直接使用 Skia WASM（`canvaskit-wasm`，catalog 锁定版本），不经 Canvas 2D                |
-| Text 节点             | ✅ 阶段二基线 | `TextNode`、Paragraph 测量/绘制、嵌套 `Text`、`numberOfLines` / `ellipsizeMode` 等      |
-| 事件系统              | ✅ 阶段三基线 | DOM `pointer*`、`hitTest`（含 `Text` 整框）、**冒泡**分发、合成 `onClick`、hover 辅助等 |
-| Image 组件            | ✅ 阶段四基线 | 异步解码、`resizeMode`、`SkImage` 缓存、`onLoad` / `onError`                            |
-| SvgPath 组件          | ✅ 阶段四基线 | `d` + `viewBox` 等比绘制、stroke/fill（见阶段四专项规格）                               |
-| `@react-canvas/ui`    | 🔶 演进中     | 主题 Token、`Button`、样式合并辅助等；依赖 `core` / `react`                             |
-| 滚动 / 裁剪           | ❌ 未开始     | `overflow: hidden`、ScrollView、惯性滚动等（阶段四 Step 9）                             |
-| 动画系统              | ❌ 未开始     |                                                                                         |
-| 无障碍                | ❌ 未开始     |                                                                                         |
-| Tailwind / className  | 🔲 远期可选   | 见阶段六 Step 16，**优先级极低**（收益有限，无法等同 Web）                              |
-| 运行时结构校验        | 🔶 持续扩展   | R-ROOT-1、R-HOST-1～5（`Text` 相关）等已随实现强制；Portal 等仍按专文约定               |
+| 模块                  | 状态          | 说明                                                                                                                                                        |
+| --------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| monorepo 结构         | ✅ 完成       | `packages/core` + `packages/react` + `packages/ui` + `apps/website`                                                                                         |
+| `ViewNode` 场景树     | ✅ 阶段一基线 | `packages/core`：树操作、样式拆分、布局回写、基础绘制                                                                                                       |
+| Reconciler HostConfig | ✅ 持续演进   | `packages/react`：`View` / `Text` / `Image` / `SvgPath` 等宿主、`commitUpdate`、场景根                                                                      |
+| 绘制管线              | ✅ 阶段一基线 | `paintScene` / `paintNode`；站内在线 demo 见 playground 等页                                                                                                |
+| Yoga 布局             | ✅ 阶段一基线 | `yoga-layout`（WASM async，版本见根目录 `pnpm-workspace.yaml` catalog）                                                                                     |
+| CanvasKit (Skia)      | ✅ 阶段一基线 | 直接使用 Skia WASM（`canvaskit-wasm`，catalog 锁定版本），不经 Canvas 2D                                                                                    |
+| Text 节点             | ✅ 阶段二基线 | `TextNode`、Paragraph 测量/绘制、嵌套 `Text`、`numberOfLines` / `ellipsizeMode` 等                                                                          |
+| 事件系统              | ✅ 阶段三基线 | DOM `pointer*`、`hitTest`（含 `Text` 整框）、**冒泡**分发、合成 `onClick`、hover 辅助等                                                                     |
+| Image 组件            | ✅ 阶段四基线 | 异步解码、`resizeMode`、`SkImage` 缓存、`onLoad` / `onError`                                                                                                |
+| SvgPath 组件          | ✅ 阶段四基线 | `d` + `viewBox` 等比绘制、stroke/fill（见阶段四专项规格）                                                                                                   |
+| `@react-canvas/ui`    | 🔶 演进中     | 主题 Token、`Button`、样式合并辅助等；依赖 `core` / `react`                                                                                                 |
+| 滚动 / 裁剪           | 🔶 部分完成   | `overflow: hidden`；**`ScrollView`** V1（见 [step-9-scrollview-design.md](./superpowers/specs/2026-04-06-step-9-scrollview-design.md)）；惯性滚动等仍为后续 |
+| 动画系统              | ❌ 未开始     |                                                                                                                                                             |
+| 无障碍                | ❌ 未开始     |                                                                                                                                                             |
+| Tailwind / className  | 🔲 远期可选   | 见阶段六 Step 16，**优先级极低**（收益有限，无法等同 Web）                                                                                                  |
+| 运行时结构校验        | 🔶 持续扩展   | R-ROOT-1、R-HOST-1～5（`Text` 相关）等已随实现强制；Portal 等仍按专文约定                                                                                   |
 
 ---
 
@@ -295,7 +295,7 @@ function HoverCard() {
 > **规格书：** [superpowers/specs/2026-04-05-phase-4-image-svgpath-design.md](./superpowers/specs/2026-04-05-phase-4-image-svgpath-design.md)  
 > **实现计划：** [superpowers/plans/2026-04-05-phase-4-implementation.md](./superpowers/plans/2026-04-05-phase-4-implementation.md)
 
-**当前实现状态：** Step 8（**Image** + **SvgPath**）已落地；**Step 9（滚动 / `overflow` 裁剪）** 仍为待办。
+**当前实现状态：** Step 8（**Image** + **SvgPath**）已落地；**Step 9（滚动）** 已落地 **`ScrollView` V1**（`ScrollViewNode`、绘制/命中一致、画布 `pointer`/`wheel`）；**惯性滚动**与路线图表格中其它可选项仍为待办。
 
 ### Step 8 — Image 与 SvgPath
 
@@ -467,15 +467,15 @@ function HoverCard() {
 
 ## 里程碑与交付物
 
-| 里程碑                     | 阶段              | 标志性能力                                                                            | 预估复杂度   |
-| -------------------------- | ----------------- | ------------------------------------------------------------------------------------- | ------------ |
-| **M1 — "看到矩形"**        | 阶段一 Step 1-3   | Yoga + CanvasKit + Reconciler，Flexbox 布局的嵌套 View 通过 Skia 绘制                 | 中高         |
-| **M2 — "看到文字"**        | 阶段二 Step 4-5   | Text 换行（Skia Paragraph）、嵌套样式、省略号（**已交付**）                           | 高           |
-| **M3 — "点得到"**          | 阶段三 Step 6     | 指针命中、`onClick` + 低级 `onPointer*`；`onPointerEnter` / `Leave` 等（**已交付**）  | 中           |
-| **M4 — "完整 UI"**         | 阶段四 Step 8-9   | **Image + SvgPath（Step 8 已交付）**；ScrollView / `overflow` 裁剪（**Step 9 待办**） | 中           |
-| **M5 — "高级绘制"**        | 阶段五 Step 10    | 阴影、渐变、clipPath、transform                                                       | 中           |
-| **M6 — "生产就绪"**        | 阶段六 Step 11-15 | 动画、无障碍、FlatList、DevTools                                                      | 高           |
-| **M6+ — Tailwind（可选）** | 阶段六 Step 16    | 构建期 `className` → `style`，**极低优先级**，不阻塞发布                              | 低（可不做） |
+| 里程碑                     | 阶段              | 标志性能力                                                                                                     | 预估复杂度   |
+| -------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| **M1 — "看到矩形"**        | 阶段一 Step 1-3   | Yoga + CanvasKit + Reconciler，Flexbox 布局的嵌套 View 通过 Skia 绘制                                          | 中高         |
+| **M2 — "看到文字"**        | 阶段二 Step 4-5   | Text 换行（Skia Paragraph）、嵌套样式、省略号（**已交付**）                                                    | 高           |
+| **M3 — "点得到"**          | 阶段三 Step 6     | 指针命中、`onClick` + 低级 `onPointer*`；`onPointerEnter` / `Leave` 等（**已交付**）                           | 中           |
+| **M4 — "完整 UI"**         | 阶段四 Step 8-9   | **Image + SvgPath（Step 8 已交付）**；**`ScrollView` V1 + `overflow` 裁剪（Step 9 部分交付）**；惯性等仍为后续 | 中           |
+| **M5 — "高级绘制"**        | 阶段五 Step 10    | 阴影、渐变、clipPath、transform                                                                                | 中           |
+| **M6 — "生产就绪"**        | 阶段六 Step 11-15 | 动画、无障碍、FlatList、DevTools                                                                               | 高           |
+| **M6+ — Tailwind（可选）** | 阶段六 Step 16    | 构建期 `className` → `style`，**极低优先级**，不阻塞发布                                                       | 低（可不做） |
 
 ---
 
