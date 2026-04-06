@@ -87,6 +87,7 @@ export default defineConfig({
             { label: "Pointer", slug: "playground/pointer" },
             { label: "Image & SVG", slug: "playground/image-svg" },
             { label: "Icon", slug: "playground/icon" },
+            { label: "Two-factor card", slug: "playground/two-factor-card" },
             { label: "Multi-canvas", slug: "playground/multi-canvas" },
           ],
         },
