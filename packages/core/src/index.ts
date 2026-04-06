@@ -21,6 +21,7 @@ export {
 export type { CanvasKit, CanvasKitInitOptions, Surface } from "canvaskit-wasm";
 export { ViewNode } from "./scene/view-node.ts";
 export type { ViewVisualProps } from "./scene/view-node.ts";
+export { ScrollViewNode } from "./scene/scroll-view-node.ts";
 export type { SceneNode } from "./scene/scene-node.ts";
 export { TextNode, collectParagraphSpans, isTextInstance } from "./scene/text-node.ts";
 export type { TextInstance } from "./scene/text-node.ts";

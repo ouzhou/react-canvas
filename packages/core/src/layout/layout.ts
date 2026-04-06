@@ -19,6 +19,15 @@ export function syncLayoutFromYoga(node: ViewNode): void {
   for (const c of node.children) syncLayoutFromYoga(c as ViewNode);
 }
 
+function clampScrollViewsAfterLayout(node: ViewNode): void {
+  if (node.type === "ScrollView") {
+    (node as ViewNode & { clampScrollOffsetsAfterLayout(): void }).clampScrollOffsetsAfterLayout();
+  }
+  for (const c of node.children) {
+    clampScrollViewsAfterLayout(c as ViewNode);
+  }
+}
+
 /** Root-only: runs Yoga layout then copies computed boxes onto each ViewNode. */
 export function calculateLayoutRoot(
   root: ViewNode,
@@ -31,6 +40,7 @@ export function calculateLayoutRoot(
   try {
     root.yogaNode.calculateLayout(width, height, direction);
     syncLayoutFromYoga(root);
+    clampScrollViewsAfterLayout(root);
   } finally {
     clearLayoutCanvasKit();
   }
