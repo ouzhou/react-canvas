@@ -190,7 +190,26 @@ export function Canvas({ width, height, children }: CanvasProps) {
 
       layoutKeyRef.current = { w: lw, h: lh, yoga, canvasKit };
 
-      detachPointerRef.current = attachCanvasPointerHandlers(canvas, sceneRoot, lw, lh, canvasKit);
+      detachPointerRef.current = attachCanvasPointerHandlers(
+        canvas,
+        sceneRoot,
+        lw,
+        lh,
+        canvasKit,
+        () => {
+          const fr = frameRef.current;
+          if (fr.surface && fr.canvasKit && fr.sceneRoot) {
+            queueLayoutPaintFrame(
+              fr.surface,
+              fr.canvasKit,
+              fr.sceneRoot,
+              fr.width,
+              fr.height,
+              fr.dpr,
+            );
+          }
+        },
+      );
     }
 
     const reconciler = reconcilerRef.current;

@@ -7,8 +7,19 @@ import {
   shouldEmitClick,
   type CanvasKit,
   type PointerDownSnapshot,
+  type ScrollViewNode,
   type ViewNode,
 } from "@react-canvas/core";
+
+function findAncestorScrollView(leaf: ViewNode | null): ScrollViewNode | null {
+  let n: ViewNode | null = leaf;
+  while (n) {
+    if (n.type === "ScrollView") return n as ScrollViewNode;
+    if (n.parent === null) break;
+    n = n.parent as ViewNode;
+  }
+  return null;
+}
 
 /**
  * 自命中叶沿父链查找首个 `props.cursor`，用于同步 `<canvas style="cursor">`。
@@ -53,7 +64,9 @@ export function clientToCanvasLogical(
 
 /**
  * Registers `pointerdown` on `canvas`; `pointermove` on `document` (for hover + move outside canvas);
- * `pointerup` / `pointercancel` on `document`.
+ * `pointerup` / `pointercancel` on `document`。
+ *
+ * `requestLayoutPaint`：在仅改变 `ScrollView` 的 `scrollX`/`scrollY` 时触发与 `queueLayoutPaintFrame` 一致的重绘。
  */
 export function attachCanvasPointerHandlers(
   canvas: HTMLCanvasElement,
@@ -61,8 +74,11 @@ export function attachCanvasPointerHandlers(
   logicalWidth: number,
   logicalHeight: number,
   canvasKit: CanvasKit,
+  requestLayoutPaint: () => void,
 ): () => void {
   const down = new Map<number, PointerDownSnapshot>();
+  /** 在 `ScrollView` 视口内按下时拖拽滚动（pointerId → 状态）。 */
+  const scrollDrag = new Map<number, { node: ScrollViewNode; lastPageY: number }>();
   /** Deepest hit under the mouse for hover (mouse / pen only). */
   let hoverLeaf: ViewNode | null = null;
   let lastPage = { x: 0, y: 0 };
@@ -75,11 +91,26 @@ export function attachCanvasPointerHandlers(
     const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
     if (!hit) return;
     down.set(ev.pointerId, { pageX, pageY, target: hit });
+    const sv = findAncestorScrollView(hit);
+    if (sv) {
+      scrollDrag.set(ev.pointerId, { node: sv, lastPageY: pageY });
+    }
     const path = buildPathToRoot(hit, sceneRoot);
     dispatchBubble(path, sceneRoot, "pointerdown", pageX, pageY, ev.pointerId, ev.timeStamp);
   };
 
   const onPointerMove = (ev: PointerEvent) => {
+    const drag = scrollDrag.get(ev.pointerId);
+    if (drag) {
+      const { y: pageY } = route(ev);
+      const deltaY = pageY - drag.lastPageY;
+      drag.node.scrollY += deltaY;
+      drag.node.clampScrollOffsetsAfterLayout();
+      drag.lastPageY = pageY;
+      requestLayoutPaint();
+      return;
+    }
+
     const r = canvas.getBoundingClientRect();
     const inside =
       ev.clientX >= r.left && ev.clientX < r.right && ev.clientY >= r.top && ev.clientY < r.bottom;
@@ -146,6 +177,7 @@ export function attachCanvasPointerHandlers(
   };
 
   const onPointerUpOrCancel = (ev: PointerEvent) => {
+    scrollDrag.delete(ev.pointerId);
     const { x: pageX, y: pageY } = route(ev);
     const snap = down.get(ev.pointerId);
     down.delete(ev.pointerId);
@@ -170,16 +202,36 @@ export function attachCanvasPointerHandlers(
     }
   };
 
+  const onWheel = (ev: WheelEvent) => {
+    const { x: pageX, y: pageY } = clientToCanvasLogical(
+      ev.clientX,
+      ev.clientY,
+      canvas,
+      logicalWidth,
+      logicalHeight,
+    );
+    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
+    if (!hit) return;
+    const sv = findAncestorScrollView(hit);
+    if (!sv) return;
+    ev.preventDefault();
+    sv.scrollY += ev.deltaY;
+    sv.clampScrollOffsetsAfterLayout();
+    requestLayoutPaint();
+  };
+
   canvas.addEventListener("pointerdown", onPointerDown);
   document.addEventListener("pointermove", onPointerMove);
   document.addEventListener("pointerup", onPointerUpOrCancel);
   document.addEventListener("pointercancel", onPointerUpOrCancel);
+  canvas.addEventListener("wheel", onWheel, { passive: false });
 
   return () => {
     canvas.removeEventListener("pointerdown", onPointerDown);
     document.removeEventListener("pointermove", onPointerMove);
     document.removeEventListener("pointerup", onPointerUpOrCancel);
     document.removeEventListener("pointercancel", onPointerUpOrCancel);
+    canvas.removeEventListener("wheel", onWheel);
     canvas.style.cursor = "";
   };
 }
