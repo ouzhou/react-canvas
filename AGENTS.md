@@ -78,11 +78,11 @@ For GitHub Actions, consider using [`voidzero-dev/setup-vp`](https://github.com/
   with:
     cache: true
 - run: vp check
-- run: vp test
+- run: vp run -r test
 ```
 
 ## Review Checklist for Agents
 
 - [ ] Run `vp install` after pulling remote changes and before getting started.
-- [ ] Run `vp check` and `vp test` to validate changes.
+- [ ] Run `vp check` and **`pnpm test`**（或 `vp run -r test`）验证变更；**勿**在仓库根目录单独运行 `vp test`（会使用根 `vite.config`，无各包 `jsdom` 等测试选项）。
 <!--VITE PLUS END-->
