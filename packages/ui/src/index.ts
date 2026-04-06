@@ -1,6 +1,8 @@
 import "./types/augment.ts";
 
 export { Button, type ButtonProps } from "./components/button/button.tsx";
+export { Icon } from "./components/icon/icon.tsx";
+export type { IconProps, LucideIconData } from "./components/icon/types.ts";
 export {
   getButtonStyles,
   type ButtonSize,

@@ -27,7 +27,7 @@
 
 - **完整 SVG 文档**：整段 `<svg>...</svg>`、XML 解析、`<g>` 子树、`<defs>`、CSS、SMIL 动画。
 - **非 path 图元**：`<circle>`、`<rect>` 等（若需要，后续单独规格或先在外部转为 `d`）。
-- **`Icon` / Lucide 注册表**：可作为 **`SvgPath` 之上的薄封装** 或独立包，**不**作为本规格必达宿主类型；数据流仍为 **`d` + viewBox**。
+- **`Icon` / Lucide 注册表**：可作为 **`SvgPath` 之上的薄封装** 或独立包，**不**作为本规格必达宿主类型；数据流仍为 **`d` + viewBox**。细化 API 与依赖见 [2026-04-08-ui-icon-lucide-design.md](./2026-04-08-ui-icon-lucide-design.md)。
 - **路径级命中**：`Path.contains()` 等留作后续优化；v1 与 roadmap 一致采用 **AABB**。
 - **图片格式以外的 source**：如 `require()` / `ArrayBuffer` 可作为后续扩展，本规格 **`source` 仅 `{ uri: string }`**。
 

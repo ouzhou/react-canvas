@@ -1,0 +1,32 @@
+---
+title: Icon
+description: "@react-canvas/ui 的 Icon 组件（Lucide 图标数据 + SvgPath）。"
+---
+
+import { IconDocDemo } from "../../../components/IconDocDemo.tsx";
+
+`Icon` 将 [`@lucide/icons`](https://lucide.dev/guide/packages/icons) 单文件导出的矢量数据（`path` / `circle` 等）绘制为画布上的 `<SvgPath>`。应用需安装 **`@lucide/icons`**（与 `@react-canvas/ui` 的 peer 版本一致）。
+
+## 用法
+
+按需导入图标模块，再传给 `icon`：
+
+```tsx
+import camera from "@lucide/icons/icons/camera";
+import { Icon } from "@react-canvas/ui";
+
+<Icon icon={camera} size={48} color="#e2e8f0" strokeWidth={1.5} />;
+```
+
+常用 props：`size`、`color`（默认作用在 **stroke**）、`stroke` / `fill`、`strokeWidth`、`style` 以及画布交互回调（与 `View` 一致）。
+
+## 示例
+
+下方画布内为 **camera** 与 **house** 两个图标（同一页内嵌，不跳转 Playground）。
+
+<IconDocDemo client:load />
+
+## 说明
+
+- 与 DOM 版 `lucide-react` 不同：Canvas 侧使用 **图标数据包** `@lucide/icons`，便于 tree-shake。
+- 若 `icon.node` 无法解析出可绘制路径，会触发 `onError`（若传入），且该次不绘制矢量。

@@ -4,6 +4,7 @@ packages:
 
 catalog:
   "@astrojs/starlight-tailwind": ^5.0.0
+  "@lucide/icons": ^1.7.0
   "@tailwindcss/vite": ^4.2.2
   "@types/node": ^24.12.2
   "@types/react": ^19.2.14
@@ -13,6 +14,7 @@ catalog:
   "@vitejs/plugin-react": 4.7.0
   canvaskit-wasm: ^0.41.0
   jsdom: ^29.0.1
+  lucide-react: ^1.7.0
   react: 19.2.0
   react-dom: 19.2.0
   react-reconciler: 0.33.0

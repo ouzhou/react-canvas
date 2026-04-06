@@ -72,6 +72,7 @@ export default defineConfig({
           items: [
             { label: "概览", slug: "ui" },
             { label: "Button", slug: "ui/button" },
+            { label: "Icon", slug: "ui/icon" },
           ],
         },
         {
