@@ -3,4 +3,29 @@ title: React 概览
 description: CanvasProvider、宿主组件与交互。
 ---
 
-本节与 **Core** 并行，示例以 React 为主；与 Core 同主题的内容将用 **Tabs** 并列。占位阶段请使用 **Playground**。
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## 从哪开始
+
+<Card title="快速上手" icon="rocket">
+  先读 [快速上手](/intro/quickstart/)，再打开 [Phase 1 Playground](/playground/phase-1/) 对照。
+</Card>
+
+## 教程（与 Core 同页 Tabs）
+
+<CardGrid stagger>
+  <Card title="运行时与布局" icon="document">
+    [运行时与布局](/guides/runtime-layout/)
+  </Card>
+  <Card title="文字" icon="document">
+    [文字](/guides/text/)
+  </Card>
+  <Card title="指针与事件" icon="document">
+    [指针与事件](/guides/pointer/)
+  </Card>
+  <Card title="图片与 SVG" icon="document">
+    [图片与 SVG](/guides/image-svg/)
+  </Card>
+</CardGrid>
+
+运行时结构规则见 [运行时结构约束](/reference/constraints/)。

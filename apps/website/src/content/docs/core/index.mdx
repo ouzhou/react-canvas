@@ -3,4 +3,28 @@ title: Core（原生 TS）概览
 description: 使用 @react-canvas/core 的入口与路线图对应关系。
 ---
 
-本站本节将按路线图阶段补充 **不经过 React** 的 API 与示例。当前为占位页；可先使用 **Playground** 与仓库 `docs/core` 专文。
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+本站 **Core** 教程与 **React** 共用 **`/guides/`** 下各章，在单页内用 **Tabs** 区分 **Core（TS）** 与 **React**。
+
+## 教程入口
+
+<CardGrid stagger>
+  <Card title="快速上手（偏 React）" icon="rocket">
+    [快速上手](/intro/quickstart/)
+  </Card>
+  <Card title="运行时与布局" icon="document">
+    [运行时与布局](/guides/runtime-layout/)
+  </Card>
+  <Card title="文字" icon="document">
+    [文字](/guides/text/)
+  </Card>
+  <Card title="指针与事件" icon="document">
+    [指针与事件](/guides/pointer/)
+  </Card>
+  <Card title="图片与 SVG" icon="document">
+    [图片与 SVG](/guides/image-svg/)
+  </Card>
+</CardGrid>
+
+长文设计仍见仓库 `docs/core` 与 `docs/superpowers/specs`。

@@ -1,0 +1,31 @@
+---
+title: 快速上手
+description: 用 React 在几分钟内跑通第一个画布：CanvasProvider、Canvas 与 View。
+---
+
+import { Card } from "@astrojs/starlight/components";
+
+## 你会得到什么
+
+一块由 **Yoga** 布局、**CanvasKit（Skia WASM）** 绘制的画布，上面有一个可嵌套的 `View` 树。对应路线图 **阶段一 / M1**。
+
+## 最短路：React
+
+1. 在应用根部用 **`CanvasProvider`** 异步初始化 Yoga 与 CanvasKit（内部会 `initCanvasRuntime`）。
+2. 在树中放置 **`<Canvas>`**，且其**唯一**子节点为 **`<View>`**（或后续宿主）；再嵌套子 `View` 即可用 Flexbox 样式排版。
+
+更细的 API 与约束见 [运行时与布局](/guides/runtime-layout/) 与仓库 [phase-1-design.md](https://github.com/ouzhou/react-canvas/blob/main/docs/react/phase-1-design.md)。
+
+## 在线示例
+
+<Card title="Phase 1 Playground" icon="laptop">
+
+在浏览器里直接看可运行示例（本仓库文档站内嵌）：
+
+- [打开 Phase 1 Playground](/playground/phase-1/)
+
+</Card>
+
+## Core（原生 TS）从哪开始
+
+不经过 React 时，请使用 `@react-canvas/core` 的 **`initCanvasRuntime`**、**`ViewNode`**、布局与 **`paintScene`** 等；教程见 [运行时与布局](/guides/runtime-layout/) 的 **Core（TS）** 标签页。

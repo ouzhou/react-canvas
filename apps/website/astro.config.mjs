@@ -49,6 +49,16 @@ export default defineConfig({
             { label: "安装与开发", slug: "intro/installation" },
             { label: "路线图导读", slug: "intro/roadmap" },
             { label: "文档撰写指南", slug: "intro/authoring" },
+            { label: "快速上手", slug: "intro/quickstart" },
+          ],
+        },
+        {
+          label: "教程",
+          items: [
+            { label: "运行时与布局", slug: "guides/runtime-layout" },
+            { label: "文字", slug: "guides/text" },
+            { label: "指针与事件", slug: "guides/pointer" },
+            { label: "图片与 SVG", slug: "guides/image-svg" },
           ],
         },
         {

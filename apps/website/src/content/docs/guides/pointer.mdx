@@ -1,0 +1,44 @@
+---
+title: 指针与事件
+description: 命中测试、冒泡分发与 onClick（路线图阶段三）。
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+## 摘要
+
+**阶段三**：指针在 DOM 层捕获，经 **`hitTest`** 与 **`dispatchBubble`** 等在场景树上分发；对外以 **`onPointer*`**、合成 **`onClick`** 等为主。详见交互设计规格。
+
+<Tabs>
+  <TabItem label="Core（TS）">
+    ```ts
+    import { hitTest, dispatchBubble } from "@react-canvas/core";
+
+    // 概念：对页面坐标做 hitTest，再沿路径冒泡 dispatch
+    ```
+
+    API 与类型见 **`@react-canvas/core`** 的 **`input`** 相关导出。
+
+  </TabItem>
+  <TabItem label="React">
+    在宿主上声明 **`onPointerDown`** / **`onClick`** 等（与实现进度一致）。示例见 Playground。
+
+    ```tsx
+    <View
+      onClick={() => {
+        console.log("click");
+      }}
+      style={{ width: 100, height: 40, backgroundColor: "#4488ff" }}
+    />
+    ```
+
+  </TabItem>
+</Tabs>
+
+## Playground
+
+- [Pointer](/playground/pointer/)
+
+## 延伸阅读
+
+- [phase-3-interaction-design.md](https://github.com/ouzhou/react-canvas/blob/main/docs/superpowers/specs/2026-04-05-phase-3-interaction-design.md)
