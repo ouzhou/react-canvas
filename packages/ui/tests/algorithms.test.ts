@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
-import { compactAlgorithm, darkAlgorithm, defaultAlgorithm } from "../src/theme/algorithms.ts";
+import {
+  compactAlgorithm,
+  darkAlgorithm,
+  defaultAlgorithm,
+  lightenTowardsWhite,
+} from "../src/theme/algorithms.ts";
+import { getCanvasToken } from "../src/theme/get-canvas-token.ts";
 import { DEFAULT_SEED } from "../src/theme/seed.ts";
 
 describe("algorithms", () => {
@@ -23,5 +29,19 @@ describe("algorithms", () => {
     expect(d.colorBgLayout).toBeDefined();
     expect(d.colorBgLayout).not.toBe(base.colorBgLayout);
     expect(d.colorPrimary).not.toBe(base.colorPrimary);
+  });
+
+  it("defaultAlgorithm sets lighter colorPrimaryHover than colorPrimary", () => {
+    const t = defaultAlgorithm(DEFAULT_SEED);
+    expect(t.colorPrimaryHover).toBe(lightenTowardsWhite(t.colorPrimary, 0.15));
+    expect(t.colorBgHover).toBe("#fafafa");
+  });
+
+  it("dark theme primary hover is lighter than dark primary", () => {
+    const t = getCanvasToken({ appearance: "dark" });
+    const primary = t.colorPrimary;
+    const hover = t.colorPrimaryHover;
+    expect(hover).toBe(lightenTowardsWhite(primary, 0.1));
+    expect(hover).not.toBe(primary);
   });
 });

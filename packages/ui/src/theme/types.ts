@@ -8,7 +8,11 @@ export interface SeedToken {
 
 export interface CanvasToken {
   colorPrimary: string;
+  /** 主按钮悬停背景：比 `colorPrimary` 更浅（向白色混合）。 */
+  colorPrimaryHover: string;
   colorBgLayout: string;
+  /** 弱背景悬停（如 ghost 按钮）：比 `colorBgLayout` 略浅或略提亮。 */
+  colorBgHover: string;
   colorText: string;
   colorBorder: string;
   borderRadius: number;

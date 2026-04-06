@@ -1,7 +1,7 @@
 # `@react-canvas/ui` · Divider — 设计规格
 
 **日期：** 2026-04-09  
-**状态：** 待实现  
+**状态：** 已实现（以 `packages/ui` 与文档站为准）  
 **关联：** 与 `Button` 相同 **`token` / `CanvasThemeProvider` 约定**；布局基于 **`View` + `Text`**
 
 ---
@@ -47,7 +47,7 @@ export type DividerProps = {
 - **`orientation`**：
   - **`horizontal`**：纯线时为「高固定、宽由父布局拉伸」；带 **`children`** 时为 **row** 三栏。
   - **`vertical`**：纯线时为「宽固定、高由父布局拉伸」；带 **`children`** 时为 **column** 三栏。
-- **`children`**：中间区域内容，**由调用方提供 `Text`**（与 **`Button`** 一致），以便控制字号、颜色、字重。若传入 **字符串**，实现上可 **不**自动包 **`Text`**（减少隐式行为）；文档示例统一写 **`<Text>…</Text>`**。若希望与 **`Button`** 一样对 string 友好，可在实现阶段 **`typeof children === 'string'`** 时包一层 **`Text`**（规格允许作为小增强，需在实现计划中写清）。
+- **`children`**：中间区域内容，**由调用方提供 `Text`**（与 **`Button`** 一致），以便控制字号、颜色、字重。`@react-canvas/ui` 包内 JSX 类型未声明 **`Text`** 宿主，**v1 不**对字符串自动包 **`Text`**；请使用 **`<Text>…</Text>`**。
 
 ### 2.2 纯线默认尺寸（逻辑像素）
 

@@ -1,18 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
 import { checkboxBoxSize, getCheckboxStyles } from "../src/components/checkbox/variants.ts";
-import type { CanvasToken } from "../src/theme/types.ts";
+import { defaultAlgorithm } from "../src/theme/algorithms.ts";
+import { DEFAULT_SEED } from "../src/theme/seed.ts";
 
-const mockToken: CanvasToken = {
-  colorPrimary: "#1677ff",
-  colorBgLayout: "#f5f5f5",
-  colorText: "rgba(0,0,0,0.85)",
-  colorBorder: "#d9d9d9",
-  borderRadius: 6,
-  paddingSM: 8,
-  paddingMD: 12,
-  fontSizeSM: 12,
-  fontSizeMD: 14,
-};
+const mockToken = defaultAlgorithm(DEFAULT_SEED);
 
 describe("getCheckboxStyles", () => {
   it("md size uses 18x18 and border token", () => {

@@ -11,6 +11,7 @@ export {
   type AvatarSizePreset,
 } from "./components/avatar/variants.ts";
 export {
+  getButtonHoverStylePatch,
   getButtonStyles,
   type ButtonSize,
   type ButtonVariant,
@@ -30,7 +31,12 @@ export {
 } from "./components/switch/variants.ts";
 export { mergeViewStyles } from "./style/merge.ts";
 export { resolveSx, type SxCanvas } from "./style/sx.ts";
-export { compactAlgorithm, darkAlgorithm, defaultAlgorithm } from "./theme/algorithms.ts";
+export {
+  compactAlgorithm,
+  darkAlgorithm,
+  defaultAlgorithm,
+  lightenTowardsWhite,
+} from "./theme/algorithms.ts";
 export { CanvasThemeContext, CanvasThemeProvider, useCanvasToken } from "./theme/context.tsx";
 export type { CanvasThemeContextValue } from "./theme/context.tsx";
 export { getCanvasToken } from "./theme/get-canvas-token.ts";

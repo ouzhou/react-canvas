@@ -1,10 +1,15 @@
 import type { InteractionHandlers, ViewStyle } from "@react-canvas/core";
 import { View } from "@react-canvas/react";
-import { useContext, type ReactNode } from "react";
+import { useContext, useState, type ReactNode } from "react";
 import { mergeViewStyles } from "../../style/merge.ts";
 import { CanvasThemeContext } from "../../theme/context.tsx";
 import type { CanvasToken } from "../../theme/types.ts";
-import { getButtonStyles, type ButtonSize, type ButtonVariant } from "./variants.ts";
+import {
+  getButtonHoverStylePatch,
+  getButtonStyles,
+  type ButtonSize,
+  type ButtonVariant,
+} from "./variants.ts";
 
 export type ButtonProps = {
   variant?: ButtonVariant;
@@ -28,8 +33,11 @@ export function Button(props: ButtonProps) {
     disabled,
     style,
     children,
+    onPointerEnter,
+    onPointerLeave,
     ...handlers
   } = props;
+  const [hovered, setHovered] = useState(false);
   const token = tokenProp ?? ctx?.token;
   if (!token) {
     throw new Error(
@@ -44,12 +52,24 @@ export function Button(props: ButtonProps) {
   const merged = mergeViewStyles(
     base,
     getButtonStyles(variant, size, token),
+    !disabled && hovered ? getButtonHoverStylePatch(variant, token) : {},
     disabled ? { opacity: 0.5 } : {},
     { cursor: disabled ? "default" : "pointer" },
     style,
   );
   return (
-    <View style={merged} {...handlers}>
+    <View
+      style={merged}
+      onPointerEnter={(e) => {
+        if (!disabled) setHovered(true);
+        onPointerEnter?.(e);
+      }}
+      onPointerLeave={(e) => {
+        setHovered(false);
+        onPointerLeave?.(e);
+      }}
+      {...handlers}
+    >
       {children}
     </View>
   );
