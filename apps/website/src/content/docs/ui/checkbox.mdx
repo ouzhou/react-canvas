@@ -3,16 +3,121 @@ title: Checkbox
 description: "@react-canvas/ui 的 Checkbox 组件。"
 ---
 
-import { Steps } from "@astrojs/starlight/components";
+import { Card, Steps } from "@astrojs/starlight/components";
+
+import {
+  CheckboxDocDemoControlled,
+  CheckboxDocDemoIndeterminate,
+  CheckboxDocDemoUncontrolled,
+} from "../../../components/UiControlDocDemos.tsx";
+
+`Checkbox` 在画布上绘制方框与勾选/半选态，样式来自 **`CanvasToken`**（与 `Button` 相同须传 **`token`** 或使用外层 **`CanvasThemeProvider`**）。
 
 <Steps>
 
-1. 在应用根部使用 `CanvasThemeProvider`（详见[主题与密度](/ui/theme/)）。
+1. 在应用根部使用 `CanvasThemeProvider`（详见 [主题与密度](/ui/theme/)）。
 
-2. 在画布树内渲染 `Checkbox` 并传入 **`token`**（与 `Button` 相同；`<Canvas>` 内无法继承 Context 时需由外层传入）。
+2. 在 `<Canvas>` 子树内渲染 `Checkbox`；reconciler 子树内请显式传入 **`token={...}`**。
 
-3. 受控用法传入 **`checked`** 与 **`onChange(checked: boolean)`**；非受控可传 **`defaultChecked`**。第三态 **`indeterminate`** 由父级控制；首次点击时组件会 **`onChange(true)`**，由父级将 **`indeterminate`** 置为 `false` 并更新 **`checked`**。
+3. 受控：在 props 上声明 **`checked`**，并处理 **`onChange(checked: boolean)`**；非受控：不传 **`checked`**，可传 **`defaultChecked`**。
+
+4. **`indeterminate`** 仅由父级控制；首次点击时组件会 **`onChange(true)`**，由你在回调里将 **`indeterminate`** 置为 `false` 并更新 **`checked`**。
 
 </Steps>
 
-完整交互示例见 [@react-canvas/ui Playground](/playground/ui/)。
+## 参数（Props）
+
+| 属性             | 类型                         | 说明                                                                 |
+| ---------------- | ---------------------------- | -------------------------------------------------------------------- |
+| `checked`        | `boolean`                    | 可选。受控时由父级传入；**勿**与「不传 `checked`」混用模式切换。     |
+| `defaultChecked` | `boolean`                    | 可选。非受控初值。                                                   |
+| `indeterminate`  | `boolean`                    | 可选。第三态（视觉优先于「已勾选」）。                               |
+| `disabled`       | `boolean`                    | 可选。降低透明度并忽略点击。                                         |
+| `size`           | `'sm' \| 'md'`               | 可选。默认 **`md`**。                                                |
+| `onChange`       | `(checked: boolean) => void` | 可选。状态变更回调。                                                 |
+| `token`          | `CanvasToken`                | 画布内建议显式传入。                                                 |
+| `style`          | `ViewStyle`                  | 可选。合并到外层方框容器。                                           |
+| `children`       | `ReactNode`                  | 可选。通常放在右侧，与 `Text` 组合。                                 |
+| 交互             | —                            | 与 `View` 相同（如 `onClick`）；内部先更新勾选再调用你的 `onClick`。 |
+
+## 代码示例与预览
+
+更完整的主题控件组合见 [@react-canvas/ui Playground](/playground/ui/)。
+
+### 受控
+
+```tsx
+import { Text, View } from "@react-canvas/react";
+import { Checkbox } from "@react-canvas/ui";
+import type { CanvasToken } from "@react-canvas/ui";
+import { useState } from "react";
+
+function Row({ token }: { token: CanvasToken }) {
+  const [checked, setChecked] = useState(false);
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <Checkbox token={token} checked={checked} onChange={setChecked}>
+        <Text style={{ fontSize: token.fontSizeSM, color: token.colorText }}>
+          {checked ? "已勾选" : "未勾选"}
+        </Text>
+      </Checkbox>
+    </View>
+  );
+}
+```
+
+<Card title="受控：checked + onChange">
+  <div class="not-prose">
+    <CheckboxDocDemoControlled client:load />
+  </div>
+</Card>
+
+### 非受控：`defaultChecked`
+
+```tsx
+import { Text } from "@react-canvas/react";
+import { Checkbox } from "@react-canvas/ui";
+
+<Checkbox token={token} defaultChecked>
+  <Text style={{ fontSize: token.fontSizeSM, color: token.colorText }}>默认选中</Text>
+</Checkbox>;
+```
+
+<Card title="非受控：defaultChecked">
+  <div class="not-prose">
+    <CheckboxDocDemoUncontrolled client:load />
+  </div>
+</Card>
+
+### 半选：`indeterminate`
+
+```tsx
+import { Text } from "@react-canvas/react";
+import { Checkbox } from "@react-canvas/ui";
+import type { CanvasToken } from "@react-canvas/ui";
+import { useState } from "react";
+
+function IndeterminateRow({ token }: { token: CanvasToken }) {
+  const [checked, setChecked] = useState(false);
+  const [indeterminate, setIndeterminate] = useState(true);
+  return (
+    <Checkbox
+      token={token}
+      indeterminate={indeterminate}
+      checked={checked}
+      onChange={(v) => {
+        setIndeterminate(false);
+        setChecked(v);
+      }}
+    >
+      <Text style={{ fontSize: token.fontSizeSM, color: token.colorText }}>半选</Text>
+    </Checkbox>
+  );
+}
+```
+
+<Card title="半选 indeterminate">
+  <div class="not-prose">
+    <CheckboxDocDemoIndeterminate client:load />
+  </div>
+</Card>
