@@ -7,7 +7,7 @@ import { Aside, Card } from "@astrojs/starlight/components";
 
 import { MultiCanvasPlayground } from "../../../components/MultiCanvasPlayground.tsx";
 
-同一页面挂载多块画布时，若每块外层都使用独立的 `CanvasProvider`，会多次触发运行时初始化（尽管 Yoga / CanvasKit 已在 `@react-canvas/core` 内做单例加载）。请在下方调整数量，观察 **A / B** 两组是否均全部就绪；若 A 异常而 B 正常，可优先采用 **单个 CanvasProvider + 多个 Canvas**。
+同一页面挂载多块画布时，若每块外层都使用独立的 `CanvasProvider`，会多次触发对 `initCanvasRuntime` 的订阅（Yoga / CanvasKit 在 `@react-canvas/core` 内仍只初始化一次）。请在下方调整数量，观察 **A / B** 两组是否均全部就绪；若 A 异常而 B 正常，可**考虑**采用 **单个 CanvasProvider + 多个 Canvas**（可选的结构与性能上的做法，并非 API 要求）。设计说明见仓库 [canvas-runtime-multi-provider 规格](https://github.com/ouzhou/react-canvas/blob/main/docs/superpowers/specs/2026-04-09-canvas-runtime-multi-provider-design.md)。
 
 <Aside type="tip">
   **WebGL**：每个 `<canvas>` 仍可能占用独立上下文；浏览器对上下文数量有限制。若仅部分格子空白，可对照本节试验与浏览器图形相关限制。

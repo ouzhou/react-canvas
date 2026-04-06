@@ -169,8 +169,9 @@ export function MultiCanvasPlayground() {
           A. 多个 CanvasProvider（每格独立初始化运行时）
         </h4>
         <p className="m-0 mb-3 text-sm text-[var(--sl-color-gray-3)]">
-          与文档页连续嵌入多段 Icon 演示时的结构类似。核心层应对 Yoga / CanvasKit
-          做单例初始化；若仍有个别画布空白，可对比下方 B 并检查浏览器 WebGL 上下文数量限制。
+          与文档页连续嵌入多段独立 demo 时的结构类似。Yoga / CanvasKit 在 core
+          内单例初始化；若仍有个别画布空白，可对比下方 B 并检查浏览器 WebGL 上下文数量限制（与
+          Provider 个数无简单对应）。
         </p>
         <MultiProviderGrid count={count} loadFonts={loadFonts} />
       </div>
@@ -181,7 +182,7 @@ export function MultiCanvasPlayground() {
         </h4>
         <p className="m-0 mb-3 text-sm text-[var(--sl-color-gray-3)]">
           同一运行时上挂多块 Canvas，每个画布仍各自创建 surface（及 WebGL
-          上下文，若可用）。推荐在单页多画布场景优先采用此结构。
+          上下文，若可用）。在需要同屏大量画布时，可考虑此结构以减少重复订阅与便于对照 WebGL 占用。
         </p>
         <SingleProviderGrid count={count} loadFonts={loadFonts} />
       </div>

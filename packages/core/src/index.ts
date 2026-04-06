@@ -1,8 +1,19 @@
 export { initYoga } from "./layout/yoga.ts";
 export type { Yoga } from "./layout/yoga.ts";
 export { initCanvasKit } from "./render/canvaskit.ts";
-export { initCanvasRuntime } from "./runtime/runtime.ts";
-export type { CanvasRuntime, InitCanvasRuntimeOptions } from "./runtime/runtime.ts";
+export {
+  initCanvasRuntime,
+  preloadCanvasRuntime,
+  subscribeCanvasRuntimeInit,
+  getCanvasRuntimeInitSnapshot,
+  getCanvasRuntimeInitServerSnapshot,
+  getFontOptionsFingerprint,
+} from "./runtime/runtime.ts";
+export type {
+  CanvasRuntime,
+  CanvasRuntimeInitSnapshot,
+  InitCanvasRuntimeOptions,
+} from "./runtime/runtime.ts";
 export {
   BUILTIN_PARAGRAPH_FONT_URL,
   ensureDefaultParagraphFonts,

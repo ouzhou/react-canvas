@@ -1,10 +1,11 @@
 import {
+  getCanvasRuntimeInitServerSnapshot,
+  getCanvasRuntimeInitSnapshot,
   initCanvasRuntime,
-  type CanvasKit,
+  subscribeCanvasRuntimeInit,
   type InitCanvasRuntimeOptions,
-  type Yoga,
 } from "@react-canvas/core";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { CanvasRuntimeContext } from "./context.ts";
 
 export type CanvasProviderRenderState = {
@@ -19,35 +20,28 @@ export type CanvasProviderProps = {
 };
 
 export function CanvasProvider({ children, runtimeOptions }: CanvasProviderProps) {
-  const [yoga, setYoga] = useState<Yoga | null>(null);
-  const [canvasKit, setCanvasKit] = useState<CanvasKit | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-
   const loadDefaultParagraphFonts = runtimeOptions?.loadDefaultParagraphFonts !== false;
   const defaultParagraphFontUrl = runtimeOptions?.defaultParagraphFontUrl;
 
   useEffect(() => {
-    let cancelled = false;
-    setError(null);
     void initCanvasRuntime({
       loadDefaultParagraphFonts: loadDefaultParagraphFonts,
       defaultParagraphFontUrl: defaultParagraphFontUrl,
-    })
-      .then(({ yoga: y, canvasKit: ck }) => {
-        if (cancelled) return;
-        setYoga(y);
-        setCanvasKit(ck);
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e : new Error(String(e)));
-      });
-    return () => {
-      cancelled = true;
-    };
+    });
   }, [loadDefaultParagraphFonts, defaultParagraphFontUrl]);
 
-  const isReady = yoga !== null && canvasKit !== null;
-  const value = useMemo(() => (yoga && canvasKit ? { yoga, canvasKit } : null), [yoga, canvasKit]);
+  const snap = useSyncExternalStore(
+    subscribeCanvasRuntimeInit,
+    getCanvasRuntimeInitSnapshot,
+    getCanvasRuntimeInitServerSnapshot,
+  );
+
+  const isReady = snap.status === "ready";
+  const error = snap.status === "error" ? snap.error : null;
+  const value = useMemo(() => {
+    if (snap.status !== "ready") return null;
+    return { yoga: snap.runtime.yoga, canvasKit: snap.runtime.canvasKit };
+  }, [snap]);
 
   return (
     <CanvasRuntimeContext.Provider value={value}>

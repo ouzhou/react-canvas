@@ -1,7 +1,7 @@
 # Canvas 运行时与多 `CanvasProvider` — 设计规格
 
 **日期：** 2026-04-09  
-**状态：** 草案（待实现计划）  
+**状态：** 已实现（core 订阅式初始化 + React `useSyncExternalStore`；见实现计划与同提交代码）  
 **关联：** `@react-canvas/core`（`initCanvasRuntime`）、`@react-canvas/react`（`CanvasProvider`、`CanvasRuntimeContext`）、文档站 `playground/multi-canvas`
 
 ---
