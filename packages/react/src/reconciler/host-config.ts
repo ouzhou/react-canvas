@@ -12,6 +12,7 @@ import {
   type TextInstance,
   TextNode,
   type TextStyle,
+  ScrollViewNode,
   ViewNode,
   type ViewStyle,
   type Yoga,
@@ -22,6 +23,7 @@ import { Image } from "../hosts/image.ts";
 import type { SvgPathProps } from "../hosts/svg-path.ts";
 import { SvgPath } from "../hosts/svg-path.ts";
 import { Text } from "../hosts/text.ts";
+import { ScrollView } from "../hosts/scroll-view.ts";
 import { View } from "../hosts/view.ts";
 
 /** 由 `viewNodeRef` prop 写入，卸载时必须在 `destroy` 前清空。 */
@@ -349,6 +351,15 @@ export function createCanvasHostConfig(
         node.interactionHandlers = pickInteraction(props as Record<string, unknown>);
         return node;
       }
+      if (type === ScrollView) {
+        if (ctx.isInText) {
+          throw new Error("[react-canvas] R-HOST-2: <ScrollView> cannot be inside <Text>.");
+        }
+        const node = new ScrollViewNode(yoga);
+        node.setStyle(props.style ?? {});
+        node.interactionHandlers = pickInteraction(props as Record<string, unknown>);
+        return node;
+      }
       if (type === Text) {
         const node = new TextNode(yoga);
         node.setStyle((props.style ?? {}) as TextStyle);
@@ -504,6 +515,13 @@ export function createCanvasHostConfig(
           prevProps as SvgPathProps,
           nextProps as SvgPathProps,
         );
+      } else if (instance.type === "ScrollView") {
+        updateViewNodeRef(
+          instance,
+          prevProps as Record<string, unknown>,
+          nextProps as Record<string, unknown>,
+        );
+        (instance as ScrollViewNode).updateStyle(prevProps.style ?? {}, nextProps.style ?? {});
       } else {
         updateViewNodeRef(
           instance,

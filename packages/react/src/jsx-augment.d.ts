@@ -18,6 +18,11 @@ declare module "react" {
         children?: ReactNode;
         viewNodeRef?: RefObject<ViewNode | null>;
       } & InteractionHandlers;
+      ScrollView: {
+        style?: ViewStyle;
+        horizontal?: boolean;
+        children?: ReactNode;
+      } & InteractionHandlers;
       Text: {
         style?: TextStyle;
         children?: ReactNode;

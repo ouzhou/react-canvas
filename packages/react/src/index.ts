@@ -10,6 +10,7 @@ export {
 } from "./canvas/overlay-z-index.tsx";
 export type { CanvasRuntimeValue } from "./canvas/context.ts";
 export { View, type ViewProps } from "./hosts/view.ts";
+export { ScrollView, type ScrollViewProps } from "./hosts/scroll-view.ts";
 export {
   useCanvasClickAway,
   type UseCanvasClickAwayOptions,
