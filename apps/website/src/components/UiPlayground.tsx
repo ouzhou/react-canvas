@@ -1,5 +1,13 @@
+import userIcon from "@lucide/icons/icons/user";
 import { Canvas, CanvasProvider, Text, View } from "@react-canvas/react";
-import { Button, CanvasThemeProvider, useCanvasToken } from "@react-canvas/ui";
+import {
+  Avatar,
+  Button,
+  CanvasThemeProvider,
+  Checkbox,
+  Switch,
+  useCanvasToken,
+} from "@react-canvas/ui";
 import type { CanvasThemeConfig, CanvasToken } from "@react-canvas/ui";
 import { Component, type ErrorInfo, type ReactNode, useState } from "react";
 
@@ -16,33 +24,76 @@ const PRIMARY_PRESETS: { label: string; colorPrimary: string }[] = [
  */
 function UiCanvasContent({ token }: { token: CanvasToken }) {
   const [clicks, setClicks] = useState(0);
+  const [switchOn, setSwitchOn] = useState(true);
+  const [checkA, setCheckA] = useState(false);
+  const [checkB, setCheckB] = useState(false);
+  const [indeterminateB, setIndeterminateB] = useState(true);
   return (
     <View
       style={{
         flex: 1,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
+        flexDirection: "column",
         gap: 12,
         padding: 16,
         backgroundColor: token.colorBgLayout,
       }}
     >
-      <Button token={token} variant="primary" size="md" onClick={() => setClicks((c) => c + 1)}>
-        <Text style={{ fontSize: token.fontSizeMD, fontWeight: "600", color: "#ffffff" }}>
-          Primary ({clicks})
-        </Text>
-      </Button>
-      <Button token={token} variant="ghost" size="sm">
-        <Text style={{ fontSize: token.fontSizeSM, color: token.colorText }}>Ghost</Text>
-      </Button>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 12,
+          flexShrink: 0,
+        }}
+      >
+        <Button token={token} variant="primary" size="md" onClick={() => setClicks((c) => c + 1)}>
+          <Text style={{ fontSize: token.fontSizeMD, fontWeight: "600", color: "#ffffff" }}>
+            Primary ({clicks})
+          </Text>
+        </Button>
+        <Button token={token} variant="ghost" size="sm">
+          <Text style={{ fontSize: token.fontSizeSM, color: token.colorText }}>Ghost</Text>
+        </Button>
+      </View>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 16,
+          flexShrink: 0,
+        }}
+      >
+        <Checkbox token={token} checked={checkA} onChange={setCheckA}>
+          <Text style={{ fontSize: token.fontSizeSM, color: token.colorText }}>受控</Text>
+        </Checkbox>
+        <Checkbox
+          token={token}
+          indeterminate={indeterminateB}
+          checked={checkB}
+          onChange={(v: boolean) => {
+            setIndeterminateB(false);
+            setCheckB(v);
+          }}
+        >
+          <Text style={{ fontSize: token.fontSizeSM, color: token.colorText }}>半选</Text>
+        </Checkbox>
+        <Switch token={token} checked={switchOn} onChange={setSwitchOn} />
+        <Avatar token={token} icon={userIcon} size="sm" />
+        <Avatar token={token} size="sm">
+          <Text style={{ fontSize: token.fontSizeSM, color: token.colorText, fontWeight: "600" }}>
+            A
+          </Text>
+        </Avatar>
+      </View>
     </View>
   );
 }
 
 /** 紧凑模式画布略矮，与 token 内边距缩小一致。 */
 function canvasHeightForDensity(density: CanvasThemeConfig["density"]): number {
-  return density === "compact" ? 120 : 150;
+  return density === "compact" ? 220 : 260;
 }
 
 /** 捕获画布子树抛错，避免整岛白屏无信息 */

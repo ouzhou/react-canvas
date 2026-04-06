@@ -1,0 +1,18 @@
+---
+title: Checkbox
+description: "@react-canvas/ui 的 Checkbox 组件。"
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+<Steps>
+
+1. 在应用根部使用 `CanvasThemeProvider`（详见[主题与密度](/ui/theme/)）。
+
+2. 在画布树内渲染 `Checkbox` 并传入 **`token`**（与 `Button` 相同；`<Canvas>` 内无法继承 Context 时需由外层传入）。
+
+3. 受控用法传入 **`checked`** 与 **`onChange(checked: boolean)`**；非受控可传 **`defaultChecked`**。第三态 **`indeterminate`** 由父级控制；首次点击时组件会 **`onChange(true)`**，由父级将 **`indeterminate`** 置为 `false` 并更新 **`checked`**。
+
+</Steps>
+
+完整交互示例见 [@react-canvas/ui Playground](/playground/ui/)。

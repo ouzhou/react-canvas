@@ -1,0 +1,18 @@
+---
+title: Avatar
+description: "@react-canvas/ui 的 Avatar 组件（图片 / Lucide 图标 / 文字）。"
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+<Steps>
+
+1. 在应用根部使用 `CanvasThemeProvider`（详见[主题与密度](/ui/theme/)）。
+
+2. 在画布树内渲染 `Avatar` 并传入 **`token`**。
+
+3. 内容优先级：**`source` 图片加载成功** 优先；否则 **`icon`**（`@lucide/icons` 单文件默认导出）；否则 **`children`**（通常为 **`Text`**）。图片 **`onError`** 时按同样顺序回退。
+
+</Steps>
+
+图标与 `Icon` 组件一致，需安装 **`@lucide/icons`**（peer 版本与包一致）。示例见 [@react-canvas/ui Playground](/playground/ui/)。

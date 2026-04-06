@@ -1,5 +1,7 @@
 import type {
+  ImageSource,
   InteractionHandlers,
+  ResizeMode,
   SvgPathStrokeLinecap,
   SvgPathStrokeLinejoin,
   ViewStyle,
@@ -11,6 +13,14 @@ declare module "react" {
     interface IntrinsicElements {
       View: {
         style?: ViewStyle;
+        children?: ReactNode;
+      } & InteractionHandlers;
+      Image: {
+        source: ImageSource;
+        style?: ViewStyle;
+        resizeMode?: ResizeMode;
+        onLoad?: () => void;
+        onError?: (error: unknown) => void;
         children?: ReactNode;
       } & InteractionHandlers;
       SvgPath: {
