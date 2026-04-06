@@ -1,7 +1,7 @@
-// @ts-check
 import react from "@astrojs/react";
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -13,6 +13,8 @@ const repoRoot = path.resolve(__dirname, "../..");
 // https://astro.build/config
 export default defineConfig({
   vite: {
+    // tailwindcss() returns Plugin[] — spread into Vite's plugins array
+    plugins: [...tailwindcss()],
     resolve: {
       alias: {
         "@react-canvas/react": path.join(repoRoot, "packages/react/src/index.ts"),
@@ -31,24 +33,53 @@ export default defineConfig({
   integrations: [
     react(),
     starlight({
-      title: "My Docs",
-      social: [{ icon: "github", label: "GitHub", href: "https://github.com/withastro/starlight" }],
+      title: "React Canvas",
+      customCss: ["./src/styles/global.css", "./src/styles/custom.css"],
+      social: [
+        {
+          icon: "github",
+          label: "GitHub",
+          href: "https://github.com/ouzhou/react-canvas",
+        },
+      ],
       sidebar: [
         {
-          label: "Guides",
+          label: "入门",
           items: [
-            // Each item here is one entry in the navigation menu.
-            { label: "Example Guide", slug: "guides/example" },
-            { label: "Phase 1 playground", slug: "playground/phase-1" },
-            { label: "Text playground", slug: "playground/text" },
-            { label: "Button playground", slug: "playground/button" },
-            { label: "@react-canvas/ui", slug: "playground/ui" },
-            { label: "Pointer playground", slug: "playground/pointer" },
-            { label: "Image & SVG playground", slug: "playground/image-svg" },
+            { label: "安装与开发", slug: "intro/installation" },
+            { label: "路线图导读", slug: "intro/roadmap" },
+            { label: "文档撰写指南", slug: "intro/authoring" },
           ],
         },
         {
-          label: "Reference",
+          label: "Core（原生 TS）",
+          items: [{ label: "概览", slug: "core" }],
+        },
+        {
+          label: "React",
+          items: [{ label: "概览", slug: "react" }],
+        },
+        {
+          label: "UI 组件库",
+          items: [
+            { label: "概览", slug: "ui" },
+            { label: "Button", slug: "ui/button" },
+          ],
+        },
+        {
+          label: "Playground",
+          collapsed: false,
+          items: [
+            { label: "Phase 1", slug: "playground/phase-1" },
+            { label: "Text", slug: "playground/text" },
+            { label: "Button", slug: "playground/button" },
+            { label: "@react-canvas/ui", slug: "playground/ui" },
+            { label: "Pointer", slug: "playground/pointer" },
+            { label: "Image & SVG", slug: "playground/image-svg" },
+          ],
+        },
+        {
+          label: "参考",
           autogenerate: { directory: "reference" },
         },
       ],

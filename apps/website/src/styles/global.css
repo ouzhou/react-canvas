@@ -1,0 +1,11 @@
+/* Starlight + Tailwind v4 — see https://starlight.astro.build/guides/css-and-tailwind/ */
+@layer base, starlight, theme, components, utilities;
+
+@import "@astrojs/starlight-tailwind";
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme {
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+}

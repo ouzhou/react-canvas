@@ -1,39 +1,40 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: React Canvas
+description: 基于 CanvasKit（Skia WASM）与 Yoga 的 React 画布渲染与文档。
 hero:
-  tagline: Congrats on setting up a new Starlight project!
+  tagline: 文档、示例与 Playground
   image:
     file: ../../assets/houston.webp
   actions:
-    - text: Example Guide
-      link: /guides/example/
+    - text: 安装与开发
+      link: /intro/installation/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
-      icon: external
-      variant: minimal
+    - text: Core 概览
+      link: /core/
+      icon: document
+    - text: React 概览
+      link: /react/
+      icon: document
+    - text: UI 组件库
+      link: /ui/
+      icon: document
 ---
 
 import { Card, CardGrid } from "@astrojs/starlight/components";
 
-## Next steps
+## 快速入口
 
 <CardGrid stagger>
-  <Card title="Update content" icon="pencil">
-    Edit `src/content/docs/index.mdx` to see this page change.
+  <Card title="入门" icon="rocket">
+    从 [安装与开发](/intro/installation/) 开始，并阅读 [路线图导读](/intro/roadmap/)。
   </Card>
-  <Card title="Change page layout" icon="document">
-    Delete `template: splash` in `src/content/docs/index.mdx` to display a sidebar on this page.
+  <Card title="Core（原生 TS）" icon="document">
+    [Core 概览](/core/) 与仓库 `docs/core` 专文。
   </Card>
-  <Card title="Add new content" icon="add-document">
-    Add Markdown or MDX files to `src/content/docs` to create new pages.
+  <Card title="React" icon="document">
+    [React 概览](/react/) 与 Playground 示例。
   </Card>
-  <Card title="Configure your site" icon="setting">
-    Edit your `sidebar` and other config in `astro.config.mjs`.
-  </Card>
-  <Card title="Read the docs" icon="open-book">
-    Learn more in [the Starlight Docs](https://starlight.astro.build/).
+  <Card title="Playground" icon="laptop">
+    交互示例见侧栏 **Playground**。
   </Card>
 </CardGrid>
