@@ -17,20 +17,20 @@
 
 ## 2. 内容区宽度 `innerW` 从哪来
 
-外层 **`TextNode`** 的 measure 回调（`packages/core/src/text-node.ts`）：
+外层 **`TextNode`** 的 measure 回调（`packages/core/src/scene/text-node.ts`）：
 
 1. Yoga 传入当前约束下的 **`width`** 与 **`widthMode`**。
 2. 减去左右 **padding**：`innerW = max(0, width - padL - padR)`。
 3. 将 **`innerW`** 交给 **`measureParagraphSpans`**，内部对 **`Paragraph.layout(maxW)`** 使用。
 
-**绘制**（`packages/core/src/paint.ts`）使用 Yoga **已结算**的 `node.layout.width`，再减同一套 padding 得到 **`innerW`**，再次 **`p.layout(innerW)`** 后 **`drawParagraph`**。  
+**绘制**（`packages/core/src/render/paint.ts`）使用 Yoga **已结算**的 `node.layout.width`，再减同一套 padding 得到 **`innerW`**，再次 **`p.layout(innerW)`** 后 **`drawParagraph`**。  
 **测量与绘制必须使用同一套宽度约束**，否则会出现「量出来一行、画出来两行」等不一致。
 
 ---
 
 ## 3. Yoga `MeasureMode` 与 `layoutMaxWidthForMeasure`
 
-实现见 **`layoutMaxWidthForMeasure`**（`packages/core/src/paragraph-build.ts`）：
+实现见 **`layoutMaxWidthForMeasure`**（`packages/core/src/text/paragraph-build.ts`）：
 
 | `widthMode`                           | 传给 `Paragraph.layout` 的宽度含义                                                                                      |
 | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -61,7 +61,7 @@ Skia **`TextStyle.heightMultiplier`** 表示 **行高相对字号** 的倍数。
 - **`numberOfLines`** → **`maxLines`**（若实现传入）。
 - **`ellipsizeMode === 'tail'`** → **`ellipsis`**（如 `"…"`）。
 
-具体以 **`packages/core/src/paragraph-build.ts`** 为准。
+具体以 **`packages/core/src/text/paragraph-build.ts`** 为准。
 
 ---
 
@@ -79,9 +79,9 @@ Skia **`TextStyle.heightMultiplier`** 表示 **行高相对字号** 的倍数。
 
 ## 8. 源码索引
 
-| 主题                                                                                  | 路径                                   |
-| ------------------------------------------------------------------------------------- | -------------------------------------- |
-| `innerW`、measure 回调                                                                | `packages/core/src/text-node.ts`       |
-| `layoutMaxWidthForMeasure`、`measureParagraphSpans`、`lineHeightToSkHeightMultiplier` | `packages/core/src/paragraph-build.ts` |
-| 绘制时 `layout` + `drawParagraph`                                                     | `packages/core/src/paint.ts`           |
-| `TextOnlyProps.lineHeight` 说明                                                       | `packages/core/src/text-style.ts`      |
+| 主题                                                                                  | 路径                                        |
+| ------------------------------------------------------------------------------------- | ------------------------------------------- |
+| `innerW`、measure 回调                                                                | `packages/core/src/scene/text-node.ts`      |
+| `layoutMaxWidthForMeasure`、`measureParagraphSpans`、`lineHeightToSkHeightMultiplier` | `packages/core/src/text/paragraph-build.ts` |
+| 绘制时 `layout` + `drawParagraph`                                                     | `packages/core/src/render/paint.ts`         |
+| `TextOnlyProps.lineHeight` 说明                                                       | `packages/core/src/style/text-style.ts`     |
