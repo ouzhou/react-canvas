@@ -1,5 +1,18 @@
-import { resetLayoutPaintQueue, ViewNode, type CanvasKit, type Yoga } from "@react-canvas/core";
-import { Children, isValidElement, useLayoutEffect, useRef, type ReactNode } from "react";
+import {
+  queueLayoutPaintFrame,
+  resetLayoutPaintQueue,
+  ViewNode,
+  type CanvasKit,
+  type Yoga,
+} from "@react-canvas/core";
+import {
+  Children,
+  isValidElement,
+  useDeferredValue,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 import Reconciler from "react-reconciler";
 import { canvasBackingStoreSize } from "./canvas-backing-store.ts";
 import { useCanvasRuntime } from "./context.ts";
@@ -32,9 +45,18 @@ function assertSingleViewChild(children: ReactNode): void {
   }
 }
 
+function layoutWH(width: number, height: number): { lw: number; lh: number } {
+  return { lw: Math.max(1, Math.round(width)), lh: Math.max(1, Math.round(height)) };
+}
+
 export function Canvas({ width, height, children }: CanvasProps) {
   assertSingleViewChild(children);
   const { yoga, canvasKit } = useCanvasRuntime();
+
+  /** 拖拽等场景下父组件可能一帧内多次改宽高；延后提交以减少 WebGL surface 连续删建。 */
+  const dw = useDeferredValue(width);
+  const dh = useDeferredValue(height);
+  const { lw, lh } = layoutWH(dw, dh);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<PaintFrameRef>({
@@ -64,6 +86,7 @@ export function Canvas({ width, height, children }: CanvasProps) {
     const root = rootRef.current;
     const surface = frameRef.current.surface;
     const sceneRoot = frameRef.current.sceneRoot;
+
     if (!reconciler || !root || !surface || !sceneRoot) {
       detachPointerRef.current?.();
       detachPointerRef.current = null;
@@ -100,8 +123,6 @@ export function Canvas({ width, height, children }: CanvasProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const lw = Math.max(1, Math.round(width));
-    const lh = Math.max(1, Math.round(height));
     const key = layoutKeyRef.current;
     const needNewSurface =
       reconcilerRef.current === null ||
@@ -173,7 +194,14 @@ export function Canvas({ width, height, children }: CanvasProps) {
     if (!reconciler || !root) return;
 
     reconciler.updateContainer(children, root as never, null, () => {});
-  }, [yoga, canvasKit, width, height, children]);
+
+    /** 与 host resetAfterCommit 内 queueLayoutPaintFrame 一致；若某次 commit 触发 resetAfterCommit 时 frameRef 尚无 surface 会漏排队，此处补一次（frame-queue 内会合并重复）。 */
+    const fr = frameRef.current;
+    const sr = fr.sceneRoot;
+    if (fr.surface && fr.canvasKit && sr) {
+      queueLayoutPaintFrame(fr.surface, fr.canvasKit, sr, fr.width, fr.height, fr.dpr);
+    }
+  }, [yoga, canvasKit, lw, lh, children]);
 
   useLayoutEffect(() => {
     return () => {
@@ -181,6 +209,9 @@ export function Canvas({ width, height, children }: CanvasProps) {
     };
   }, []);
 
-  /** `canvas` 默认为 inline 替换元素，易产生基线下方空隙，导致与 flex/grid 同排时高度不一致 */
+  /**
+   * 不在 `<canvas>` 上使用随尺寸变化的 `key`：改宽高由 `needNewSurface` 在同一 DOM 上删建 surface；换 DOM 易与快速
+   * 连续提交交错。`useDeferredValue` 压低父组件传入尺寸的频率。`display:block` 避免 inline 画布与 flex 基线空隙。
+   */
   return <canvas ref={canvasRef} style={{ display: "block" }} />;
 }

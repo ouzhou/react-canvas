@@ -45,7 +45,7 @@ function canvasHeightForDensity(density: CanvasThemeConfig["density"]): number {
   return density === "compact" ? 120 : 150;
 }
 
-/** 捕获画布子树抛错，避免整岛白屏无信息；随 height key 重挂载以清除错误态 */
+/** 捕获画布子树抛错，避免整岛白屏无信息 */
 class UiPlaygroundCanvasErrorBoundary extends Component<
   { children: ReactNode },
   { error: Error | null }
@@ -238,8 +238,7 @@ function UiPlaygroundCanvasWithHeight({ token, height }: { token: CanvasToken; h
         if (error) return <p>Failed to load runtime: {error.message}</p>;
         if (!isReady) return <p>Loading Yoga + CanvasKit…</p>;
         return (
-          /* key：尺寸变化时整棵 Canvas 卸载再挂，避免同一 canvas DOM 上快速删建 WebGL surface 导致白屏 */
-          <UiPlaygroundCanvasErrorBoundary key={height}>
+          <UiPlaygroundCanvasErrorBoundary>
             <Canvas width={420} height={height}>
               <View style={{ flex: 1 }}>
                 <UiCanvasContent token={token} />

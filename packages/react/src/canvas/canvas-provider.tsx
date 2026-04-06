@@ -38,6 +38,7 @@ export function CanvasProvider({ children, runtimeOptions }: CanvasProviderProps
 
   const isReady = snap.status === "ready";
   const error = snap.status === "error" ? snap.error : null;
+
   const value = useMemo(() => {
     if (snap.status !== "ready") return null;
     return { yoga: snap.runtime.yoga, canvasKit: snap.runtime.canvasKit };
