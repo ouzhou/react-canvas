@@ -22,6 +22,7 @@
     "astro": "^6.0.1",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-live": "catalog:",
     "sharp": "^0.34.2",
     "tailwindcss": "catalog:"
   },

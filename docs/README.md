@@ -7,11 +7,13 @@
 
 ## 仓库级（`docs/` 根目录）
 
-| 文档                                               | 说明                           |
-| -------------------------------------------------- | ------------------------------ |
-| [known-limitations.md](./known-limitations.md)     | 平台能力边界：缺陷 vs 非缺陷   |
-| [development-roadmap.md](./development-roadmap.md) | 分阶段路线图与验收             |
-| [text-input-naming.md](./text-input-naming.md)     | TextInput / Input 跨包命名约定 |
+| 文档                                                                                         | 说明                                                                      |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| [known-limitations.md](./known-limitations.md)                                               | 平台能力边界：缺陷 vs 非缺陷                                              |
+| [development-roadmap.md](./development-roadmap.md)                                           | 分阶段路线图与验收                                                        |
+| [text-input-naming.md](./text-input-naming.md)                                               | TextInput / Input 跨包命名约定                                            |
+| [realtime-browser-code-execution-research.md](./realtime-browser-code-execution-research.md) | 浏览器内实时运行：路线与产品选型（React Live、Sandpack、WebContainer 等） |
+| [live-code-preview-implementation.md](./live-code-preview-implementation.md)                 | 「改源码即预览」实现逻辑：dumi / Ant Design 文档与 react-live 对照        |
 
 ---
 
