@@ -6,7 +6,7 @@ import type { ImageNode } from "../scene/image-node.ts";
 import type { SvgPathNode } from "../scene/svg-path-node.ts";
 import type { TextNode } from "../scene/text-node.ts";
 import { isDisplayNone } from "../layout/layout.ts";
-import type { ScrollViewNode } from "../scene/scroll-view-node.ts";
+import { getVerticalScrollMetrics, type ScrollViewNode } from "../scene/scroll-view-node.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 import { parseViewBox, viewBoxToAffine } from "../geometry/viewbox.ts";
 import { getSortedChildrenForPaint } from "./children-z-order.ts";
@@ -29,6 +29,36 @@ function clipToLayoutRoundedRect(
   } else {
     skCanvas.clipRect(rect, canvasKit.ClipOp.Intersect, true);
   }
+}
+
+/** 视口右侧垂直滚动指示器（与 `getVerticalScrollMetrics` 一致，画在子内容之后）。 */
+function paintScrollViewVerticalScrollbar(
+  skCanvas: Canvas,
+  canvasKit: CanvasKit,
+  paint: Paint,
+  sv: ScrollViewNode,
+): void {
+  const m = getVerticalScrollMetrics(sv);
+  if (!m) return;
+  if (!sv.scrollbarHoverVisible) return;
+
+  const { trackLeft, trackTop, trackH, barW, thumbTop, thumbH } = m;
+
+  /** 仅绘滑块，无轨道底色；滑块比命中区窄 20%，水平居中。 */
+  const thumbDrawW = barW * 0.8;
+  const thumbLeft = trackLeft + (barW - thumbDrawW) / 2;
+
+  paint.setStyle(canvasKit.PaintStyle.Fill);
+  paint.setAntiAlias(true);
+
+  const thumbBottom = Math.min(trackTop + trackH, thumbTop + thumbH);
+  const thumbHVisible = thumbBottom - thumbTop;
+  const thumbRect = canvasKit.LTRBRect(thumbLeft, thumbTop, thumbLeft + thumbDrawW, thumbBottom);
+  /** 与 CSS `border-radius: 50%` 等价的胶囊形：短边一半的圆角。 */
+  const thumbRr = Math.min(thumbDrawW, thumbHVisible) / 2;
+  /** 在上次基础上再深约 20%（RGB×0.8）。 */
+  paint.setColor(canvasKit.parseColorString("rgba(141,141,146,0.92)"));
+  skCanvas.drawRRect(canvasKit.RRectXY(thumbRect, thumbRr, thumbRr), paint);
 }
 
 /**
@@ -249,6 +279,7 @@ export function paintNode(
     const sv = node as ScrollViewNode;
     const sx = sv.scrollX;
     const sy = sv.scrollY;
+
     if (!skipBackground) {
       skCanvas.save();
       clipToLayoutRoundedRect(skCanvas, canvasKit, w, h, node.props.borderRadius ?? 0);
@@ -256,6 +287,11 @@ export function paintNode(
       for (const c of getSortedChildrenForPaint(node)) {
         paintNode(c, skCanvas, canvasKit, paint);
       }
+      skCanvas.restore();
+
+      skCanvas.save();
+      clipToLayoutRoundedRect(skCanvas, canvasKit, w, h, node.props.borderRadius ?? 0);
+      paintScrollViewVerticalScrollbar(skCanvas, canvasKit, paint, sv);
       skCanvas.restore();
     } else {
       skCanvas.save();

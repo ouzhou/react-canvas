@@ -4,7 +4,7 @@ import { getSortedChildrenForPaint } from "../render/children-z-order.ts";
 import { buildLocalTransformMatrix } from "../render/transform.ts";
 import { isDisplayNone } from "../layout/layout.ts";
 import type { TextNode } from "../scene/text-node.ts";
-import type { ScrollViewNode } from "../scene/scroll-view-node.ts";
+import { isLocalPointOnVerticalScrollbar, type ScrollViewNode } from "../scene/scroll-view-node.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
 function pointInRect(px: number, py: number, x: number, y: number, w: number, h: number): boolean {
@@ -81,6 +81,10 @@ function hitTestRecursive(
   let worldForChildren = world;
   if (node.type === "ScrollView") {
     const sv = node as ScrollViewNode;
+    /** 滚动条叠在内容之上，先于子节点命中。 */
+    if (isLocalPointOnVerticalScrollbar(sv, localX, localY)) {
+      return node;
+    }
     worldForChildren = canvasKit.Matrix.multiply(
       world,
       canvasKit.Matrix.translated(-sv.scrollX, -sv.scrollY),
@@ -111,4 +115,88 @@ export function buildPathToRoot(target: ViewNode, sceneRoot: ViewNode): ViewNode
     throw new Error("[react-canvas] hit path: target is not under sceneRoot.");
   }
   return rev.reverse();
+}
+
+/**
+ * 若 `page` 落在某 `ScrollView` 的**垂直滚动条轨道**内，返回该节点（用于仅允许轨道拖拽滚动）。
+ * 与绘制顺序一致：滚动条窄条优先于子内容。
+ */
+export function hitTestScrollViewVerticalScrollbar(
+  sceneRoot: ViewNode,
+  pageX: number,
+  pageY: number,
+  canvasKit: CanvasKit,
+): ScrollViewNode | null {
+  return hitTestScrollbarStripRecursive(
+    sceneRoot,
+    pageX,
+    pageY,
+    canvasKit,
+    canvasKit.Matrix.identity(),
+  );
+}
+
+function hitTestScrollbarStripRecursive(
+  node: ViewNode,
+  pageX: number,
+  pageY: number,
+  canvasKit: CanvasKit,
+  parentWorld: number[],
+): ScrollViewNode | null {
+  if (isDisplayNone(node)) return null;
+
+  const lx = node.layout.left;
+  const ly = node.layout.top;
+  const w = node.layout.width;
+  const h = node.layout.height;
+
+  const localT = buildLocalTransformMatrix(canvasKit, w, h, node.props.transform);
+  const incremental = canvasKit.Matrix.multiply(canvasKit.Matrix.translated(lx, ly), localT);
+  const world = canvasKit.Matrix.multiply(parentWorld, incremental);
+  const inv = canvasKit.Matrix.invert(world);
+  if (!inv) return null;
+
+  const pts = [pageX, pageY];
+  canvasKit.Matrix.mapPoints(inv, pts);
+  const localX = pts[0]!;
+  const localY = pts[1]!;
+
+  if (!localPointHitsNodeBounds(node, localX, localY)) {
+    return null;
+  }
+
+  if (node.type === "Text") {
+    return null;
+  }
+
+  if (node.type === "ScrollView") {
+    const sv = node as ScrollViewNode;
+    if (isLocalPointOnVerticalScrollbar(sv, localX, localY)) {
+      return sv;
+    }
+  }
+
+  let worldForChildren = world;
+  if (node.type === "ScrollView") {
+    const sv = node as ScrollViewNode;
+    worldForChildren = canvasKit.Matrix.multiply(
+      world,
+      canvasKit.Matrix.translated(-sv.scrollX, -sv.scrollY),
+    );
+  }
+
+  const ordered = getSortedChildrenForPaint(node);
+  for (let i = ordered.length - 1; i >= 0; i--) {
+    const c = ordered[i]!;
+    const hit = hitTestScrollbarStripRecursive(
+      c as ViewNode,
+      pageX,
+      pageY,
+      canvasKit,
+      worldForChildren,
+    );
+    if (hit) return hit;
+  }
+
+  return null;
 }

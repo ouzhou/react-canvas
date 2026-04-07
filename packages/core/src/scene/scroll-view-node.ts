@@ -3,12 +3,81 @@ import type { Yoga } from "yoga-layout/load";
 import type { ViewStyle } from "../style/view-style.ts";
 import { ViewNode } from "./view-node.ts";
 
+/** 与 `paint.ts` / `hit-test.ts` 共用，保证绘制与命中一致。 */
+export const SCROLLBAR_VERTICAL_INSET = 3;
+export const SCROLLBAR_VERTICAL_WIDTH = 10;
+
+export type VerticalScrollMetrics = {
+  maxScrollY: number;
+  contentHeight: number;
+  viewportW: number;
+  viewportH: number;
+  trackLeft: number;
+  trackTop: number;
+  trackH: number;
+  barW: number;
+  thumbTop: number;
+  thumbH: number;
+};
+
+/** 可滚动时返回轨道/滑块几何；否则 `null`（不绘滚动条）。 */
+export function getVerticalScrollMetrics(sv: ScrollViewNode): VerticalScrollMetrics | null {
+  const vpW = sv.layout.width;
+  const vpH = sv.layout.height;
+  const first = sv.children[0] as ViewNode | undefined;
+  const contentH = first ? first.layout.height : 0;
+  const maxY = Math.max(0, contentH - vpH);
+  if (maxY <= 0 || vpH <= 4 || vpW <= 8) return null;
+
+  const inset = SCROLLBAR_VERTICAL_INSET;
+  const barW = SCROLLBAR_VERTICAL_WIDTH;
+  const trackLeft = vpW - inset - barW;
+  const trackTop = inset;
+  const trackH = vpH - 2 * inset;
+  if (trackH < 12) return null;
+
+  const thumbH = Math.max(20, Math.min(trackH, (vpH / contentH) * trackH));
+  const travel = Math.max(0, trackH - thumbH);
+  const thumbTop = trackTop + (maxY > 0 ? (sv.scrollY / maxY) * travel : 0);
+
+  return {
+    maxScrollY: maxY,
+    contentHeight: contentH,
+    viewportW: vpW,
+    viewportH: vpH,
+    trackLeft,
+    trackTop,
+    trackH,
+    barW,
+    thumbTop,
+    thumbH,
+  };
+}
+
+/** 视口局部坐标下是否落在垂直滚动条轨道内（整条可拖拽区域）。 */
+export function isLocalPointOnVerticalScrollbar(
+  sv: ScrollViewNode,
+  localX: number,
+  localY: number,
+): boolean {
+  const m = getVerticalScrollMetrics(sv);
+  if (!m) return false;
+  return (
+    localX >= m.trackLeft &&
+    localX < m.trackLeft + m.barW &&
+    localY >= m.trackTop &&
+    localY < m.trackTop + m.trackH
+  );
+}
+
 /**
  * 画布内滚动容器（阶段四 Step 9）。子节点量测高度可大于视口；`scrollX`/`scrollY` 为内容偏移。
  */
 export class ScrollViewNode extends ViewNode {
   scrollX = 0;
   scrollY = 0;
+  /** 指针进入视口且可垂直滚动时由宿主置为 `true`，离开画布或不再处于该 `ScrollView` 内为 `false`；仅此时绘制滚动条。 */
+  scrollbarHoverVisible = false;
 
   constructor(yoga: Yoga) {
     super(yoga, "ScrollView");

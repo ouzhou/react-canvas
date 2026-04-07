@@ -1,0 +1,10 @@
+---
+title: ScrollView playground
+description: 画布内纵向 ScrollView：拖拽与滚轮滚动，滚动后点击验证命中。
+---
+
+import { ScrollViewPlayground } from "../../../components/ScrollViewPlayground.tsx";
+
+`ScrollView` 与 `overflow: hidden` 视口裁剪、绘制与 `hitTest` 使用同一套 `scrollX` / `scrollY`。内容需放在**一个**子树内（常用单层 `View` 包裹多行），以便布局计算可滚动高度。
+
+<ScrollViewPlayground client:load />

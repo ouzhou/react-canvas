@@ -92,6 +92,7 @@ export default defineConfig({
             { label: "Button", slug: "playground/button" },
             { label: "@react-canvas/ui", slug: "playground/ui" },
             { label: "Pointer", slug: "playground/pointer" },
+            { label: "ScrollView", slug: "playground/scroll-view" },
             { label: "Transform", slug: "playground/transform" },
             { label: "Image & SVG", slug: "playground/image-svg" },
             { label: "Icon", slug: "playground/icon" },

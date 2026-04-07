@@ -3,7 +3,9 @@ import {
   diffHoverEnterLeave,
   dispatchBubble,
   dispatchPointerEnterLeave,
+  getVerticalScrollMetrics,
   hitTest,
+  hitTestScrollViewVerticalScrollbar,
   shouldEmitClick,
   type CanvasKit,
   type PointerDownSnapshot,
@@ -19,6 +21,25 @@ function findAncestorScrollView(leaf: ViewNode | null): ScrollViewNode | null {
     n = n.parent as ViewNode;
   }
   return null;
+}
+
+/** 仅当命中点处于某可滚动 `ScrollView` 视口内（沿父链）时显示滚动条；否则隐藏。 */
+function syncScrollbarHoverFromHit(
+  hit: ViewNode | null,
+  lastSv: { current: ScrollViewNode | null },
+  requestLayoutPaint: () => void,
+): void {
+  let next: ScrollViewNode | null = null;
+  if (hit) {
+    const sv = findAncestorScrollView(hit);
+    if (sv && getVerticalScrollMetrics(sv)) next = sv;
+  }
+  if (next === lastSv.current) return;
+  const prev = lastSv.current;
+  if (prev) prev.scrollbarHoverVisible = false;
+  if (next) next.scrollbarHoverVisible = true;
+  lastSv.current = next;
+  requestLayoutPaint();
 }
 
 /**
@@ -77,11 +98,12 @@ export function attachCanvasPointerHandlers(
   requestLayoutPaint: () => void,
 ): () => void {
   const down = new Map<number, PointerDownSnapshot>();
-  /** 在 `ScrollView` 视口内按下时拖拽滚动（pointerId → 状态）。 */
-  const scrollDrag = new Map<number, { node: ScrollViewNode; lastPageY: number }>();
+  /** 仅在**垂直滚动条轨道**上按下时拖拽改变 `scrollY`（列表体不再拖拽滚动）。 */
+  const scrollBarDrag = new Map<number, { node: ScrollViewNode; lastPageY: number }>();
   /** Deepest hit under the mouse for hover (mouse / pen only). */
   let hoverLeaf: ViewNode | null = null;
   let lastPage = { x: 0, y: 0 };
+  const lastScrollbarHoverSv = { current: null as ScrollViewNode | null };
 
   const route = (ev: PointerEvent) =>
     clientToCanvasLogical(ev.clientX, ev.clientY, canvas, logicalWidth, logicalHeight);
@@ -89,24 +111,36 @@ export function attachCanvasPointerHandlers(
   const onPointerDown = (ev: PointerEvent) => {
     const { x: pageX, y: pageY } = route(ev);
     const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
-    if (!hit) return;
+    if (!hit) {
+      syncScrollbarHoverFromHit(null, lastScrollbarHoverSv, requestLayoutPaint);
+      return;
+    }
+    syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
     down.set(ev.pointerId, { pageX, pageY, target: hit });
-    const sv = findAncestorScrollView(hit);
-    if (sv) {
-      scrollDrag.set(ev.pointerId, { node: sv, lastPageY: pageY });
+    const scrollbarSv = hitTestScrollViewVerticalScrollbar(sceneRoot, pageX, pageY, canvasKit);
+    if (scrollbarSv) {
+      scrollBarDrag.set(ev.pointerId, { node: scrollbarSv, lastPageY: pageY });
     }
     const path = buildPathToRoot(hit, sceneRoot);
     dispatchBubble(path, sceneRoot, "pointerdown", pageX, pageY, ev.pointerId, ev.timeStamp);
   };
 
   const onPointerMove = (ev: PointerEvent) => {
-    const drag = scrollDrag.get(ev.pointerId);
-    if (drag) {
+    const barDrag = scrollBarDrag.get(ev.pointerId);
+    if (barDrag) {
       const { y: pageY } = route(ev);
-      const deltaY = pageY - drag.lastPageY;
-      drag.node.scrollY += deltaY;
-      drag.node.clampScrollOffsetsAfterLayout();
-      drag.lastPageY = pageY;
+      const deltaY = pageY - barDrag.lastPageY;
+      const m = getVerticalScrollMetrics(barDrag.node);
+      if (m) {
+        const travel = Math.max(0, m.trackH - m.thumbH);
+        if (travel > 0) {
+          barDrag.node.scrollY += (deltaY / travel) * m.maxScrollY;
+        } else {
+          barDrag.node.scrollY += deltaY;
+        }
+        barDrag.node.clampScrollOffsetsAfterLayout();
+      }
+      barDrag.lastPageY = pageY;
       requestLayoutPaint();
       return;
     }
@@ -116,6 +150,7 @@ export function attachCanvasPointerHandlers(
       ev.clientX >= r.left && ev.clientX < r.right && ev.clientY >= r.top && ev.clientY < r.bottom;
 
     if (!inside) {
+      syncScrollbarHoverFromHit(null, lastScrollbarHoverSv, requestLayoutPaint);
       if (ev.pointerType === "mouse" || ev.pointerType === "pen") {
         if (hoverLeaf !== null) {
           const { leave } = diffHoverEnterLeave(hoverLeaf, null, sceneRoot);
@@ -141,6 +176,7 @@ export function attachCanvasPointerHandlers(
     lastPage = { x: pageX, y: pageY };
 
     const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
+    syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
     if (hit) {
       const path = buildPathToRoot(hit, sceneRoot);
       dispatchBubble(path, sceneRoot, "pointermove", pageX, pageY, ev.pointerId, ev.timeStamp);
@@ -177,7 +213,7 @@ export function attachCanvasPointerHandlers(
   };
 
   const onPointerUpOrCancel = (ev: PointerEvent) => {
-    scrollDrag.delete(ev.pointerId);
+    scrollBarDrag.delete(ev.pointerId);
     const { x: pageX, y: pageY } = route(ev);
     const snap = down.get(ev.pointerId);
     down.delete(ev.pointerId);
@@ -211,6 +247,7 @@ export function attachCanvasPointerHandlers(
       logicalHeight,
     );
     const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
+    syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
     if (!hit) return;
     const sv = findAncestorScrollView(hit);
     if (!sv) return;

@@ -1,6 +1,6 @@
 import userIcon from "@lucide/icons/icons/user";
 import loaderCircle from "@lucide/icons/icons/loader-circle";
-import { Canvas, CanvasProvider, Text, View } from "@react-canvas/react";
+import { Canvas, CanvasProvider, ScrollView, Text, View } from "@react-canvas/react";
 import {
   Avatar,
   AvatarGroup,
@@ -18,6 +18,10 @@ import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from "
 const THEME: CanvasThemeConfig = {
   seed: { colorPrimary: "#65a30d", borderRadius: 10 },
 };
+
+/** 固定视口高度；长内容在 `ScrollView` 内滚动。 */
+const CANVAS_W = 640;
+const CANVAS_H = 560;
 
 type ComputeEnv = "k8s" | "vm";
 
@@ -125,7 +129,13 @@ function PlaygroundCanvasContent({ token }: { token: CanvasToken }) {
   const primary = token.colorPrimary;
 
   return (
-    <View style={{ flex: 1, flexDirection: "column", backgroundColor: token.colorBgLayout }}>
+    <View
+      style={{
+        flexDirection: "column",
+        width: "100%",
+        backgroundColor: token.colorBgLayout,
+      }}
+    >
       <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
         <View
           style={{
@@ -310,7 +320,7 @@ function PlaygroundCanvasContent({ token }: { token: CanvasToken }) {
         </View>
       </View>
 
-      <View style={{ padding: 16, paddingTop: 24, flexGrow: 1 }}>
+      <View style={{ padding: 16, paddingTop: 24 }}>
         <View style={{ marginBottom: 16, alignSelf: "stretch" }}>
           <Divider token={token} orientation="horizontal">
             <Text style={{ fontSize: 14, fontWeight: "500", color: "#6b7280" }}>
@@ -423,9 +433,19 @@ function TwoFactorCardInner() {
         return (
           <TwoFactorCardErrorBoundary>
             <div className="[&_canvas]:block">
-              <Canvas width={640} height={1020}>
-                <View style={{ flex: 1 }}>
-                  <PlaygroundCanvasContent token={token} />
+              <Canvas width={CANVAS_W} height={CANVAS_H}>
+                <View style={{ width: "100%", height: "100%" }}>
+                  <ScrollView
+                    style={{
+                      width: "100%",
+                      height: CANVAS_H,
+                      backgroundColor: token.colorBgLayout,
+                    }}
+                  >
+                    <View style={{ width: "100%" }}>
+                      <PlaygroundCanvasContent token={token} />
+                    </View>
+                  </ScrollView>
                 </View>
               </Canvas>
             </div>
@@ -440,7 +460,9 @@ export function TwoFactorCardPlayground() {
   return (
     <div className="not-prose flex max-w-3xl flex-col gap-4">
       <p className="m-0 text-sm text-[var(--sl-color-gray-3)]">
-        单块画布内：顶部白卡片含双因素行 + 分隔线 +「Wallpaper Tinting」
+        画布固定 {CANVAS_W}×{CANVAS_H}，整块内容在{" "}
+        <code className="text-[var(--sl-color-text)]">ScrollView</code>{" "}
+        内纵向滚动。顶部白卡片含双因素行 + 分隔线 +「Wallpaper Tinting」
         <code className="text-[var(--sl-color-text)]">Switch</code>
         ；其下为「Billing Address」区块（顶底分隔线 +{" "}
         <code className="text-[var(--sl-color-text)]">Checkbox</code>

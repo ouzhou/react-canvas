@@ -21,7 +21,12 @@ export {
 export type { CanvasKit, CanvasKitInitOptions, Surface } from "canvaskit-wasm";
 export { ViewNode } from "./scene/view-node.ts";
 export type { ViewVisualProps } from "./scene/view-node.ts";
-export { ScrollViewNode } from "./scene/scroll-view-node.ts";
+export {
+  ScrollViewNode,
+  getVerticalScrollMetrics,
+  isLocalPointOnVerticalScrollbar,
+  type VerticalScrollMetrics,
+} from "./scene/scroll-view-node.ts";
 export type { SceneNode } from "./scene/scene-node.ts";
 export { TextNode, collectParagraphSpans, isTextInstance } from "./scene/text-node.ts";
 export type { TextInstance } from "./scene/text-node.ts";
@@ -53,7 +58,7 @@ export {
 } from "./text/paragraph-build.ts";
 export type { ParagraphSpan } from "./text/paragraph-build.ts";
 export type { CanvasSyntheticPointerEvent, InteractionHandlers } from "./input/types.ts";
-export { hitTest, buildPathToRoot } from "./input/hit-test.ts";
+export { hitTest, buildPathToRoot, hitTestScrollViewVerticalScrollbar } from "./input/hit-test.ts";
 export { dispatchBubble } from "./input/dispatch.ts";
 export { getWorldBounds, containsPagePoint, getWorldOffset } from "./geometry/world-bounds.ts";
 export {
