@@ -1,5 +1,6 @@
 export { Canvas } from "./canvas/canvas.tsx";
 export type { CanvasProps } from "./canvas/canvas.tsx";
+export { getCanvasFrame, type CanvasFrameSnapshot } from "./canvas/canvas-frame-registry.ts";
 export { CanvasProvider } from "./canvas/canvas-provider.tsx";
 export type { CanvasProviderProps, CanvasProviderRenderState } from "./canvas/canvas-provider.tsx";
 export { CanvasRuntimeContext, useCanvasRuntime } from "./canvas/context.ts";

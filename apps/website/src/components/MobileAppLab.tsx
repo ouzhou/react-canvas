@@ -1,4 +1,9 @@
 import {
+  attachInspectorHandlers,
+  InspectorHighlight,
+  type InspectorState,
+} from "@react-canvas/plugin-inspector";
+import {
   attachViewportHandlers,
   useViewportState,
   type ViewportState,
@@ -800,42 +805,65 @@ function LabCanvas({
 }) {
   const w = Math.max(1, Math.floor(width));
   const h = Math.max(1, Math.floor(height));
+  const [inspector, setInspector] = useState<InspectorState>({
+    hoverNode: null,
+    scopeStack: [],
+  });
 
   useLayoutEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
-    return attachViewportHandlers(el, {
+    const detachViewport = attachViewportHandlers(el, {
       logicalWidth: w,
       logicalHeight: h,
       setState: setViewport,
     });
+    const detachInspector = attachInspectorHandlers(el, {
+      logicalWidth: w,
+      logicalHeight: h,
+      onStateChange: setInspector,
+    });
+    return () => {
+      detachViewport();
+      detachInspector();
+    };
   }, [canvasRef, w, h, setViewport]);
 
   return (
-    <Canvas width={w} height={h} canvasRef={canvasRef} camera={viewport}>
-      <View style={{ flex: 1 }}>
-        <View
-          style={{
-            flex: 1,
-            flexDirection: "row",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            alignContent: "center",
-            padding: 20,
-            gap: 20,
-            backgroundColor: "#f1f5f9",
-          }}
-        >
-          <ProductDetailPage />
-          <ExplorePage />
-          <BeveragesPage />
-          <SearchPage />
-          <FiltersPage />
-          <CartPage />
-          <FavoritesPage />
+    <>
+      <Canvas width={w} height={h} canvasRef={canvasRef} camera={viewport}>
+        <View style={{ flex: 1 }}>
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "row",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              alignContent: "center",
+              padding: 20,
+              gap: 20,
+              backgroundColor: "#f1f5f9",
+            }}
+          >
+            <ProductDetailPage />
+            <ExplorePage />
+            <BeveragesPage />
+            <SearchPage />
+            <FiltersPage />
+            <CartPage />
+            <FavoritesPage />
+          </View>
         </View>
-      </View>
-    </Canvas>
+      </Canvas>
+      <InspectorHighlight
+        canvasRef={canvasRef}
+        node={inspector.hoverNode}
+        logicalWidth={w}
+        logicalHeight={h}
+        cameraRevision={viewport}
+        className="z-[80] border-2 border-[var(--sl-color-accent)]"
+      />
+    </>
   );
 }
 
@@ -857,7 +885,9 @@ export function MobileAppLab() {
         文档首页
       </a>
       <p className="pointer-events-none absolute left-3 top-3 z-10 max-w-[min(100%,22rem)] text-xs leading-snug text-[var(--sl-color-gray-3)]">
-        按住 Cmd（Windows：Ctrl）时可滚轮缩放或左键拖拽平移；松开修饰键即不可
+        按住
+        Cmd（Windows：Ctrl）时可滚轮缩放或左键拖拽平移；松开修饰键即不可。悬停显示节点描边；双击进入子层选择；Esc
+        退出层级
       </p>
       <CanvasProvider>
         {({ isReady, error }) => {

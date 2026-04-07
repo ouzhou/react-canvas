@@ -14,6 +14,7 @@
     "@astrojs/starlight": "^0.38.2",
     "@astrojs/starlight-tailwind": "catalog:",
     "@lucide/icons": "catalog:",
+    "@react-canvas/plugin-inspector": "workspace:*",
     "@react-canvas/plugin-viewport": "workspace:*",
     "@react-canvas/react": "workspace:*",
     "@react-canvas/ui": "workspace:*",
