@@ -20,8 +20,10 @@ import {
   PromptInputSubmit,
   PromptInputTextarea,
 } from "@/components/ai-elements/prompt-input";
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { XIcon } from "lucide-react";
 import type { ChatStatus, DynamicToolUIPart, ToolUIPart, UIMessage } from "ai";
 import type { ReactNode } from "react";
 
@@ -35,22 +37,39 @@ function isToolPart(part: UIMessage["parts"][number]): part is ToolUIPart | Dyna
   return t === "dynamic-tool" || t.startsWith("tool-");
 }
 
-/** 避免 set_lab_tsx 的完整 code_b64 塞满对话区，仅影响展示。 */
+/** 避免整文件 code 塞满对话区，仅影响展示。 */
 function toolInputForDisplay(part: ToolUIPart | DynamicToolUIPart): ToolUIPart["input"] {
-  if (part.type !== "tool-set_lab_tsx" || part.input === undefined || part.input === null) {
+  if (part.input === undefined || part.input === null) {
     return part.input;
   }
-  const input = part.input as { code_b64?: string; code?: string };
-  const raw = input.code_b64 ?? input.code;
-  if (typeof raw !== "string" || raw.length <= MAX_TOOL_CODE_PREVIEW_CHARS) {
-    return part.input;
+  const truncate = (s: string): string =>
+    s.length <= MAX_TOOL_CODE_PREVIEW_CHARS
+      ? s
+      : `${s.slice(0, MAX_TOOL_CODE_PREVIEW_CHARS)}\n\n/* …已省略 ${s.length - MAX_TOOL_CODE_PREVIEW_CHARS} 字符 */`;
+
+  if (part.type === "tool-set_lab_tsx") {
+    const input = part.input as { code?: string };
+    const raw = input.code;
+    if (typeof raw !== "string" || raw.length <= MAX_TOOL_CODE_PREVIEW_CHARS) {
+      return part.input;
+    }
+    const omitted = raw.length - MAX_TOOL_CODE_PREVIEW_CHARS;
+    return {
+      ...input,
+      code: `${raw.slice(0, MAX_TOOL_CODE_PREVIEW_CHARS)}\n\n/* …已省略 ${omitted} 字符（完整内容已写入侧栏并应用）*/`,
+    };
   }
-  const omitted = raw.length - MAX_TOOL_CODE_PREVIEW_CHARS;
-  const key = input.code_b64 !== undefined ? "code_b64" : "code";
-  return {
-    ...input,
-    [key]: `${raw.slice(0, MAX_TOOL_CODE_PREVIEW_CHARS)}\n\n/* …已省略 ${omitted} 字符（完整内容已写入侧栏并应用）*/`,
-  };
+  if (part.type === "tool-replace_lab_tsx") {
+    const input = part.input as { old_string?: string; new_string?: string };
+    return {
+      ...input,
+      old_string:
+        typeof input.old_string === "string" ? truncate(input.old_string) : input.old_string,
+      new_string:
+        typeof input.new_string === "string" ? truncate(input.new_string) : input.new_string,
+    };
+  }
+  return part.input;
 }
 
 export type MobileAppLabChatPanelProps = {
@@ -63,6 +82,8 @@ export type MobileAppLabChatPanelProps = {
   inputPlaceholder: string;
   /** 顶栏右侧，例如「设置」按钮 */
   headerRight?: ReactNode;
+  /** 关闭整个对话浮层 */
+  onClose?: () => void;
   error?: Error;
   onClearError?: () => void;
   /**
@@ -83,6 +104,7 @@ export function MobileAppLabChatPanel({
   onStop,
   inputPlaceholder,
   headerRight,
+  onClose,
   error,
   onClearError,
   codeStreamLoadingBanner,
@@ -97,11 +119,28 @@ export function MobileAppLabChatPanel({
     <TooltipProvider delayDuration={200}>
       <div
         aria-label="AI 对话"
-        className="pointer-events-auto fixed right-3 bottom-4 z-[90] flex h-[min(42vh,400px)] w-[min(100vw-1.5rem,22rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-lg"
+        className="pointer-events-auto fixed right-3 bottom-4 z-[90] flex h-[min(76.8vh,816px)] w-[min(100vw-2rem,28rem)] flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-lg"
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2">
           <div className="text-sm font-medium">AI 对话</div>
-          {headerRight ? <div className="flex shrink-0 items-center">{headerRight}</div> : null}
+          {headerRight || onClose ? (
+            <div className="flex shrink-0 items-center gap-1">
+              {headerRight}
+              {onClose ? (
+                <Button
+                  aria-label="关闭 AI 对话"
+                  className="size-8 shrink-0 p-0"
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    onClose();
+                  }}
+                >
+                  <XIcon aria-hidden className="size-4" />
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         {showCodeLoading ? (
           <div
@@ -143,7 +182,11 @@ export function MobileAppLabChatPanel({
                         ) : (
                           <ToolHeader
                             state={part.state}
-                            title={part.type === "tool-set_lab_tsx" ? "set_lab_tsx" : undefined}
+                            title={
+                              part.type.startsWith("tool-")
+                                ? part.type.slice("tool-".length)
+                                : undefined
+                            }
                             type={part.type}
                           />
                         );
@@ -186,7 +229,6 @@ export function MobileAppLabChatPanel({
         <div className="shrink-0 border-t border-border p-2">
           <PromptInput className="rounded-xl border-0 shadow-none" onSubmit={onSubmit}>
             <PromptInputTextarea
-              className="min-h-[44px] text-sm"
               placeholder={inputPlaceholder}
               value={input}
               onChange={(e) => {

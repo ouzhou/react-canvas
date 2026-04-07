@@ -24,12 +24,13 @@ const WELCOME_LAB_TOOLS: UIMessage = {
 
 本页在 **React Canvas**（\`@react-canvas/react\`：\`View\` / \`Text\` / \`ScrollView\` / \`Image\` + \`React\`）里预览「手机窗口」界面；布局类似 **Yoga Flexbox**。仓库里还有 \`@react-canvas/ui\`（Button、Icon、主题等），但 **Lab 默认未注入到预览环境**，请不要在源码里 \`import\`——需要按钮/图标时用 \`View\` + \`Text\` 组合即可。
 
-配置 DeepSeek 后，直接用自然语言说想改什么；我会通过工具 **set_lab_tsx**（参数为完整源码的 **UTF-8 Base64：code_b64**）写入侧栏并**自动应用到下方画布**，避免大段 TSX 在 JSON 里转义出错。`,
+配置 DeepSeek 后，直接用自然语言说想改什么。小改动优先用 **replace_lab_tsx**（唯一匹配替换）；需要核对行号时用 **read_lab_tsx_slice**。整文件重写才用 **set_lab_tsx**（参数 **code** 为完整 TSX 字符串）。修改会写入侧栏并**自动应用到画布**。`,
     },
   ],
 };
 
-const MAX_STEPS = 5;
+/** 允许 read → replace 多轮；比单步整文件 set 更易用 */
+const MAX_STEPS = 12;
 
 function mergeStepIntoMessages(prev: UIMessage[], step: UIMessage): UIMessage[] {
   const idx = prev.findIndex((m) => m.id === step.id);
@@ -87,7 +88,11 @@ export function useMobileAppLabTsxStreamChat(options: {
       setStatus("streaming");
       const modelMessages = await convertToModelMessages(next);
 
-      const tools = createLabTsxTools({ setDraft, setAppliedCode });
+      const tools = createLabTsxTools({
+        getDraft: getDraftSnapshot,
+        setDraft,
+        setAppliedCode,
+      });
       const genResult = await generateText({
         model: createDeepSeek({ apiKey }).chat("deepseek-coder"),
         system: buildLabSystemPrompt(getDraftSnapshot()),

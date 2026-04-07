@@ -13,8 +13,8 @@ import {
 import { Canvas, CanvasProvider, Image, ScrollView, Text, View } from "@react-canvas/react";
 import { LiveContext, LiveError, LiveProvider } from "react-live";
 import type { ComponentType, Dispatch, RefObject, SetStateAction } from "react";
-import { FileCode2Icon } from "lucide-react";
-import React, { useContext, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { FileCode2Icon, HandIcon, MoveIcon } from "lucide-react";
+import React, { useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,9 +31,25 @@ import {
   MobileAppLabTsxProvider,
 } from "@/contexts/mobile-app-lab-tsx-context.tsx";
 import { loadLabTsxFromStorage } from "@/lib/mobile-app-lab-tsx-storage.ts";
+import { cn } from "@/lib/utils";
 
 import { MobileAppLabChatOverlay } from "./MobileAppLabChatOverlay.tsx";
 import { DEFAULT_LAB_TSX } from "./mobile-app-lab-default-source.ts";
+
+/**
+ * react-live 仅注入此处列出的标识符。历史草稿或示例若使用 &lt;LoginPage /&gt; 但未在 TSX 内声明，
+ * 会报 ReferenceError；提供占位组件避免红条刷屏，仍应在源码中实现真实页面。
+ */
+function LoginPageScopePlaceholder() {
+  return (
+    <View style={{ padding: 12, borderRadius: 8, backgroundColor: "#fef2f2" }}>
+      <Text style={{ fontSize: 12, color: "#991b1b", lineHeight: 18 }}>
+        使用了 LoginPage 但未在同一 TSX 内编写 function LoginPage。请在 IIFE 内声明该组件，或从 JSX
+        中移除 &lt;LoginPage /&gt;。
+      </Text>
+    </View>
+  );
+}
 
 const liveScope = {
   React,
@@ -41,7 +57,13 @@ const liveScope = {
   Text,
   ScrollView,
   Image,
+  LoginPage: LoginPageScopePlaceholder,
 };
+
+type MobileAppLabCanvasTool = "hand" | "move";
+
+/** 是否允许切换到「移动」检视模式；当前暂时关闭。 */
+const MOBILE_APP_LAB_MOVE_TOOL_ENABLED = false;
 
 function useViewportSize(): { w: number; h: number } {
   const [size, setSize] = useState(() => ({
@@ -65,12 +87,14 @@ function LabLiveCanvas({
   width,
   height,
   canvasRef,
+  canvasTool,
   viewport,
   setViewport,
 }: {
   width: number;
   height: number;
   canvasRef: RefObject<HTMLCanvasElement | null>;
+  canvasTool: MobileAppLabCanvasTool;
   viewport: ViewportState;
   setViewport: Dispatch<SetStateAction<ViewportState>>;
 }) {
@@ -83,38 +107,60 @@ function LabLiveCanvas({
   const live = useContext(LiveContext);
   const Preview = live.element as ComponentType | null | undefined;
 
+  useEffect(() => {
+    if (canvasTool === "hand") {
+      setInspector({ hoverNode: null, scopeStack: [] });
+    }
+  }, [canvasTool]);
+
   useLayoutEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
+    el.style.cursor = canvasTool === "hand" ? "grab" : "";
+    return () => {
+      el.style.cursor = "";
+    };
+  }, [canvasRef, canvasTool]);
+
+  useLayoutEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const handMode = canvasTool === "hand";
     const detachViewport = attachViewportHandlers(el, {
-      logicalWidth: w,
       logicalHeight: h,
+      logicalWidth: w,
+      primaryButtonPan: handMode,
       setState: setViewport,
+      wheelPan: true,
     });
-    const detachInspector = attachInspectorHandlers(el, {
-      logicalWidth: w,
-      logicalHeight: h,
-      onStateChange: setInspector,
-    });
+    const detachInspector = handMode
+      ? () => {}
+      : attachInspectorHandlers(el, {
+          logicalHeight: h,
+          logicalWidth: w,
+          onStateChange: setInspector,
+        });
     return () => {
       detachViewport();
       detachInspector();
     };
-  }, [canvasRef, w, h, setViewport]);
+  }, [canvasRef, canvasTool, w, h, setViewport]);
 
   return (
     <>
       <Canvas width={w} height={h} canvasRef={canvasRef} camera={viewport}>
         <View style={{ flex: 1, backgroundColor: "#f1f5f9" }}>{Preview ? <Preview /> : null}</View>
       </Canvas>
-      <InspectorHighlight
-        canvasRef={canvasRef}
-        node={inspector.hoverNode}
-        logicalWidth={w}
-        logicalHeight={h}
-        cameraRevision={viewport}
-        className="z-[80] border-2 border-[var(--sl-color-accent)]"
-      />
+      {canvasTool === "move" ? (
+        <InspectorHighlight
+          canvasRef={canvasRef}
+          node={inspector.hoverNode}
+          logicalWidth={w}
+          logicalHeight={h}
+          cameraRevision={viewport}
+          className="z-[80] border-2 border-[var(--sl-color-accent)]"
+        />
+      ) : null}
     </>
   );
 }
@@ -138,10 +184,64 @@ function MobileAppLabEditorSurface({
   }
   const { draft, setDraft, appliedCode, setAppliedCode, persistError, resetLabTsx } = ctx;
   const [editorOpen, setEditorOpen] = useState(false);
+  const [canvasTool, setCanvasTool] = useState<MobileAppLabCanvasTool>("hand");
 
   return (
     <LiveProvider code={appliedCode} language="tsx" enableTypeScript scope={liveScope}>
       <div className="relative h-full w-full">
+        <div
+          aria-label="画布工具"
+          className="fixed left-3 top-1/2 z-[95] flex -translate-y-1/2 flex-col gap-1 rounded-xl border border-[var(--sl-color-hairline)] bg-white/95 p-1 shadow-md"
+          role="toolbar"
+        >
+          <Button
+            aria-label="手型：平移视图"
+            aria-pressed={canvasTool === "hand"}
+            className={cn(
+              "size-9 shrink-0",
+              canvasTool === "hand"
+                ? "border border-[var(--sl-color-accent)] bg-[color-mix(in_oklab,var(--sl-color-accent)_18%,transparent)] text-[var(--sl-color-accent)] shadow-sm ring-2 ring-[var(--sl-color-accent)]/35"
+                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+            )}
+            title="手型：拖拽平移画布，不选中对象"
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              setCanvasTool("hand");
+            }}
+          >
+            <HandIcon aria-hidden className="size-4" />
+          </Button>
+          <Button
+            aria-label="移动：选择与检视"
+            aria-pressed={canvasTool === "move"}
+            className={cn(
+              "size-9 shrink-0",
+              MOBILE_APP_LAB_MOVE_TOOL_ENABLED &&
+                canvasTool === "move" &&
+                "border border-[var(--sl-color-accent)] bg-[color-mix(in_oklab,var(--sl-color-accent)_18%,transparent)] text-[var(--sl-color-accent)] shadow-sm ring-2 ring-[var(--sl-color-accent)]/35",
+              MOBILE_APP_LAB_MOVE_TOOL_ENABLED &&
+                canvasTool !== "move" &&
+                "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+              !MOBILE_APP_LAB_MOVE_TOOL_ENABLED && "text-muted-foreground",
+            )}
+            disabled={!MOBILE_APP_LAB_MOVE_TOOL_ENABLED}
+            title={
+              MOBILE_APP_LAB_MOVE_TOOL_ENABLED
+                ? "移动：悬停高亮节点；平移需按住 Cmd/Ctrl 并拖拽"
+                : "移动模式暂未开放"
+            }
+            type="button"
+            variant="ghost"
+            onClick={() => {
+              if (MOBILE_APP_LAB_MOVE_TOOL_ENABLED) {
+                setCanvasTool("move");
+              }
+            }}
+          >
+            <MoveIcon aria-hidden className="size-4" />
+          </Button>
+        </div>
         <Sheet onOpenChange={setEditorOpen} open={editorOpen}>
           <SheetTrigger asChild>
             <Button
@@ -160,8 +260,8 @@ function MobileAppLabEditorSurface({
             <SheetHeader>
               <SheetTitle>TSX（完整源码）</SheetTitle>
               <SheetDescription>
-                编辑后点击「应用」更新画布预览。通过右下角 AI
-                对话修改侧栏源码时，会在模型返回后**自动应用**到画布。可点击遮罩或右上角关闭侧栏。
+                编辑后点击「应用」更新画布预览。通过右下角「AI
+                对话」面板修改侧栏源码时，会在模型返回后**自动应用**到画布。可点击遮罩或右上角关闭侧栏。
               </SheetDescription>
             </SheetHeader>
             <label className="sr-only" htmlFor="mobile-app-lab-tsx">
@@ -212,11 +312,12 @@ function MobileAppLabEditorSurface({
         <MobileAppLabChatOverlay />
         <div className="[&_canvas]:block h-full w-full [&_canvas]:h-full [&_canvas]:w-full">
           <LabLiveCanvas
-            width={w}
-            height={h}
             canvasRef={canvasDomRef}
-            viewport={viewport}
+            canvasTool={canvasTool}
+            height={h}
             setViewport={setViewport}
+            viewport={viewport}
+            width={w}
           />
         </div>
       </div>
@@ -239,17 +340,6 @@ export function MobileAppLab() {
 
   return (
     <div className="fixed inset-0 box-border overflow-hidden bg-slate-100 text-[var(--sl-color-text)]">
-      <a
-        className="absolute left-3 top-3 z-10 rounded-md bg-white/90 px-2 py-1 text-sm text-[var(--sl-color-accent)] shadow-sm underline-offset-2 hover:underline"
-        href="/"
-      >
-        文档首页
-      </a>
-      <p className="pointer-events-none absolute left-3 top-12 z-10 max-w-[min(100%,22rem)] text-xs leading-snug text-[var(--sl-color-gray-3)]">
-        点击右上角「编辑 TSX」打开侧栏手动编辑，保存时点「应用」更新画布。配置 DeepSeek
-        后可在右下角用 AI 对话修改源码，返回后会自动应用到画布。按住
-        Cmd（Windows：Ctrl）可滚轮缩放或左键拖拽平移；悬停显示节点描边。
-      </p>
       <MobileAppLabTsxProvider
         defaultSource={DEFAULT_LAB_TSX}
         initialFromStorage={initialFromStorage}

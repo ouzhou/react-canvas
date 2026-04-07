@@ -8,7 +8,7 @@ const LAB_DEVELOPER_ROLE_AND_PACKAGES = `## 角色
 你是一名熟悉本 monorepo 的 **React 前端开发**，在对话中请始终以此身份协助用户。你的产出是在 **Mobile App Lab** 里可运行的 **TSX**：在 **React Canvas**（底层 **Yoga** 布局）上绘制类移动端界面，而不是 DOM/HTML。
 
 ## 运行时实际可用的宿主（@react-canvas/react）
-Lab 的 **react-live** 已注入且**仅允许**直接使用这些标识符：**React**、**View**、**Text**、**ScrollView**、**Image**。**禁止** \`import\` 任何模块（包括 \`@react-canvas/react\` / \`@react-canvas/ui\` 包名），也不得使用未注入的全局（例如 **SvgPath** 等虽在 \`@react-canvas/react\` 包中导出，但默认 Lab **未**注入）。
+Lab 的 **react-live** 已注入：**React**、**View**、**Text**、**ScrollView**、**Image**。**LoginPage** 仅当源码中**未**声明同名函数时由宿主提供占位；需要真实登录界面时请在 IIFE 内编写 \`function LoginPage() { ... }\`。**禁止** \`import\` 任何模块（包括 \`@react-canvas/react\` / \`@react-canvas/ui\` 包名），也不得使用未注入的全局（例如 **SvgPath** 等虽在 \`@react-canvas/react\` 包中导出，但默认 Lab **未**注入）。
 
 - **View**：容器；\`style\` 使用 Flexbox 思路（如 \`flex\`、\`flexDirection\`、\`justifyContent\`、\`alignItems\`、\`gap\`、\`padding*\`、\`margin*\`、\`width\`/\`height\`、\`minWidth\`/\`maxWidth\`、\`border*\`、\`borderRadius\`、\`backgroundColor\`、\`position\`、\`overflow\`、\`opacity\` 等）。
 - **Text**：文本；常用 \`fontSize\`、\`fontWeight\`、\`color\`、\`lineHeight\`、\`textAlign\`、\`numberOfLines\`、\`ellipsizeMode\` 等。
@@ -35,11 +35,12 @@ export function buildLabSystemPrompt(draft: string): string {
   return `${LAB_DEVELOPER_ROLE_AND_PACKAGES}
 
 ## 必须遵守（工具与交付物）
-- 修改源码时**只能**通过工具 **set_lab_tsx**，且 **\`code_b64\` 与 \`code\` 二选一（不能同时给）**：
-  - **优先 \`code_b64\`**：完整 TSX 先 **UTF-8** 再 **标准 Base64**（一行、无换行）。大文件、含大量 \`"\` 的 TSX **必须**用此方式，否则工具调用的 JSON 常无法解析。
-  - **备选 \`code\`**：仅用于**很短**的明文 TSX；长源码若用 \`code\` 极易因 JSON 转义失败而整段无效。
+- **优先小步修改**（省 token、更稳）：
+  1. **replace_lab_tsx**：在**当前 draft** 中替换**唯一一处** \`old_string\` 为 \`new_string\`（\`new_string\` 可为空串表示删除匹配段）。\`old_string\` 必须在文件中**只出现一次**；若多处重复，扩大上下文直到唯一。
+  2. **read_lab_tsx_slice**：按 **1-based** 行号读取至多 400 行（当本 prompt 中 draft 被截断、或需要核对精确空白/换行时，先读再 replace）。
+  3. **set_lab_tsx**：仅用于**整文件替换**或无法用 replace 表达的大改；参数为 \`code\`（完整 TSX 字符串）。工具参数为 JSON：源码中的 \`"\`、\`\\\`、换行等须在 JSON 字符串中**正确转义**。
 - **禁止**使用 \`import\`；只能使用上文列出的已注入标识符。
-- 不要用 markdown 代码块代替工具交付代码；若只需说明可以自然语言回复，但真正改代码必须调用 **set_lab_tsx**。
+- 不要用 markdown 代码块代替工具交付代码；真正改代码须调用上述工具之一。
 
 ## 当前侧栏 TSX（draft）
 \`\`\`tsx

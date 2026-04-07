@@ -1,6 +1,6 @@
 import type { GenerateTextResult, UIMessage } from "ai";
 import { nanoid } from "nanoid";
-import type { LabTsxToolSet } from "@/lib/mobile-app-lab-tsx-tools";
+import { MOBILE_APP_LAB_TOOL_NAMES, type LabTsxToolSet } from "@/lib/mobile-app-lab-tsx-tools";
 
 /**
  * 将 `generateText` 的多步结果整理为一条 assistant `UIMessage`（供对话区展示）。
@@ -11,13 +11,14 @@ export function buildAssistantUIMessageFromGenerateText(
 ): UIMessage {
   const parts: UIMessage["parts"] = [];
   const seenToolCallIds = new Set<string>();
+  const labToolSet = new Set<string>(MOBILE_APP_LAB_TOOL_NAMES);
 
   for (const step of result.steps) {
     if (step.text?.trim()) {
       parts.push({ type: "text", text: step.text });
     }
     for (const part of step.content) {
-      if (part.type !== "tool-error" || part.toolName !== "set_lab_tsx") {
+      if (part.type !== "tool-error" || !labToolSet.has(part.toolName)) {
         continue;
       }
       if (seenToolCallIds.has(part.toolCallId)) {
@@ -32,15 +33,15 @@ export function buildAssistantUIMessageFromGenerateText(
             ? err.message
             : JSON.stringify(err).slice(0, 2000);
       parts.push({
-        type: "tool-set_lab_tsx",
+        type: `tool-${part.toolName}`,
         toolCallId: part.toolCallId,
         state: "output-error",
         input: part.input,
         errorText,
-      });
+      } as UIMessage["parts"][number]);
     }
     for (const tr of step.toolResults) {
-      if (tr.type !== "tool-result" || tr.toolName !== "set_lab_tsx") {
+      if (tr.type !== "tool-result" || !labToolSet.has(tr.toolName)) {
         continue;
       }
       if (seenToolCallIds.has(tr.toolCallId)) {
@@ -48,12 +49,12 @@ export function buildAssistantUIMessageFromGenerateText(
       }
       seenToolCallIds.add(tr.toolCallId);
       parts.push({
-        type: "tool-set_lab_tsx",
+        type: `tool-${tr.toolName}`,
         toolCallId: tr.toolCallId,
         state: "output-available",
         input: tr.input,
         output: tr.output,
-      });
+      } as UIMessage["parts"][number]);
     }
   }
 
