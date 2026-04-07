@@ -50,7 +50,8 @@
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
     "tokenlens": "catalog:",
-    "use-stick-to-bottom": "catalog:"
+    "use-stick-to-bottom": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/react": "catalog:",

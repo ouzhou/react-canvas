@@ -3,13 +3,16 @@
 import { MobileAppLabDeepseekSettingsDialog } from "@/components/MobileAppLabDeepseekSettingsDialog";
 import { MobileAppLabChatPanel } from "@/components/mobile-app-lab-chat-panel";
 import { Button } from "@/components/ui/button";
+import type { MobileAppLabTsxContextValue } from "@/contexts/mobile-app-lab-tsx-context.tsx";
+import { MobileAppLabTsxContext } from "@/contexts/mobile-app-lab-tsx-context.tsx";
 import { useMobileAppLabChatMock } from "@/hooks/use-mobile-app-lab-chat-mock";
 import { useMobileAppLabDeepseekKey } from "@/hooks/use-mobile-app-lab-deepseek-key";
+import { useMobileAppLabTsxStreamChat } from "@/hooks/use-mobile-app-lab-tsx-stream-chat";
 import { MobileAppLabDeepseekTransport } from "@/lib/mobile-app-lab-deepseek-transport";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useContext, useMemo, useState } from "react";
 
 const WELCOME_REMOTE =
   "已通过环境变量 **PUBLIC_AI_CHAT_URL** 使用 `useChat` + `DefaultChatTransport` 连接远程接口。请确保该地址返回与 AI SDK 兼容的 UI 消息流。";
@@ -87,7 +90,8 @@ function MobileAppLabChatOverlaySdk({ apiUrl }: { apiUrl: string }) {
   );
 }
 
-function MobileAppLabChatOverlayDeepseekInner({
+/** 无 Lab TSX Context 时：普通 DeepSeek 对话（非 tool）。 */
+function MobileAppLabChatOverlayDeepseekPlainInner({
   apiKey,
   onOpenSettings,
 }: {
@@ -139,6 +143,53 @@ function MobileAppLabChatOverlayDeepseekInner({
   );
 }
 
+/** Mobile App Lab：`streamText` + `set_lab_tsx` 工具。 */
+function MobileAppLabChatOverlayDeepseekLabTools({
+  apiKey,
+  onOpenSettings,
+  labTsx,
+}: {
+  apiKey: string;
+  onOpenSettings: () => void;
+  labTsx: MobileAppLabTsxContextValue;
+}) {
+  const [input, setInput] = useState("");
+  const { messages, sendText, status, stop, error, clearError } = useMobileAppLabTsxStreamChat({
+    apiKey,
+    getDraftSnapshot: () => labTsx.draftForPrompt,
+    setDraft: (code) => {
+      labTsx.setDraft(code);
+    },
+  });
+
+  const onSubmit = useCallback(
+    (message: PromptInputMessage) => {
+      const t = message.text.trim();
+      if (!t) {
+        return;
+      }
+      void sendText(t);
+      setInput("");
+    },
+    [sendText],
+  );
+
+  return (
+    <MobileAppLabChatPanel
+      error={error}
+      headerRight={settingsButton(onOpenSettings)}
+      input={input}
+      inputPlaceholder="描述如何修改侧栏 TSX…"
+      messages={messages}
+      onClearError={clearError}
+      onInputChange={setInput}
+      onStop={stop}
+      onSubmit={onSubmit}
+      status={status}
+    />
+  );
+}
+
 function MobileAppLabChatOverlayDeepseek({
   apiKey,
   onOpenSettings,
@@ -146,8 +197,19 @@ function MobileAppLabChatOverlayDeepseek({
   apiKey: string;
   onOpenSettings: () => void;
 }) {
+  const labTsx = useContext(MobileAppLabTsxContext);
+  if (labTsx) {
+    return (
+      <MobileAppLabChatOverlayDeepseekLabTools
+        key={apiKey}
+        apiKey={apiKey}
+        labTsx={labTsx}
+        onOpenSettings={onOpenSettings}
+      />
+    );
+  }
   return (
-    <MobileAppLabChatOverlayDeepseekInner
+    <MobileAppLabChatOverlayDeepseekPlainInner
       key={apiKey}
       apiKey={apiKey}
       onOpenSettings={onOpenSettings}
@@ -188,7 +250,7 @@ function MobileAppLabChatOverlayMock({ onOpenSettings }: { onOpenSettings: () =>
 /**
  * AI Elements 对话浮层（右下角）。
  * - `PUBLIC_AI_CHAT_URL`：远程 `DefaultChatTransport`。
- * - 否则若 localStorage 有 DeepSeek Key：`@ai-sdk/deepseek` + 自定义 `ChatTransport`。
+ * - 否则若 localStorage 有 DeepSeek Key：`streamText` + 工具 `set_lab_tsx`（有 Lab Context 时）或普通 `ChatTransport`。
  * - 否则 Mock；可通过「设置」写入 Key。
  */
 export function MobileAppLabChatOverlay() {

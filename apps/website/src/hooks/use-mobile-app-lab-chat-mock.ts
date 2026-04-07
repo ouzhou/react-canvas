@@ -3,7 +3,7 @@ import { nanoid } from "nanoid";
 import { useCallback, useRef, useState } from "react";
 
 const WELCOME =
-  "你好，这是 **Mobile App Lab** 的占位对话。点击右上角 **设置** 可填写 DeepSeek API Key（存于 localStorage）以使用真实模型；否则下方输入会模拟流式回复。";
+  "你好，这是 **Mobile App Lab** 的占位对话。点击右上角 **设置** 填写 DeepSeek API Key 后，可使用 **set_lab_tsx** 工具修改侧栏 TSX（仅更新侧栏，需再点「应用」同步画布）；否则下方为 Mock 流式回复。";
 
 const MOCK_REPLY_PREFIX = "【Mock】\n\n";
 
