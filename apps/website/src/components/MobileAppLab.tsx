@@ -11,8 +11,21 @@ import {
 import { Canvas, CanvasProvider, Image, ScrollView, Text, View } from "@react-canvas/react";
 import { LiveContext, LiveError, LiveProvider } from "react-live";
 import type { ComponentType, Dispatch, RefObject, SetStateAction } from "react";
+import { FileCode2Icon } from "lucide-react";
 import React, { useContext, useLayoutEffect, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+import { MobileAppLabChatOverlay } from "./MobileAppLabChatOverlay.tsx";
 import { DEFAULT_LAB_TSX } from "./mobile-app-lab-default-source.ts";
 
 const liveScope = {
@@ -109,6 +122,7 @@ export function MobileAppLab() {
   const canvasDomRef = useRef<HTMLCanvasElement | null>(null);
   const [draft, setDraft] = useState(DEFAULT_LAB_TSX);
   const [appliedCode, setAppliedCode] = useState(DEFAULT_LAB_TSX);
+  const [editorOpen, setEditorOpen] = useState(false);
 
   return (
     <div className="fixed inset-0 box-border overflow-hidden bg-slate-100 text-[var(--sl-color-text)]">
@@ -119,7 +133,7 @@ export function MobileAppLab() {
         文档首页
       </a>
       <p className="pointer-events-none absolute left-3 top-12 z-10 max-w-[min(100%,22rem)] text-xs leading-snug text-[var(--sl-color-gray-3)]">
-        右侧为完整默认 TSX 源码，编辑后点「应用」更新画布。按住
+        点击右上角「编辑 TSX」打开侧栏编辑源码，保存时点「应用」更新画布。按住
         Cmd（Windows：Ctrl）可滚轮缩放或左键拖拽平移；悬停显示节点描边。
       </p>
       <CanvasProvider>
@@ -141,31 +155,53 @@ export function MobileAppLab() {
           return (
             <LiveProvider code={appliedCode} language="tsx" enableTypeScript scope={liveScope}>
               <div className="relative h-full w-full">
-                <div className="fixed right-3 top-3 z-[100] flex max-h-[min(85vh,900px)] w-[min(100vw-1.5rem,42rem)] flex-col gap-2 overflow-hidden rounded-lg border border-[var(--sl-color-hairline)] bg-white/95 p-2 shadow-md">
-                  <label
-                    className="text-xs font-medium text-[var(--sl-color-gray-3)]"
-                    htmlFor="mobile-app-lab-tsx"
-                  >
-                    TSX（完整源码）
-                  </label>
-                  <textarea
-                    id="mobile-app-lab-tsx"
-                    aria-label="TSX 代码"
-                    className="min-h-[min(50vh,28rem)] w-full flex-1 resize-y rounded border border-[var(--sl-color-hairline)] bg-white px-2 py-1 font-mono text-[11px] leading-relaxed text-[var(--sl-color-text)]"
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    spellCheck={false}
-                  />
-                  <button
-                    type="button"
-                    className="rounded-md bg-[var(--sl-color-accent)] px-3 py-1.5 text-sm font-medium text-white"
-                    aria-label="应用代码并更新预览"
-                    onClick={() => setAppliedCode(draft.trim())}
-                  >
-                    应用
-                  </button>
-                </div>
+                <Sheet onOpenChange={setEditorOpen} open={editorOpen}>
+                  <SheetTrigger asChild>
+                    <Button
+                      aria-expanded={editorOpen}
+                      aria-label="打开 TSX 源码编辑侧栏"
+                      className="fixed top-3 right-3 z-[100] gap-1.5 border border-[var(--sl-color-hairline)] bg-white/95 text-[var(--sl-color-text)] shadow-md hover:bg-white"
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      <FileCode2Icon aria-hidden className="size-4" />
+                      编辑 TSX
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent className="overflow-y-auto" side="right">
+                    <SheetHeader>
+                      <SheetTitle>TSX（完整源码）</SheetTitle>
+                      <SheetDescription>
+                        编辑后点击「应用」更新画布预览；可点击遮罩或右上角关闭侧栏。
+                      </SheetDescription>
+                    </SheetHeader>
+                    <label className="sr-only" htmlFor="mobile-app-lab-tsx">
+                      TSX 代码
+                    </label>
+                    <textarea
+                      id="mobile-app-lab-tsx"
+                      aria-label="TSX 代码"
+                      className="min-h-[min(52vh,28rem)] w-full flex-1 resize-y rounded-md border border-border bg-background px-2 py-1.5 font-mono text-[11px] leading-relaxed text-foreground"
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      spellCheck={false}
+                    />
+                    <SheetFooter className="flex-row justify-end border-t-0 pt-0">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setAppliedCode(draft.trim());
+                          setEditorOpen(false);
+                        }}
+                      >
+                        应用
+                      </Button>
+                    </SheetFooter>
+                  </SheetContent>
+                </Sheet>
                 <LiveError className="fixed bottom-4 left-4 z-[100] max-h-40 max-w-[min(100%,36rem)] overflow-auto rounded border border-red-200 bg-red-50 px-3 py-2 font-mono text-xs text-red-800" />
+                <MobileAppLabChatOverlay />
                 <div className="[&_canvas]:block h-full w-full [&_canvas]:h-full [&_canvas]:w-full">
                   <LabLiveCanvas
                     width={w}

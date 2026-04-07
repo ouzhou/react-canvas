@@ -17,6 +17,7 @@ export default defineConfig({
     plugins: [...tailwindcss()],
     resolve: {
       alias: {
+        "@": path.join(__dirname, "src"),
         "@react-canvas/react": path.join(repoRoot, "packages/react/src/index.ts"),
         "@react-canvas/core": path.join(repoRoot, "packages/core/src/index.ts"),
         "@react-canvas/ui": path.join(repoRoot, "packages/ui/src/index.ts"),
@@ -29,8 +30,10 @@ export default defineConfig({
     },
     optimizeDeps: {
       include: ["react", "react/jsx-runtime", "react-dom", "react-dom/client", "@astrojs/react"],
+      exclude: ["fsevents"],
     },
     ssr: {
+      external: ["fsevents"],
       noExternal: [
         "@react-canvas/react",
         "@react-canvas/core",
