@@ -78,7 +78,8 @@ export function MobileAppLabDeepseekSettingsDialog({
           />
           {hasSavedKey ? (
             <p className="text-xs text-muted-foreground">
-              当前已保存 Key，对话将使用 deepseek-chat 模型。
+              当前已保存 Key：无 App Lab 时为 deepseek-chat；带 TSX 工具（本页 Lab）时为
+              deepseek-coder。
             </p>
           ) : null}
         </div>

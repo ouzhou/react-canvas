@@ -18,7 +18,7 @@ const WELCOME_REMOTE =
   "已通过环境变量 **PUBLIC_AI_CHAT_URL** 使用 `useChat` + `DefaultChatTransport` 连接远程接口。请确保该地址返回与 AI SDK 兼容的 UI 消息流。";
 
 const WELCOME_DEEPSEEK =
-  "已通过 **设置** 中的 DeepSeek API Key 使用 `deepseek-chat` 模型（`@ai-sdk/deepseek`）。Key 仅保存在本机 localStorage。";
+  "已通过 **设置** 中的 DeepSeek API Key 使用 `@ai-sdk/deepseek`（普通对话为 `deepseek-chat`）。Key 仅保存在本机 localStorage。";
 
 function getPublicAiChatUrl(): string | undefined {
   const raw = import.meta.env.PUBLIC_AI_CHAT_URL;
@@ -160,6 +160,9 @@ function MobileAppLabChatOverlayDeepseekLabTools({
     setDraft: (code) => {
       labTsx.setDraft(code);
     },
+    setAppliedCode: (code) => {
+      labTsx.setAppliedCode(code);
+    },
   });
 
   const onSubmit = useCallback(
@@ -176,6 +179,7 @@ function MobileAppLabChatOverlayDeepseekLabTools({
 
   return (
     <MobileAppLabChatPanel
+      codeStreamLoadingBanner
       error={error}
       headerRight={settingsButton(onOpenSettings)}
       input={input}
@@ -250,7 +254,7 @@ function MobileAppLabChatOverlayMock({ onOpenSettings }: { onOpenSettings: () =>
 /**
  * AI Elements 对话浮层（右下角）。
  * - `PUBLIC_AI_CHAT_URL`：远程 `DefaultChatTransport`。
- * - 否则若 localStorage 有 DeepSeek Key：`streamText` + 工具 `set_lab_tsx`（有 Lab Context 时）或普通 `ChatTransport`。
+ * - 否则若 localStorage 有 DeepSeek Key：`streamText` + 工具 `set_lab_tsx`（有 Lab Context 时同步应用画布）或普通 `ChatTransport`。
  * - 否则 Mock；可通过「设置」写入 Key。
  */
 export function MobileAppLabChatOverlay() {

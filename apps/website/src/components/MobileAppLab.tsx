@@ -160,8 +160,8 @@ function MobileAppLabEditorSurface({
             <SheetHeader>
               <SheetTitle>TSX（完整源码）</SheetTitle>
               <SheetDescription>
-                编辑后点击「应用」更新画布预览；AI
-                通过对话修改时也只更新此处，需点「应用」后画布才变。可点击遮罩或右上角关闭侧栏。
+                编辑后点击「应用」更新画布预览。通过右下角 AI
+                对话修改侧栏源码时，会在模型返回后**自动应用**到画布。可点击遮罩或右上角关闭侧栏。
               </SheetDescription>
             </SheetHeader>
             <label className="sr-only" htmlFor="mobile-app-lab-tsx">
@@ -246,8 +246,8 @@ export function MobileAppLab() {
         文档首页
       </a>
       <p className="pointer-events-none absolute left-3 top-12 z-10 max-w-[min(100%,22rem)] text-xs leading-snug text-[var(--sl-color-gray-3)]">
-        点击右上角「编辑 TSX」打开侧栏编辑源码，保存时点「应用」更新画布。配置 DeepSeek
-        后可在右下角用对话通过工具修改侧栏源码（同样需点「应用」）。按住
+        点击右上角「编辑 TSX」打开侧栏手动编辑，保存时点「应用」更新画布。配置 DeepSeek
+        后可在右下角用 AI 对话修改源码，返回后会自动应用到画布。按住
         Cmd（Windows：Ctrl）可滚轮缩放或左键拖拽平移；悬停显示节点描边。
       </p>
       <MobileAppLabTsxProvider
