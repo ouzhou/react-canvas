@@ -1,4 +1,5 @@
 import type { CanvasKit } from "canvaskit-wasm";
+import { logicalPointFromCameraViewport, type ViewportCamera } from "../render/camera.ts";
 import { pointInRoundedRectLocal } from "../geometry/rounded-rect-hit.ts";
 import { getSortedChildrenForPaint } from "../render/children-z-order.ts";
 import { buildLocalTransformMatrix } from "../render/transform.ts";
@@ -40,8 +41,10 @@ export function hitTest(
   pageX: number,
   pageY: number,
   canvasKit: CanvasKit,
+  camera?: ViewportCamera | null,
 ): ViewNode | null {
-  return hitTestRecursive(sceneRoot, pageX, pageY, canvasKit, canvasKit.Matrix.identity());
+  const { x, y } = logicalPointFromCameraViewport(canvasKit, camera, pageX, pageY);
+  return hitTestRecursive(sceneRoot, x, y, canvasKit, canvasKit.Matrix.identity());
 }
 
 function hitTestRecursive(
@@ -126,14 +129,10 @@ export function hitTestScrollViewVerticalScrollbar(
   pageX: number,
   pageY: number,
   canvasKit: CanvasKit,
+  camera?: ViewportCamera | null,
 ): ScrollViewNode | null {
-  return hitTestScrollbarStripRecursive(
-    sceneRoot,
-    pageX,
-    pageY,
-    canvasKit,
-    canvasKit.Matrix.identity(),
-  );
+  const { x, y } = logicalPointFromCameraViewport(canvasKit, camera, pageX, pageY);
+  return hitTestScrollbarStripRecursive(sceneRoot, x, y, canvasKit, canvasKit.Matrix.identity());
 }
 
 function hitTestScrollbarStripRecursive(

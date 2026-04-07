@@ -1,5 +1,6 @@
 import type { CanvasKit, Surface } from "canvaskit-wasm";
 import { resetDefaultParagraphFontLoaderForTests } from "../text/default-paragraph-font.ts";
+import type { ViewportCamera } from "../render/camera.ts";
 import { paintScene } from "../render/paint.ts";
 import { resetParagraphFontStateForTests } from "../text/paragraph-build.ts";
 import type { ViewNode } from "../scene/view-node.ts";
@@ -17,6 +18,7 @@ type SurfaceQueueState = {
   frameHeight: number;
   frameDpr: number;
   frameCanvasKit: CanvasKit | null;
+  frameCamera: ViewportCamera | null;
 };
 
 const queueStateBySurface = new WeakMap<Surface, SurfaceQueueState>();
@@ -37,6 +39,7 @@ function getQueueState(surface: Surface): SurfaceQueueState {
       frameHeight: 0,
       frameDpr: 1,
       frameCanvasKit: null,
+      frameCamera: null,
     };
     queueStateBySurface.set(surface, st);
   }
@@ -55,6 +58,7 @@ function scheduleFrame(surface: Surface, st: SurfaceQueueState): void {
     const h = st.frameHeight;
     const d = st.frameDpr;
     const ck = st.frameCanvasKit;
+    const cam = st.frameCamera;
     st.pendingLayout = false;
     st.pendingPaint = false;
     if (root && ck) {
@@ -62,7 +66,7 @@ function scheduleFrame(surface: Surface, st: SurfaceQueueState): void {
       if (doPaint) {
         const paint = new ck.Paint();
         paint.setAntiAlias(true);
-        paintScene(root, skCanvas, ck, d, paint);
+        paintScene(root, skCanvas, ck, d, paint, cam);
         paint.delete();
       }
     }
@@ -83,6 +87,7 @@ export function queueLayoutPaintFrame(
   width: number,
   height: number,
   dpr: number,
+  camera?: ViewportCamera | null,
 ): void {
   const st = getQueueState(surface);
   st.frameRoot = rootNode;
@@ -90,6 +95,7 @@ export function queueLayoutPaintFrame(
   st.frameHeight = height;
   st.frameDpr = dpr;
   st.frameCanvasKit = canvasKit;
+  st.frameCamera = camera ?? null;
   st.pendingLayout = true;
   st.pendingPaint = true;
   scheduleFrame(surface, st);
@@ -106,6 +112,7 @@ export function queuePaintOnlyFrame(
   width: number,
   height: number,
   dpr: number,
+  camera?: ViewportCamera | null,
 ): void {
   const st = getQueueState(surface);
   if (st.pendingLayout) return;
@@ -114,6 +121,7 @@ export function queuePaintOnlyFrame(
   st.frameHeight = height;
   st.frameDpr = dpr;
   st.frameCanvasKit = canvasKit;
+  st.frameCamera = camera ?? null;
   st.pendingPaint = true;
   scheduleFrame(surface, st);
 }

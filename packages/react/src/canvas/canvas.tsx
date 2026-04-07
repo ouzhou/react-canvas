@@ -3,15 +3,18 @@ import {
   resetLayoutPaintQueue,
   ViewNode,
   type CanvasKit,
+  type ViewportCamera,
   type Yoga,
 } from "@react-canvas/core";
 import {
   Children,
   isValidElement,
+  useCallback,
   useDeferredValue,
   useLayoutEffect,
   useRef,
   type ReactNode,
+  type RefObject,
 } from "react";
 import Reconciler from "react-reconciler";
 import { canvasBackingStoreSize } from "./canvas-backing-store.ts";
@@ -29,6 +32,10 @@ export type CanvasProps = {
   width: number;
   height: number;
   children: ReactNode;
+  /** 可选：与内部 `<canvas>` DOM 同步，便于 `attachViewportHandlers` 等扩展 */
+  canvasRef?: RefObject<HTMLCanvasElement | null>;
+  /** 画布根视口相机（平移 + 统一缩放）；缺省为无变换。与节点 `transform` 二选一，避免重复。 */
+  camera?: ViewportCamera | null;
 };
 
 function assertSingleViewChild(children: ReactNode): void {
@@ -50,7 +57,13 @@ function layoutWH(width: number, height: number): { lw: number; lh: number } {
   return { lw: Math.max(1, Math.round(width)), lh: Math.max(1, Math.round(height)) };
 }
 
-export function Canvas({ width, height, children }: CanvasProps) {
+export function Canvas({
+  width,
+  height,
+  children,
+  canvasRef: forwardedCanvasRef,
+  camera = null,
+}: CanvasProps) {
   assertSingleViewChild(children);
   const { yoga, canvasKit } = useCanvasRuntime();
 
@@ -59,7 +72,14 @@ export function Canvas({ width, height, children }: CanvasProps) {
   const dh = useDeferredValue(height);
   const { lw, lh } = layoutWH(dw, dh);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const setCanvasNode = useCallback(
+    (el: HTMLCanvasElement | null) => {
+      canvasRef.current = el;
+      if (forwardedCanvasRef) forwardedCanvasRef.current = el;
+    },
+    [forwardedCanvasRef],
+  );
   const frameRef = useRef<PaintFrameRef>({
     surface: null,
     canvasKit: null,
@@ -67,7 +87,9 @@ export function Canvas({ width, height, children }: CanvasProps) {
     width: 0,
     height: 0,
     dpr: 1,
+    camera: null,
   });
+  frameRef.current.camera = camera ?? null;
 
   const reconcilerRef = useRef<ReturnType<typeof Reconciler> | null>(null);
   const rootRef = useRef<unknown>(null);
@@ -104,6 +126,7 @@ export function Canvas({ width, height, children }: CanvasProps) {
       }
       frameRef.current.surface = null;
       frameRef.current.canvasKit = null;
+      frameRef.current.camera = null;
       layoutKeyRef.current = { w: 0, h: 0, yoga: null, canvasKit: null };
       return;
     }
@@ -120,6 +143,7 @@ export function Canvas({ width, height, children }: CanvasProps) {
     surface.delete();
     frameRef.current.surface = null;
     frameRef.current.canvasKit = null;
+    frameRef.current.camera = null;
     layoutKeyRef.current = { w: 0, h: 0, yoga: null, canvasKit: null };
   };
 
@@ -206,9 +230,11 @@ export function Canvas({ width, height, children }: CanvasProps) {
               fr.width,
               fr.height,
               fr.dpr,
+              fr.camera,
             );
           }
         },
+        () => frameRef.current.camera,
       );
     }
 
@@ -226,15 +252,16 @@ export function Canvas({ width, height, children }: CanvasProps) {
         canvasKit: fr.canvasKit,
         logicalWidth: fr.width,
         logicalHeight: fr.height,
+        camera: fr.camera,
       });
     }
 
     /** 与 host resetAfterCommit 内 queueLayoutPaintFrame 一致；若某次 commit 触发 resetAfterCommit 时 frameRef 尚无 surface 会漏排队，此处补一次（frame-queue 内会合并重复）。 */
     const sr = fr.sceneRoot;
     if (fr.surface && fr.canvasKit && sr) {
-      queueLayoutPaintFrame(fr.surface, fr.canvasKit, sr, fr.width, fr.height, fr.dpr);
+      queueLayoutPaintFrame(fr.surface, fr.canvasKit, sr, fr.width, fr.height, fr.dpr, fr.camera);
     }
-  }, [yoga, canvasKit, lw, lh, children]);
+  }, [yoga, canvasKit, lw, lh, children, camera]);
 
   useLayoutEffect(() => {
     return () => {
@@ -246,5 +273,5 @@ export function Canvas({ width, height, children }: CanvasProps) {
    * 不在 `<canvas>` 上使用随尺寸变化的 `key`：改宽高由 `needNewSurface` 在同一 DOM 上删建 surface；换 DOM 易与快速
    * 连续提交交错。`useDeferredValue` 压低父组件传入尺寸的频率。`display:block` 避免 inline 画布与 flex 基线空隙。
    */
-  return <canvas ref={canvasRef} style={{ display: "block" }} />;
+  return <canvas ref={setCanvasNode} style={{ display: "block" }} />;
 }

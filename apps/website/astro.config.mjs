@@ -20,6 +20,10 @@ export default defineConfig({
         "@react-canvas/react": path.join(repoRoot, "packages/react/src/index.ts"),
         "@react-canvas/core": path.join(repoRoot, "packages/core/src/index.ts"),
         "@react-canvas/ui": path.join(repoRoot, "packages/ui/src/index.ts"),
+        "@react-canvas/plugin-viewport": path.join(
+          repoRoot,
+          "packages/plugin-viewport/src/index.ts",
+        ),
       },
       dedupe: ["react", "react-dom"],
     },
@@ -27,7 +31,12 @@ export default defineConfig({
       include: ["react", "react/jsx-runtime", "react-dom", "react-dom/client", "@astrojs/react"],
     },
     ssr: {
-      noExternal: ["@react-canvas/react", "@react-canvas/core", "@react-canvas/ui"],
+      noExternal: [
+        "@react-canvas/react",
+        "@react-canvas/core",
+        "@react-canvas/ui",
+        "@react-canvas/plugin-viewport",
+      ],
     },
   },
   integrations: [
@@ -98,6 +107,7 @@ export default defineConfig({
             { label: "Icon", slug: "playground/icon" },
             { label: "Two-factor card", slug: "playground/two-factor-card" },
             { label: "Multi-canvas", slug: "playground/multi-canvas" },
+            { label: "Mobile app lab", link: "/mobile-app-lab" },
           ],
         },
         {

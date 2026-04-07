@@ -8,6 +8,7 @@ import {
   unregisterPaintFrameRequester,
   type SceneNode,
   type Surface,
+  type ViewportCamera,
   SvgPathNode,
   type TextInstance,
   TextNode,
@@ -182,6 +183,8 @@ export type PaintFrameRef = {
    * and a single `scale(dpr)` is not anisotropic.
    */
   dpr: number;
+  /** 画布根相机；与 `<Canvas camera={...}>` 同步，供绘制与命中。 */
+  camera: ViewportCamera | null;
 };
 
 const ROOT_HOST_CONTEXT: TextHostContext = { isInText: false };
@@ -316,6 +319,7 @@ export function createCanvasHostConfig(
             frameRef.width,
             frameRef.height,
             frameRef.dpr,
+            frameRef.camera,
           );
         };
         registerPaintFrameRequester(paintFrameRequestFn);
@@ -332,6 +336,7 @@ export function createCanvasHostConfig(
         r.width,
         r.height,
         r.dpr,
+        r.camera,
       );
     },
 

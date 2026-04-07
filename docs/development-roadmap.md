@@ -28,7 +28,7 @@
 
 | 模块                  | 状态          | 说明                                                                                                                                                        |
 | --------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| monorepo 结构         | ✅ 完成       | `packages/core` + `packages/react` + `packages/ui` + `apps/website`                                                                                         |
+| monorepo 结构         | ✅ 完成       | `packages/core` + `packages/react` + `packages/ui` + `packages/plugin-keyboard` + `packages/plugin-viewport` + `apps/website`                               |
 | `ViewNode` 场景树     | ✅ 阶段一基线 | `packages/core`：树操作、样式拆分、布局回写、基础绘制                                                                                                       |
 | Reconciler HostConfig | ✅ 持续演进   | `packages/react`：`View` / `Text` / `Image` / `SvgPath` 等宿主、`commitUpdate`、场景根                                                                      |
 | 绘制管线              | ✅ 阶段一基线 | `paintScene` / `paintNode`；站内在线 demo 见 playground 等页                                                                                                |

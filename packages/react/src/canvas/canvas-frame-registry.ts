@@ -1,5 +1,4 @@
-import type { CanvasKit } from "@react-canvas/core";
-import type { ViewNode } from "@react-canvas/core";
+import type { CanvasKit, ViewportCamera, ViewNode } from "@react-canvas/core";
 
 /** 与 DOM `<canvas>` 元素关联的当前场景快照，供 `useCanvasClickAway` 等做命中判断。 */
 export type CanvasFrameSnapshot = {
@@ -7,6 +6,7 @@ export type CanvasFrameSnapshot = {
   canvasKit: CanvasKit;
   logicalWidth: number;
   logicalHeight: number;
+  camera: ViewportCamera | null;
 };
 
 const canvasFrameByElement = new WeakMap<HTMLCanvasElement, CanvasFrameSnapshot>();

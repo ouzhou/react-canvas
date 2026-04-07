@@ -26,6 +26,29 @@ describe("hitTest", () => {
     expect(hitTest(root, 5, 5, canvasKit)).toBe(root);
   });
 
+  it("applies inverse ViewportCamera so hit matches paintScene concat order (translate)", () => {
+    const root = new ViewNode(yoga, "View");
+    root.layout = { left: 0, top: 0, width: 200, height: 200 };
+    const child = new ViewNode(yoga, "View");
+    child.layout = { left: 10, top: 10, width: 80, height: 80 };
+    root.appendChild(child);
+    const cam = { translateX: 10, translateY: 20, scale: 1 };
+    expect(hitTest(root, 50, 50, canvasKit, cam)).toBe(child);
+    expect(hitTest(root, 60, 70, canvasKit, cam)).toBe(child);
+    expect(hitTest(root, 5, 5, canvasKit, cam)).toBe(null);
+  });
+
+  it("applies inverse ViewportCamera for uniform scale", () => {
+    const root = new ViewNode(yoga, "View");
+    root.layout = { left: 0, top: 0, width: 200, height: 200 };
+    const child = new ViewNode(yoga, "View");
+    child.layout = { left: 10, top: 10, width: 80, height: 80 };
+    root.appendChild(child);
+    const cam = { translateX: 0, translateY: 0, scale: 2 };
+    expect(hitTest(root, 100, 100, canvasKit, cam)).toBe(child);
+    expect(hitTest(root, 19, 19, canvasKit, cam)).toBe(root);
+  });
+
   it("prefers last sibling (top paint order) when overlapping", () => {
     const root = new ViewNode(yoga, "View");
     root.layout = { left: 0, top: 0, width: 100, height: 100 };

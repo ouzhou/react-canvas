@@ -39,6 +39,12 @@ export {
 export { calculateLayoutRoot, isDisplayNone, syncLayoutFromYoga } from "./layout/layout.ts";
 export { getSortedChildrenForPaint } from "./render/children-z-order.ts";
 export { paintNode, paintScene } from "./render/paint.ts";
+export type { ViewportCamera } from "./render/camera.ts";
+export {
+  buildViewportCameraMatrix,
+  isViewportCameraIdentity,
+  logicalPointFromCameraViewport,
+} from "./render/camera.ts";
 export type { DimensionValue, TransformStyle, ViewStyle } from "./style/view-style.ts";
 export { buildLocalTransformMatrix } from "./render/transform.ts";
 export type { TextOnlyProps, TextStyle } from "./style/text-style.ts";

@@ -10,6 +10,11 @@ import { getVerticalScrollMetrics, type ScrollViewNode } from "../scene/scroll-v
 import type { ViewNode } from "../scene/view-node.ts";
 import { parseViewBox, viewBoxToAffine } from "../geometry/viewbox.ts";
 import { getSortedChildrenForPaint } from "./children-z-order.ts";
+import {
+  buildViewportCameraMatrix,
+  isViewportCameraIdentity,
+  type ViewportCamera,
+} from "./camera.ts";
 import { buildLocalTransformMatrix } from "./transform.ts";
 
 /** 将绘制限制在布局盒内；圆角与背景 `drawRRect` 使用同一套半径（经 `min` 钳制）。 */
@@ -71,10 +76,14 @@ export function paintScene(
   canvasKit: CanvasKit,
   dpr: number,
   paint: Paint,
+  camera?: ViewportCamera | null,
 ): void {
   skCanvas.save();
   skCanvas.scale(dpr, dpr);
   skCanvas.clear(canvasKit.TRANSPARENT);
+  if (!isViewportCameraIdentity(camera)) {
+    skCanvas.concat(buildViewportCameraMatrix(canvasKit, camera!));
+  }
   paintNode(root, skCanvas, canvasKit, paint);
   skCanvas.restore();
 }

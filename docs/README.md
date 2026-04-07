@@ -7,10 +7,11 @@
 
 ## 仓库级（`docs/` 根目录）
 
-| 文档                                               | 说明                         |
-| -------------------------------------------------- | ---------------------------- |
-| [known-limitations.md](./known-limitations.md)     | 平台能力边界：缺陷 vs 非缺陷 |
-| [development-roadmap.md](./development-roadmap.md) | 分阶段路线图与验收           |
+| 文档                                               | 说明                           |
+| -------------------------------------------------- | ------------------------------ |
+| [known-limitations.md](./known-limitations.md)     | 平台能力边界：缺陷 vs 非缺陷   |
+| [development-roadmap.md](./development-roadmap.md) | 分阶段路线图与验收             |
+| [text-input-naming.md](./text-input-naming.md)     | TextInput / Input 跨包命名约定 |
 
 ---
 

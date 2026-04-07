@@ -55,7 +55,7 @@ export function useCanvasClickAway(onAway: () => void, options: UseCanvasClickAw
           frame.logicalWidth,
           frame.logicalHeight,
         );
-        const leaf = hitTest(frame.sceneRoot, x, y, frame.canvasKit);
+        const leaf = hitTest(frame.sceneRoot, x, y, frame.canvasKit, frame.camera);
         if (leaf && isDescendantOf(leaf, boundary)) return;
         onAwayRef.current();
         return;

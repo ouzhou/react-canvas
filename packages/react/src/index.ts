@@ -23,6 +23,7 @@ export type {
   InitCanvasRuntimeOptions,
   InteractionHandlers,
   ResizeMode,
+  ViewportCamera,
 } from "@react-canvas/core";
 export {
   BUILTIN_PARAGRAPH_FONT_URL,

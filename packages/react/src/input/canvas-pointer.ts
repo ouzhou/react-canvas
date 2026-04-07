@@ -11,6 +11,7 @@ import {
   type PointerDownSnapshot,
   type ScrollViewNode,
   type ViewNode,
+  type ViewportCamera,
 } from "@react-canvas/core";
 
 function findAncestorScrollView(leaf: ViewNode | null): ScrollViewNode | null {
@@ -96,7 +97,9 @@ export function attachCanvasPointerHandlers(
   logicalHeight: number,
   canvasKit: CanvasKit,
   requestLayoutPaint: () => void,
+  getCamera?: () => ViewportCamera | null,
 ): () => void {
+  const readCamera = (): ViewportCamera | null => getCamera?.() ?? null;
   const down = new Map<number, PointerDownSnapshot>();
   /** 仅在**垂直滚动条轨道**上按下时拖拽改变 `scrollY`（列表体不再拖拽滚动）。 */
   const scrollBarDrag = new Map<number, { node: ScrollViewNode; lastPageY: number }>();
@@ -110,14 +113,20 @@ export function attachCanvasPointerHandlers(
 
   const onPointerDown = (ev: PointerEvent) => {
     const { x: pageX, y: pageY } = route(ev);
-    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
+    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
     if (!hit) {
       syncScrollbarHoverFromHit(null, lastScrollbarHoverSv, requestLayoutPaint);
       return;
     }
     syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
     down.set(ev.pointerId, { pageX, pageY, target: hit });
-    const scrollbarSv = hitTestScrollViewVerticalScrollbar(sceneRoot, pageX, pageY, canvasKit);
+    const scrollbarSv = hitTestScrollViewVerticalScrollbar(
+      sceneRoot,
+      pageX,
+      pageY,
+      canvasKit,
+      readCamera(),
+    );
     if (scrollbarSv) {
       scrollBarDrag.set(ev.pointerId, { node: scrollbarSv, lastPageY: pageY });
     }
@@ -175,7 +184,7 @@ export function attachCanvasPointerHandlers(
     const { x: pageX, y: pageY } = route(ev);
     lastPage = { x: pageX, y: pageY };
 
-    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
+    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
     syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
     if (hit) {
       const path = buildPathToRoot(hit, sceneRoot);
@@ -221,7 +230,7 @@ export function attachCanvasPointerHandlers(
     const kind: "pointerup" | "pointercancel" =
       ev.type === "pointercancel" ? "pointercancel" : "pointerup";
 
-    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
+    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
     const pathForEnd = hit
       ? buildPathToRoot(hit, sceneRoot)
       : snap
@@ -232,13 +241,15 @@ export function attachCanvasPointerHandlers(
     }
 
     if (kind === "pointercancel" || !snap) return;
-    if (shouldEmitClick(snap, pageX, pageY, sceneRoot, canvasKit)) {
+    if (shouldEmitClick(snap, pageX, pageY, sceneRoot, canvasKit, undefined, readCamera())) {
       const pathClick = buildPathToRoot(snap.target, sceneRoot);
       dispatchBubble(pathClick, sceneRoot, "click", pageX, pageY, ev.pointerId, ev.timeStamp);
     }
   };
 
   const onWheel = (ev: WheelEvent) => {
+    /** Cmd/Ctrl+滚轮留给 `@react-canvas/plugin-viewport` 等视口缩放，ScrollView 不消费。 */
+    if (ev.metaKey || ev.ctrlKey) return;
     const { x: pageX, y: pageY } = clientToCanvasLogical(
       ev.clientX,
       ev.clientY,
@@ -246,7 +257,7 @@ export function attachCanvasPointerHandlers(
       logicalWidth,
       logicalHeight,
     );
-    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit);
+    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
     syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
     if (!hit) return;
     const sv = findAncestorScrollView(hit);

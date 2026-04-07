@@ -1,4 +1,5 @@
 import type { CanvasKit } from "canvaskit-wasm";
+import type { ViewportCamera } from "../render/camera.ts";
 import { hitTest } from "./hit-test.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
@@ -22,9 +23,10 @@ export function shouldEmitClick(
   sceneRoot: ViewNode,
   canvasKit: CanvasKit,
   moveThresholdPx: number = DEFAULT_CLICK_MOVE_THRESHOLD_PX,
+  camera?: ViewportCamera | null,
 ): boolean {
   const dx = pageX - down.pageX;
   const dy = pageY - down.pageY;
   if (dx * dx + dy * dy > moveThresholdPx * moveThresholdPx) return false;
-  return hitTest(sceneRoot, pageX, pageY, canvasKit) === down.target;
+  return hitTest(sceneRoot, pageX, pageY, canvasKit, camera) === down.target;
 }
