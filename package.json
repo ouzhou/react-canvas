@@ -7,6 +7,7 @@
     "ready": "vp fmt && vp lint && vp run -r test && vp run -r build",
     "test": "vp run -r test",
     "dev": "vp run website#dev",
+    "core-test": "vp run core-test#dev",
     "prepare": "vp config"
   },
   "devDependencies": {
