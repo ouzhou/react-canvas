@@ -8,6 +8,7 @@
     "test": "vp run -r test",
     "dev": "vp run website#dev",
     "core-test": "vp run core-test#dev",
+    "lab": "vp run open-canvas-lab#dev",
     "prepare": "vp config"
   },
   "devDependencies": {
