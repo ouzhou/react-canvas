@@ -8,6 +8,13 @@ import type { ViewportCamera } from "../render/camera.ts";
 import { getVerticalScrollMetrics, type ScrollViewNode } from "../scene/scroll-view-node.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
+/** 与 {@link Stage.setPointerCapture} 配合：对处于捕获的 `pointerId` 跳过命中测试。 */
+export type CanvasPointerCaptureBinding = {
+  getTarget: (pointerId: number) => ViewNode | undefined;
+  /** 在 `pointerup` / `pointercancel` 分发后调用，清除该 `pointerId` 的捕获。 */
+  release: (pointerId: number) => void;
+};
+
 function findAncestorScrollView(leaf: ViewNode | null): ScrollViewNode | null {
   let n: ViewNode | null = leaf;
   while (n) {
@@ -92,6 +99,7 @@ export function attachCanvasPointerHandlers(
   canvasKit: CanvasKit,
   requestLayoutPaint: () => void,
   getCamera?: () => ViewportCamera | null,
+  pointerCapture?: CanvasPointerCaptureBinding,
 ): () => void {
   const readCamera = (): ViewportCamera | null => getCamera?.() ?? null;
   const down = new Map<number, PointerDownSnapshot>();
@@ -145,6 +153,15 @@ export function attachCanvasPointerHandlers(
       }
       barDrag.lastPageY = pageY;
       requestLayoutPaint();
+      return;
+    }
+
+    const capNode = pointerCapture?.getTarget(ev.pointerId);
+    if (capNode) {
+      const { x: pageX, y: pageY } = route(ev);
+      lastPage = { x: pageX, y: pageY };
+      const path = buildPathToRoot(capNode, sceneRoot);
+      dispatchBubble(path, sceneRoot, "pointermove", pageX, pageY, ev.pointerId, ev.timeStamp);
       return;
     }
 
@@ -224,15 +241,22 @@ export function attachCanvasPointerHandlers(
     const kind: "pointerup" | "pointercancel" =
       ev.type === "pointercancel" ? "pointercancel" : "pointerup";
 
-    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
-    const pathForEnd = hit
-      ? buildPathToRoot(hit, sceneRoot)
-      : snap
-        ? buildPathToRoot(snap.target, sceneRoot)
-        : null;
+    const capNode = pointerCapture?.getTarget(ev.pointerId);
+    const pathForEnd = capNode
+      ? buildPathToRoot(capNode, sceneRoot)
+      : (() => {
+          const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
+          return hit
+            ? buildPathToRoot(hit, sceneRoot)
+            : snap
+              ? buildPathToRoot(snap.target, sceneRoot)
+              : null;
+        })();
     if (pathForEnd) {
       dispatchBubble(pathForEnd, sceneRoot, kind, pageX, pageY, ev.pointerId, ev.timeStamp);
     }
+
+    pointerCapture?.release(ev.pointerId);
 
     if (kind === "pointercancel" || !snap) return;
     if (shouldEmitClick(snap, pageX, pageY, sceneRoot, canvasKit, undefined, readCamera())) {

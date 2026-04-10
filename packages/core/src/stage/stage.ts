@@ -42,6 +42,8 @@ export class Stage {
   private frameScheduler: FrameScheduler | null = null;
   /** 由 {@link createTicker} 创建；{@link teardownSurface} 时全部 {@link Ticker.destroy}。 */
   private readonly tickers = new Set<Ticker>();
+  /** `pointerId` → 捕获节点；见 `core-design.md` §8.6。 */
+  private readonly pointerCaptureById = new Map<number, ViewNode>();
   private pointerDetach: (() => void) | null = null;
   private lw = 1;
   private lh = 1;
@@ -107,6 +109,31 @@ export class Stage {
     this.tickers.delete(t);
   }
 
+  /**
+   * 将 `pointerId` 的后续 `pointermove` / `pointerup` 路由到 `node`（跳过命中测试），与 DOM `setPointerCapture` 语义一致。
+   */
+  setPointerCapture(node: ViewNode, pointerId: number): void {
+    this.pointerCaptureById.set(pointerId, node);
+  }
+
+  /**
+   * 仅当当前捕获节点为 `node` 时释放；否则忽略。
+   */
+  releasePointerCapture(node: ViewNode, pointerId: number): void {
+    if (this.pointerCaptureById.get(pointerId) !== node) return;
+    this.pointerCaptureById.delete(pointerId);
+  }
+
+  /** @internal 供 {@link attachCanvasPointerHandlers} 查询当前捕获目标。 */
+  getPointerCaptureTarget(pointerId: number): ViewNode | undefined {
+    return this.pointerCaptureById.get(pointerId);
+  }
+
+  /** @internal 在 `pointerup` / `pointercancel` 末尾清除捕获。 */
+  clearPointerCaptureForPointerId(pointerId: number): void {
+    this.pointerCaptureById.delete(pointerId);
+  }
+
   resize(width: number, height: number, dpr?: number): void {
     this.teardownSurface();
     this.mountSurface(width, height, dpr ?? defaultDevicePixelRatio());
@@ -114,6 +141,7 @@ export class Stage {
 
   destroy(): void {
     this.detachPointerHandlers();
+    this.pointerCaptureById.clear();
     this.clearAllLayerChildren();
     this.teardownSurface();
   }
@@ -137,6 +165,10 @@ export class Stage {
         this.requestLayoutPaint();
       },
       getCamera,
+      {
+        getTarget: (pointerId) => this.getPointerCaptureTarget(pointerId),
+        release: (pointerId) => this.clearPointerCaptureForPointerId(pointerId),
+      },
     );
     this.pointerDetach = detach;
     return () => {
