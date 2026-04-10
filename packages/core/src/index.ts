@@ -8,11 +8,18 @@ export {
   getCanvasRuntimeInitSnapshot,
   getCanvasRuntimeInitServerSnapshot,
   getFontOptionsFingerprint,
+  initRuntime,
+  subscribeRuntimeInit,
+  getRuntimeSnapshot,
+  getRuntimeServerSnapshot,
 } from "./runtime/runtime.ts";
 export type {
   CanvasRuntime,
   CanvasRuntimeInitSnapshot,
   InitCanvasRuntimeOptions,
+  Runtime,
+  RuntimeOptions,
+  RuntimeInitSnapshot,
 } from "./runtime/runtime.ts";
 export {
   BUILTIN_PARAGRAPH_FONT_URL,
