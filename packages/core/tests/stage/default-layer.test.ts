@@ -3,12 +3,12 @@ import type { CanvasKit, Surface } from "canvaskit-wasm";
 
 vi.mock("../../src/render/paint.ts", async (importOriginal) => {
   const mod = await importOriginal<typeof import("../../src/render/paint.ts")>();
-  return { ...mod, paintScene: vi.fn() };
+  return { ...mod, paintScene: vi.fn(), paintStageLayers: vi.fn() };
 });
 
 import { initYoga } from "../../src/layout/yoga.ts";
 import type { Yoga } from "../../src/layout/yoga.ts";
-import { paintScene, ViewNode } from "../../src/index.ts";
+import { paintStageLayers, ViewNode } from "../../src/index.ts";
 import { resetLayoutPaintQueueForTests } from "../../src/runtime/frame-queue.ts";
 import { Stage } from "../../src/stage/stage.ts";
 import type { Runtime } from "../../src/runtime/runtime.ts";
@@ -30,7 +30,7 @@ describe("Stage defaultLayer", () => {
 
   afterEach(() => {
     resetLayoutPaintQueueForTests();
-    vi.mocked(paintScene).mockClear();
+    vi.mocked(paintStageLayers).mockClear();
   });
 
   it("exposes full-size root and accepts children", () => {
@@ -55,6 +55,9 @@ describe("Stage defaultLayer", () => {
     const stage = new Stage(runtime, { canvas: fakeCanvas(), width: 320, height: 240, dpr: 1 });
 
     expect(stage.defaultLayer.zIndex).toBe(0);
+    expect(stage.overlayLayer.zIndex).toBe(100);
+    expect(stage.modalLayer.zIndex).toBe(1000);
+    expect(stage.modalLayer.captureEvents).toBe(true);
     expect(stage.defaultLayer.root.parent).toBeNull();
 
     const child = new ViewNode(yoga, "View");
@@ -63,9 +66,13 @@ describe("Stage defaultLayer", () => {
     expect(stage.defaultLayer.root.children).toContain(child);
 
     stage.requestLayoutPaint();
-    expect(paintScene).toHaveBeenCalledTimes(1);
-    const firstCall = vi.mocked(paintScene).mock.calls[0];
-    expect(firstCall?.[0]).toBe(stage.defaultLayer.root);
+    expect(paintStageLayers).toHaveBeenCalledTimes(1);
+    const roots = vi.mocked(paintStageLayers).mock.calls[0]?.[0];
+    expect(roots).toEqual([
+      stage.defaultLayer.root,
+      stage.overlayLayer.root,
+      stage.modalLayer.root,
+    ]);
 
     stage.defaultLayer.remove(child);
     expect(stage.defaultLayer.root.children).toHaveLength(0);

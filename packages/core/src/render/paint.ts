@@ -89,6 +89,29 @@ export function paintScene(
 }
 
 /**
+ * 多 {@link Layer} 根节点按顺序叠加绘制（共享相机与 DPR）；整帧仅 `clear` 一次。与 `core-design.md` §4 一致。
+ */
+export function paintStageLayers(
+  roots: ViewNode[],
+  skCanvas: Canvas,
+  canvasKit: CanvasKit,
+  dpr: number,
+  paint: Paint,
+  camera?: ViewportCamera | null,
+): void {
+  skCanvas.save();
+  skCanvas.scale(dpr, dpr);
+  skCanvas.clear(canvasKit.TRANSPARENT);
+  if (!isViewportCameraIdentity(camera)) {
+    skCanvas.concat(buildViewportCameraMatrix(canvasKit, camera!));
+  }
+  for (const root of roots) {
+    paintNode(root, skCanvas, canvasKit, paint);
+  }
+  skCanvas.restore();
+}
+
+/**
  * 子树绘制：每层 `save` 后 `concat(translate(layout) * localTransform)`，在 **局部坐标**（0…width × 0…height）下绘制，
  * 与 Yoga 布局盒一致；子节点递归时继续叠加，避免世界坐标与局部坐标混用。
  */

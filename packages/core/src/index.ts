@@ -45,7 +45,7 @@ export {
 } from "./layout/yoga-map.ts";
 export { calculateLayoutRoot, isDisplayNone, syncLayoutFromYoga } from "./layout/layout.ts";
 export { getSortedChildrenForPaint } from "./render/children-z-order.ts";
-export { paintNode, paintScene } from "./render/paint.ts";
+export { paintNode, paintScene, paintStageLayers } from "./render/paint.ts";
 export type { ViewportCamera } from "./render/camera.ts";
 export {
   buildViewportCameraMatrix,
@@ -58,7 +58,9 @@ export type { TextOnlyProps, TextStyle } from "./style/text-style.ts";
 export { mergeTextProps, splitTextStyle } from "./style/text-style.ts";
 export {
   queueLayoutPaintFrame,
+  queueLayoutPaintFrames,
   queuePaintOnlyFrame,
+  queuePaintOnlyFrames,
   resetLayoutPaintQueue,
   resetLayoutPaintQueueForTests,
 } from "./runtime/frame-queue.ts";

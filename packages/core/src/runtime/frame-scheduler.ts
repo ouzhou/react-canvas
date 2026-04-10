@@ -1,6 +1,6 @@
 import type { CanvasKit, Surface } from "canvaskit-wasm";
 import type { ViewportCamera } from "../render/camera.ts";
-import { paintScene } from "../render/paint.ts";
+import { paintScene, paintStageLayers } from "../render/paint.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
 export type FrameSchedulerHooks = {
@@ -18,7 +18,7 @@ export class FrameScheduler {
   private pendingPaint = false;
   private hasPendingFrame = false;
   private pendingRafId: number | null = null;
-  private frameRoot: ViewNode | null = null;
+  private frameRoots: ViewNode[] = [];
   private frameWidth = 0;
   private frameHeight = 0;
   private frameDpr = 1;
@@ -40,7 +40,22 @@ export class FrameScheduler {
     dpr: number,
     camera?: ViewportCamera | null,
   ): void {
-    this.frameRoot = rootNode;
+    this.queueLayoutPaintFrames(canvasKit, [rootNode], width, height, dpr, camera);
+  }
+
+  /**
+   * 多根节点（多 Layer）：按数组顺序布局；绘制时低 index 先画、后画者叠在上层。
+   */
+  queueLayoutPaintFrames(
+    canvasKit: CanvasKit,
+    rootNodes: ViewNode[],
+    width: number,
+    height: number,
+    dpr: number,
+    camera?: ViewportCamera | null,
+  ): void {
+    if (rootNodes.length === 0) return;
+    this.frameRoots = rootNodes;
     this.frameWidth = width;
     this.frameHeight = height;
     this.frameDpr = dpr;
@@ -62,8 +77,20 @@ export class FrameScheduler {
     dpr: number,
     camera?: ViewportCamera | null,
   ): void {
+    this.queuePaintOnlyFrames(canvasKit, [rootNode], width, height, dpr, camera);
+  }
+
+  queuePaintOnlyFrames(
+    canvasKit: CanvasKit,
+    rootNodes: ViewNode[],
+    width: number,
+    height: number,
+    dpr: number,
+    camera?: ViewportCamera | null,
+  ): void {
     if (this.pendingLayout) return;
-    this.frameRoot = rootNode;
+    if (rootNodes.length === 0) return;
+    this.frameRoots = rootNodes;
     this.frameWidth = width;
     this.frameHeight = height;
     this.frameDpr = dpr;
@@ -86,6 +113,7 @@ export class FrameScheduler {
     this.hasPendingFrame = false;
     this.pendingLayout = false;
     this.pendingPaint = false;
+    this.frameRoots = [];
   }
 
   private scheduleFrame(): void {
@@ -96,7 +124,7 @@ export class FrameScheduler {
     const rafId = surface.requestAnimationFrame((skCanvas) => {
       const doLayout = this.pendingLayout;
       const doPaint = this.pendingPaint;
-      const root = this.frameRoot;
+      const roots = this.frameRoots;
       const w = this.frameWidth;
       const h = this.frameHeight;
       const d = this.frameDpr;
@@ -104,12 +132,20 @@ export class FrameScheduler {
       const cam = this.frameCamera;
       this.pendingLayout = false;
       this.pendingPaint = false;
-      if (root && ck) {
-        if (doLayout) root.calculateLayout(w, h, ck);
+      if (roots.length > 0 && ck) {
+        if (doLayout) {
+          for (const r of roots) {
+            r.calculateLayout(w, h, ck);
+          }
+        }
         if (doPaint) {
           const paint = new ck.Paint();
           paint.setAntiAlias(true);
-          paintScene(root, skCanvas, ck, d, paint, cam);
+          if (roots.length === 1) {
+            paintScene(roots[0]!, skCanvas, ck, d, paint, cam);
+          } else {
+            paintStageLayers(roots, skCanvas, ck, d, paint, cam);
+          }
           paint.delete();
         }
       }

@@ -2,14 +2,16 @@ import type { Surface } from "canvaskit-wasm";
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
 import type { ViewportCamera } from "../render/camera.ts";
+import { attachCanvasPointerHandlers } from "../input/canvas-pointer.ts";
+import type { ViewNode } from "../scene/view-node.ts";
 import {
   queueLayoutPaintFrame,
+  queueLayoutPaintFrames,
   queuePaintOnlyFrame,
+  queuePaintOnlyFrames,
   resetLayoutPaintQueue,
 } from "../runtime/frame-queue.ts";
 import type { Runtime } from "../runtime/runtime.ts";
-import { attachCanvasPointerHandlers } from "../input/canvas-pointer.ts";
-import type { ViewNode } from "../scene/view-node.ts";
 import { Layer } from "./layer.ts";
 
 export type StageOptions = {
@@ -34,6 +36,10 @@ export class Stage {
   readonly runtime: Runtime;
   /** zIndex=0，普通内容与 reconciler 默认挂载根。 */
   readonly defaultLayer: Layer;
+  /** zIndex=100，tooltip / dropdown 等。 */
+  readonly overlayLayer: Layer;
+  /** zIndex=1000，modal / dialog；默认 `captureEvents=true`（事件语义见后续 Phase）。 */
+  readonly modalLayer: Layer;
   private readonly canvas: HTMLCanvasElement;
   private surface: Surface | null = null;
   private pointerDetach: (() => void) | null = null;
@@ -47,6 +53,15 @@ export class Stage {
     this.canvas = options.canvas;
     this.mountSurface(options.width, options.height, options.dpr ?? defaultDevicePixelRatio());
     this.defaultLayer = new Layer(this, { zIndex: 0, captureEvents: false, visible: true });
+    this.overlayLayer = new Layer(this, { zIndex: 100, captureEvents: false, visible: true });
+    this.modalLayer = new Layer(this, { zIndex: 1000, captureEvents: true, visible: true });
+  }
+
+  /** 按 `zIndex` 排序的内置层（绘制与布局顺序）。 */
+  layersInPaintOrder(): Layer[] {
+    return [this.defaultLayer, this.overlayLayer, this.modalLayer].sort(
+      (a, b) => a.zIndex - b.zIndex,
+    );
   }
 
   get width(): number {
@@ -73,7 +88,7 @@ export class Stage {
 
   destroy(): void {
     this.detachPointerHandlers();
-    this.clearDefaultLayerChildren();
+    this.clearAllLayerChildren();
     this.teardownSurface();
   }
 
@@ -81,7 +96,7 @@ export class Stage {
    * 绑定指针/滚轮到当前 `<canvas>`（与 `react` 包原 `attachCanvasPointerHandlers` 行为一致）。
    * 再次调用会先解除上一批监听。{@link destroy} 时也会自动解除。
    *
-   * @param sceneRoot 省略时使用 {@link defaultLayer.root}
+   * @param sceneRoot 省略时使用 {@link defaultLayer.root}。多 Layer 命中测试后续在 EventDispatcher 中扩展。
    */
   attachPointerHandlers(sceneRoot?: ViewNode, getCamera?: () => ViewportCamera | null): () => void {
     this.detachPointerHandlers();
@@ -93,7 +108,7 @@ export class Stage {
       this.height,
       this.runtime.canvasKit,
       () => {
-        this.requestLayoutPaint(root);
+        this.requestLayoutPaint();
       },
       getCamera,
     );
@@ -114,52 +129,58 @@ export class Stage {
 
   /**
    * 请求下一帧做 Yoga 布局并绘制场景（与 reconciler 中 `queueLayoutPaintFrame` 一致）。
-   * 省略 `root` 时使用 {@link defaultLayer} 的根节点。
+   * 省略 `root` 时按 {@link layersInPaintOrder} 绘制全部可见层。
    */
   requestLayoutPaint(root?: ViewNode, camera?: ViewportCamera | null): void {
-    const sceneRoot = root ?? this.defaultLayer.root;
     const surface = this.surface;
     if (!surface) {
       throw new Error("[@react-canvas/core] Stage has no surface; cannot requestLayoutPaint.");
     }
-    queueLayoutPaintFrame(
-      surface,
-      this.runtime.canvasKit,
-      sceneRoot,
-      this.width,
-      this.height,
-      this.dpr,
-      camera,
-    );
+    const ck = this.runtime.canvasKit;
+    const w = this.width;
+    const h = this.height;
+    const d = this.dpr;
+    if (root !== undefined) {
+      queueLayoutPaintFrame(surface, ck, root, w, h, d, camera);
+    } else {
+      queueLayoutPaintFrames(surface, ck, this.getVisibleLayerRoots(), w, h, d, camera);
+    }
   }
 
   /**
    * 仅重绘（不跑布局）；例如滚动偏移等仅影响绘制的更新。
-   * 省略 `root` 时使用 {@link defaultLayer} 的根节点。
+   * 省略 `root` 时按层顺序重绘全部可见层。
    */
   requestPaintOnly(root?: ViewNode, camera?: ViewportCamera | null): void {
-    const sceneRoot = root ?? this.defaultLayer.root;
     const surface = this.surface;
     if (!surface) {
       throw new Error("[@react-canvas/core] Stage has no surface; cannot requestPaintOnly.");
     }
-    queuePaintOnlyFrame(
-      surface,
-      this.runtime.canvasKit,
-      sceneRoot,
-      this.width,
-      this.height,
-      this.dpr,
-      camera,
-    );
+    const ck = this.runtime.canvasKit;
+    const w = this.width;
+    const h = this.height;
+    const d = this.dpr;
+    if (root !== undefined) {
+      queuePaintOnlyFrame(surface, ck, root, w, h, d, camera);
+    } else {
+      queuePaintOnlyFrames(surface, ck, this.getVisibleLayerRoots(), w, h, d, camera);
+    }
   }
 
-  private clearDefaultLayerChildren(): void {
-    const r = this.defaultLayer.root;
-    const copy = [...r.children];
-    for (const c of copy) {
-      r.removeChild(c);
-      c.destroy();
+  private getVisibleLayerRoots(): ViewNode[] {
+    return this.layersInPaintOrder()
+      .filter((l) => l.visible)
+      .map((l) => l.root);
+  }
+
+  private clearAllLayerChildren(): void {
+    for (const layer of this.layersInPaintOrder()) {
+      const r = layer.root;
+      const copy = [...r.children];
+      for (const c of copy) {
+        r.removeChild(c);
+        c.destroy();
+      }
     }
   }
 

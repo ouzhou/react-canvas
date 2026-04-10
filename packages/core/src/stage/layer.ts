@@ -4,7 +4,7 @@ import type { Stage } from "./stage.ts";
 
 export type LayerOptions = {
   zIndex?: number;
-  /** true：此层命中后停止向低层传递事件（Modal 语义）；Phase 6 前仅占位。 */
+  /** true：此层命中后停止向低层传递事件（Modal 语义）；完整命中链路由 EventDispatcher 扩展。 */
   captureEvents?: boolean;
   visible?: boolean;
 };

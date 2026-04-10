@@ -39,6 +39,19 @@ export function queueLayoutPaintFrame(
   getScheduler(surface).queueLayoutPaintFrame(canvasKit, rootNode, width, height, dpr, camera);
 }
 
+/** 多 Layer 根节点：按数组顺序布局，绘制时后者叠在前者之上。 */
+export function queueLayoutPaintFrames(
+  surface: Surface,
+  canvasKit: CanvasKit,
+  rootNodes: ViewNode[],
+  width: number,
+  height: number,
+  dpr: number,
+  camera?: ViewportCamera | null,
+): void {
+  getScheduler(surface).queueLayoutPaintFrames(canvasKit, rootNodes, width, height, dpr, camera);
+}
+
 /**
  * 仅重绘（不跑 Yoga）；与 {@link queueLayoutPaintFrame} 共用同一 rAF 槽位。
  * 若已排队「布局+绘制」，则无需再调用。
@@ -53,6 +66,18 @@ export function queuePaintOnlyFrame(
   camera?: ViewportCamera | null,
 ): void {
   getScheduler(surface).queuePaintOnlyFrame(canvasKit, rootNode, width, height, dpr, camera);
+}
+
+export function queuePaintOnlyFrames(
+  surface: Surface,
+  canvasKit: CanvasKit,
+  rootNodes: ViewNode[],
+  width: number,
+  height: number,
+  dpr: number,
+  camera?: ViewportCamera | null,
+): void {
+  getScheduler(surface).queuePaintOnlyFrames(canvasKit, rootNodes, width, height, dpr, camera);
 }
 
 /**
