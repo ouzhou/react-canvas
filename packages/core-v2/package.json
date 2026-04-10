@@ -44,6 +44,7 @@
     "prepublishOnly": "vp run build"
   },
   "dependencies": {
+    "canvaskit-wasm": "catalog:",
     "yoga-layout": "catalog:"
   },
   "devDependencies": {

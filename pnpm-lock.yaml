@@ -398,6 +398,9 @@ importers:
 
   packages/core-v2:
     dependencies:
+      canvaskit-wasm:
+        specifier: 'catalog:'
+        version: 0.41.0
       yoga-layout:
         specifier: 'catalog:'
         version: 3.2.1

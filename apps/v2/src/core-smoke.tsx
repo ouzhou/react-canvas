@@ -1,19 +1,23 @@
-import { createSceneRuntime, type SceneRuntime } from "@react-canvas/core-v2";
+import {
+  attachCanvasStagePointer,
+  attachSceneSkiaPresenter,
+  createSceneRuntime,
+  type SceneRuntime,
+} from "@react-canvas/core-v2";
 import { useEffect, useRef, useState } from "react";
-import { mountCoreSmokeStage } from "./core-smoke-stage.ts";
 import { PointerDebugPanel } from "./debug-panel.tsx";
 
 const W = 400;
 const H = 300;
 
 /**
- * 冒烟：仅 `@react-canvas/core-v2` + 本目录原生 DOM 封装（`mountCoreSmokeStage`），不依赖 `@react-canvas/react-v2`。
- * 外层仍用 React 挂页，便于与 App 路由一致；场景与指针语义均为 core API。
+ * 冒烟：仅 `@react-canvas/core-v2`（Skia + 画布指针），不经 `react-v2`。
+ * 页面外壳仍用 React 便于与 App 一致。
  */
 export function CoreSmoke() {
   const [rt, setRt] = useState<SceneRuntime | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const stageRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,8 +40,35 @@ export function CoreSmoke() {
   }, []);
 
   useEffect(() => {
-    if (!rt || !stageRef.current) return;
-    return mountCoreSmokeStage(stageRef.current, rt);
+    const canvas = canvasRef.current;
+    if (!rt || !canvas) return;
+
+    let detachSkia: (() => void) | undefined;
+    let detachPointer: (() => void) | undefined;
+    let cancelled = false;
+
+    const dpr =
+      typeof globalThis !== "undefined" &&
+      "devicePixelRatio" in globalThis &&
+      typeof (globalThis as { devicePixelRatio?: number }).devicePixelRatio === "number"
+        ? (globalThis as { devicePixelRatio: number }).devicePixelRatio
+        : 1;
+
+    void attachSceneSkiaPresenter(rt, canvas, { dpr })
+      .then((d) => {
+        if (!cancelled) detachSkia = d;
+      })
+      .catch((e: unknown) => {
+        console.error("[core-smoke] attachSceneSkiaPresenter:", e);
+      });
+
+    detachPointer = attachCanvasStagePointer(canvas, rt);
+
+    return () => {
+      cancelled = true;
+      detachSkia?.();
+      detachPointer?.();
+    };
   }, [rt]);
 
   if (error) {
@@ -51,12 +82,12 @@ export function CoreSmoke() {
     <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "flex-start" }}>
       <div>
         <p style={{ margin: "0 0 0.5rem", color: "#444" }}>
-          仅 core-v2：原生 DOM 指针层 + 布局调试叠层（见 <code>core-smoke-stage.ts</code>）
+          仅 core-v2：<code>attachSceneSkiaPresenter</code> + <code>attachCanvasStagePointer</code>
         </p>
-        <div
-          ref={stageRef}
+        <canvas
+          ref={canvasRef}
           style={{
-            position: "relative",
+            display: "block",
             width: W,
             height: H,
             border: "1px solid #cbd5e1",

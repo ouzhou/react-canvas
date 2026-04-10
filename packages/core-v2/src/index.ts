@@ -1,4 +1,11 @@
+export { attachCanvasStagePointer } from "./input/canvas-stage-pointer.ts";
 export { clientXYToStageLocal, type StageViewportOrigin } from "./input/stage-client-coords.ts";
+export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts";
+export { initCanvasKit } from "./render/canvaskit.ts";
+export {
+  attachSceneSkiaPresenter,
+  type AttachSceneSkiaOptions,
+} from "./render/scene-skia-presenter.ts";
 export type { ViewStyle } from "./layout/style-map.ts";
 export { applyStylesToYoga } from "./layout/style-map.ts";
 export { hitTestAt } from "./hit/hit-test.ts";
