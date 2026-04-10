@@ -75,13 +75,18 @@ export {
   setParagraphFontForTests,
 } from "./text/paragraph-build.ts";
 export type { ParagraphSpan } from "./text/paragraph-build.ts";
-export type { CanvasSyntheticPointerEvent, InteractionHandlers } from "./input/types.ts";
+export type {
+  CanvasSyntheticPointerEvent,
+  InteractionHandlers,
+  InteractionState,
+} from "./input/types.ts";
 export { hitTest, buildPathToRoot, hitTestScrollViewVerticalScrollbar } from "./input/hit-test.ts";
 export { dispatchBubble } from "./input/dispatch.ts";
 export { getWorldBounds, containsPagePoint, getWorldOffset } from "./geometry/world-bounds.ts";
 export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts";
 export { Stage } from "./stage/stage.ts";
 export type { StageOptions } from "./stage/stage.ts";
+export { FocusManager } from "./stage/focus-manager.ts";
 export { Ticker, type TickerFrameFn } from "./stage/ticker.ts";
 export { getStageFromViewNode } from "./stage/stage-link.ts";
 export { Layer } from "./stage/layer.ts";
@@ -96,6 +101,7 @@ export {
   attachCanvasPointerHandlers,
   clientToCanvasLogical,
   type CanvasPointerCaptureBinding,
+  type CanvasPointerInteractionBinding,
 } from "./input/canvas-pointer.ts";
 export { computeImageSrcDestRects, type ImageRect, type ResizeMode } from "./image/image-rect.ts";
 export { parseViewBox, viewBoxToAffine, type ViewBox } from "./geometry/viewbox.ts";

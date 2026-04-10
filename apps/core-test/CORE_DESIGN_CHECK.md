@@ -14,7 +14,8 @@
 | §10 帧调度       | `requestLayoutPaint`、每 Stage 调度器      | `Stage.requestLayoutPaint`, `Stage.getFrameScheduler`, `createAndBindFrameScheduler`  | 全部                            |
 | §11 相机         | `ViewportCamera`                           | `ViewportCamera`, `logicalPointFromCameraViewport`                                    | **视口相机**                    |
 | §12 包边界       | 纯 JS 可用                                 | 本 app 仅依赖 `@react-canvas/core`                                                    | 全局                            |
+| §14 交互态       | 焦点、`hovered`/`pressed`/`focused`        | `Stage.focusManager`, `ViewNode.interactionState`, `CanvasPointerInteractionBinding`  | （可后续加 tab）                |
 
-**尚未单独做可视化、或仅在文档中的能力**（可在后续加 tab）：伪类 §14、光标栈 §15、嵌套滚动链 §17、插件 §18 等。
+**尚未单独做可视化、或仅在文档中的能力**（可在后续加 tab）：光标栈 §15、嵌套滚动链 §17、插件 §18 等。
 
 **说明**：Image 异步解码在节点已挂在某 `Layer` 下时走 `Stage.requestPaintOnly()`（经 `getStageFromViewNode`）；未挂载时仍回退 `requestRedrawFromImage`（见 **图片** demo）。

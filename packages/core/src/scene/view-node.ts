@@ -8,7 +8,7 @@ import {
 } from "../layout/yoga-map.ts";
 import type { CanvasKit } from "canvaskit-wasm";
 import type { SceneNode } from "./scene-node.ts";
-import type { InteractionHandlers } from "../input/types.ts";
+import type { InteractionHandlers, InteractionState } from "../input/types.ts";
 import type { TransformStyle, ViewStyle } from "../style/view-style.ts";
 import { calculateLayoutRoot, syncLayoutFromYoga } from "../layout/layout.ts";
 
@@ -25,6 +25,8 @@ export type ViewVisualProps = {
   transform?: TransformStyle[];
   /** 见 `ViewStyle.zIndex`；由 paint / hit-test 读取。 */
   zIndex?: number;
+  /** 见 `ViewStyle.focusable`；默认可聚焦。 */
+  focusable?: boolean;
 };
 
 export class ViewNode {
@@ -37,6 +39,19 @@ export class ViewNode {
   dirty = false;
   /** Pointer / click handlers (set by reconciler commit). */
   interactionHandlers: InteractionHandlers = {};
+  /**
+   * 由指针与焦点管线维护；勿直接赋值，通过 `applyInteractionPatch` 或宿主事件更新。
+   * React 层可用 `useSyncExternalStore` 订阅 `onInteractionStateChange`。
+   */
+  onInteractionStateChange?: (state: InteractionState) => void;
+
+  private interactionInner: InteractionState = {
+    hovered: false,
+    pressed: false,
+    focused: false,
+  };
+  /** 多指按下同一节点时计数，全抬起后 `pressed` 才为 false。 */
+  private pressDepth = 0;
   /**
    * When false, this node's Yoga node is not attached to the parent's Yoga tree (nested Text).
    * Used by layout/sync without importing `TextNode` (avoids layout ↔ text-node cycle).
@@ -52,6 +67,53 @@ export class ViewNode {
     this.type = type;
     this.yogaNode = yoga.Node.create();
     applyRNLayoutDefaults(this.yogaNode);
+  }
+
+  get interactionState(): Readonly<InteractionState> {
+    const s = this.interactionInner;
+    return { hovered: s.hovered, pressed: s.pressed, focused: s.focused };
+  }
+
+  /**
+   * 合并交互态位；与当前值相同则不发回调。
+   * 供 {@link FocusManager} 与指针宿主调用。
+   */
+  applyInteractionPatch(patch: Partial<InteractionState>): void {
+    const next: InteractionState = {
+      hovered: patch.hovered ?? this.interactionInner.hovered,
+      pressed: patch.pressed ?? this.interactionInner.pressed,
+      focused: patch.focused ?? this.interactionInner.focused,
+    };
+    if (
+      next.hovered === this.interactionInner.hovered &&
+      next.pressed === this.interactionInner.pressed &&
+      next.focused === this.interactionInner.focused
+    ) {
+      return;
+    }
+    this.interactionInner = next;
+    this.onInteractionStateChange?.({
+      hovered: next.hovered,
+      pressed: next.pressed,
+      focused: next.focused,
+    });
+  }
+
+  /** 指针在节点上按下（不含子计数溢出保护以外的语义）。 */
+  beginPointerPress(): void {
+    this.pressDepth++;
+    if (this.pressDepth === 1) {
+      this.applyInteractionPatch({ pressed: true });
+    }
+  }
+
+  /** 与 {@link beginPointerPress} 成对，全部抬起后 `pressed` 为 false。 */
+  endPointerPress(): void {
+    if (this.pressDepth <= 0) return;
+    this.pressDepth--;
+    if (this.pressDepth === 0) {
+      this.applyInteractionPatch({ pressed: false });
+    }
   }
 
   setStyle(style: ViewStyle): void {

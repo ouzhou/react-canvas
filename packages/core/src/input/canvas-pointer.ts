@@ -15,6 +15,22 @@ export type CanvasPointerCaptureBinding = {
   release: (pointerId: number) => void;
 };
 
+/**
+ * 与 `core-design.md` §14 一致：焦点、`ViewNode` 的 `hovered` / `pressed` 合成态。
+ * {@link Stage.attachPointerHandlers} 会注入默认实现。
+ */
+export type CanvasPointerInteractionBinding = {
+  /** `pointerdown` 命中结果（含 `null` 表示画布空白处，应失焦）。 */
+  onPointerDownHit?: (hit: ViewNode | null) => void;
+  /**
+   * 在派发 `pointerenter` / `pointerleave` 之后调用，用于同步 `ViewNode.applyInteractionPatch({ hovered })`。
+   * `leave` 为叶→根顺序，`enter` 为根→叶顺序（与 {@link diffHoverEnterLeave} 一致）。
+   */
+  afterHoverDiff?: (leave: ViewNode[], enter: ViewNode[]) => void;
+  onPressBegin?: (target: ViewNode) => void;
+  onPressEnd?: (target: ViewNode) => void;
+};
+
 function findAncestorScrollView(leaf: ViewNode | null): ScrollViewNode | null {
   let n: ViewNode | null = leaf;
   while (n) {
@@ -100,6 +116,7 @@ export function attachCanvasPointerHandlers(
   requestLayoutPaint: () => void,
   getCamera?: () => ViewportCamera | null,
   pointerCapture?: CanvasPointerCaptureBinding,
+  interaction?: CanvasPointerInteractionBinding,
 ): () => void {
   const readCamera = (): ViewportCamera | null => getCamera?.() ?? null;
   const down = new Map<number, PointerDownSnapshot>();
@@ -118,9 +135,12 @@ export function attachCanvasPointerHandlers(
     const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
     if (!hit) {
       syncScrollbarHoverFromHit(null, lastScrollbarHoverSv, requestLayoutPaint);
+      interaction?.onPointerDownHit?.(null);
       return;
     }
     syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
+    interaction?.onPointerDownHit?.(hit);
+    interaction?.onPressBegin?.(hit);
     down.set(ev.pointerId, { pageX, pageY, target: hit });
     const scrollbarSv = hitTestScrollViewVerticalScrollbar(
       sceneRoot,
@@ -172,22 +192,21 @@ export function attachCanvasPointerHandlers(
     if (!inside) {
       syncScrollbarHoverFromHit(null, lastScrollbarHoverSv, requestLayoutPaint);
       if (ev.pointerType === "mouse" || ev.pointerType === "pen") {
-        if (hoverLeaf !== null) {
-          const { leave } = diffHoverEnterLeave(hoverLeaf, null, sceneRoot);
-          for (const n of leave) {
-            dispatchPointerEnterLeave(
-              sceneRoot,
-              "pointerleave",
-              n,
-              lastPage.x,
-              lastPage.y,
-              ev.pointerId,
-              ev.timeStamp,
-            );
-          }
-          hoverLeaf = null;
-          syncCanvasCursor(canvas, hoverLeaf, sceneRoot);
+        const { leave } = diffHoverEnterLeave(hoverLeaf, null, sceneRoot);
+        for (const n of leave) {
+          dispatchPointerEnterLeave(
+            sceneRoot,
+            "pointerleave",
+            n,
+            lastPage.x,
+            lastPage.y,
+            ev.pointerId,
+            ev.timeStamp,
+          );
         }
+        interaction?.afterHoverDiff?.(leave, []);
+        hoverLeaf = null;
+        syncCanvasCursor(canvas, hoverLeaf, sceneRoot);
       }
       return;
     }
@@ -227,6 +246,7 @@ export function attachCanvasPointerHandlers(
           ev.timeStamp,
         );
       }
+      interaction?.afterHoverDiff?.(leave, enter);
       hoverLeaf = hit;
       syncCanvasCursor(canvas, hoverLeaf, sceneRoot);
     }
@@ -237,6 +257,9 @@ export function attachCanvasPointerHandlers(
     const { x: pageX, y: pageY } = route(ev);
     const snap = down.get(ev.pointerId);
     down.delete(ev.pointerId);
+    if (snap) {
+      interaction?.onPressEnd?.(snap.target);
+    }
 
     const kind: "pointerup" | "pointercancel" =
       ev.type === "pointercancel" ? "pointercancel" : "pointerup";

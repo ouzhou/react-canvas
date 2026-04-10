@@ -7,6 +7,8 @@ import type { ViewNode } from "../scene/view-node.ts";
 import { createAndBindFrameScheduler, resetLayoutPaintQueue } from "../runtime/frame-queue.ts";
 import type { FrameScheduler } from "../runtime/frame-scheduler.ts";
 import type { Runtime } from "../runtime/runtime.ts";
+import type { CanvasPointerInteractionBinding } from "../input/canvas-pointer.ts";
+import { FocusManager } from "./focus-manager.ts";
 import { Layer } from "./layer.ts";
 import { Ticker } from "./ticker.ts";
 
@@ -44,6 +46,8 @@ export class Stage {
   private readonly tickers = new Set<Ticker>();
   /** `pointerId` → 捕获节点；见 `core-design.md` §8.6。 */
   private readonly pointerCaptureById = new Map<number, ViewNode>();
+  /** 画布内焦点（无 DOM）；见 `core-design.md` §14。 */
+  readonly focusManager = new FocusManager();
   private pointerDetach: (() => void) | null = null;
   private lw = 1;
   private lh = 1;
@@ -155,6 +159,25 @@ export class Stage {
   attachPointerHandlers(sceneRoot?: ViewNode, getCamera?: () => ViewportCamera | null): () => void {
     this.detachPointerHandlers();
     const root = sceneRoot ?? this.defaultLayer.root;
+    const interaction: CanvasPointerInteractionBinding = {
+      onPointerDownHit: (hit) => {
+        this.focusManager.onPointerDownHit(hit);
+      },
+      afterHoverDiff: (leave, enter) => {
+        for (const n of leave) {
+          n.applyInteractionPatch({ hovered: false });
+        }
+        for (const n of enter) {
+          n.applyInteractionPatch({ hovered: true });
+        }
+      },
+      onPressBegin: (target) => {
+        target.beginPointerPress();
+      },
+      onPressEnd: (target) => {
+        target.endPointerPress();
+      },
+    };
     const detach = attachCanvasPointerHandlers(
       this.canvas,
       root,
@@ -169,6 +192,7 @@ export class Stage {
         getTarget: (pointerId) => this.getPointerCaptureTarget(pointerId),
         release: (pointerId) => this.clearPointerCaptureForPointerId(pointerId),
       },
+      interaction,
     );
     this.pointerDetach = detach;
     return () => {
@@ -232,6 +256,7 @@ export class Stage {
   }
 
   private clearAllLayerChildren(): void {
+    this.focusManager.blur();
     for (const layer of this.layersInPaintOrder()) {
       const r = layer.root;
       const copy = [...r.children];

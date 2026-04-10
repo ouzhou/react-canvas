@@ -167,6 +167,7 @@ const VISUAL_KEYS = new Set([
   "cursor",
   "transform",
   "zIndex",
+  "focusable",
 ]);
 
 export function splitStyle(style: ViewStyle): {

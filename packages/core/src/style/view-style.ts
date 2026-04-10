@@ -91,4 +91,9 @@ export type ViewStyle = {
    * 数值越大越在上层；未设置视为 `0`。
    */
   zIndex?: number;
+  /**
+   * `false` 时 pointerdown 不将焦点交给该视图（并会 `blur` 当前焦点）；默认可聚焦。
+   * 见 `core-design.md` §14。
+   */
+  focusable?: boolean;
 };
