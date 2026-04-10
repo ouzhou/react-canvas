@@ -1,6 +1,6 @@
 import type { CanvasKit } from "canvaskit-wasm";
 import type { ViewportCamera } from "../render/camera.ts";
-import { hitTest } from "./hit-test.ts";
+import { hitTest, hitTestAmongLayerRoots } from "./hit-test.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
 /** Max distance (logical px) between down and up for a synthetic `click`. */
@@ -20,7 +20,7 @@ export function shouldEmitClick(
   down: PointerDownSnapshot,
   pageX: number,
   pageY: number,
-  sceneRoot: ViewNode,
+  sceneRoot: ViewNode | readonly ViewNode[],
   canvasKit: CanvasKit,
   moveThresholdPx: number = DEFAULT_CLICK_MOVE_THRESHOLD_PX,
   camera?: ViewportCamera | null,
@@ -28,5 +28,10 @@ export function shouldEmitClick(
   const dx = pageX - down.pageX;
   const dy = pageY - down.pageY;
   if (dx * dx + dy * dy > moveThresholdPx * moveThresholdPx) return false;
-  return hitTest(sceneRoot, pageX, pageY, canvasKit, camera) === down.target;
+  const roots = Array.isArray(sceneRoot) ? sceneRoot : [sceneRoot];
+  const up =
+    roots.length === 1
+      ? hitTest(roots[0]!, pageX, pageY, canvasKit, camera)
+      : (hitTestAmongLayerRoots(roots, pageX, pageY, canvasKit, camera)?.hit ?? null);
+  return up === down.target;
 }

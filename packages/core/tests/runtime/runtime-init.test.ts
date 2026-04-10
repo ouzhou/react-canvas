@@ -14,19 +14,19 @@ vi.mock("../../src/render/canvaskit.ts", () => ({
 }));
 
 import {
-  getRuntimeSnapshot,
-  initRuntime,
-  subscribeRuntimeInit,
+  getCanvasRuntimeInitSnapshot,
+  initCanvasRuntime,
+  subscribeCanvasRuntimeInit,
 } from "../../src/runtime/runtime-init-store.ts";
 
 describe("runtime init (documented API)", () => {
-  test("getRuntimeSnapshot matches subscribeRuntimeInit emissions", async () => {
+  test("getCanvasRuntimeInitSnapshot matches subscribeCanvasRuntimeInit emissions", async () => {
     const spy = vi.fn();
-    const unsub = subscribeRuntimeInit(spy);
-    const p = initRuntime({ loadDefaultParagraphFonts: false });
+    const unsub = subscribeCanvasRuntimeInit(spy);
+    const p = initCanvasRuntime({ loadDefaultParagraphFonts: false });
     await p;
     expect(spy).toHaveBeenCalled();
-    const snap = getRuntimeSnapshot();
+    const snap = getCanvasRuntimeInitSnapshot();
     expect(snap.status === "ready" || snap.status === "error").toBe(true);
     unsub();
   });

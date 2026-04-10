@@ -34,7 +34,7 @@ export async function mountAnimationDemo(
   box.setStyle(baseStyle);
   const label = new TextNode(yoga);
   label.setStyle({ fontSize: 14, color: "#ecfdf5" });
-  label.appendTextSlot({ nodeValue: "opacity 呼吸 (Ticker)" });
+  label.appendTextSlot({ nodeValue: "§9 动画 — Ticker 驱动 opacity 呼吸" });
   box.appendChild(label);
 
   root.appendChild(box);

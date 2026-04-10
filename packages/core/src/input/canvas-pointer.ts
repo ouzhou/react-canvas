@@ -2,7 +2,12 @@ import type { CanvasKit } from "canvaskit-wasm";
 
 import { shouldEmitClick, type PointerDownSnapshot } from "./click.ts";
 import { dispatchBubble } from "./dispatch.ts";
-import { buildPathToRoot, hitTest, hitTestScrollViewVerticalScrollbar } from "./hit-test.ts";
+import {
+  buildPathToRoot,
+  hitTest,
+  hitTestAmongLayerRoots,
+  hitTestScrollViewVerticalScrollbar,
+} from "./hit-test.ts";
 import { diffHoverEnterLeave, dispatchPointerEnterLeave } from "./hover.ts";
 import type { ViewportCamera } from "../render/camera.ts";
 import { getVerticalScrollMetrics, type ScrollViewNode } from "../scene/scroll-view-node.ts";
@@ -79,16 +84,34 @@ export function resolveCursorFromHitLeaf(leaf: ViewNode | null, sceneRoot: ViewN
 function syncCanvasCursor(
   canvas: HTMLCanvasElement,
   leaf: ViewNode | null,
-  sceneRoot: ViewNode,
+  layerRoot: ViewNode,
   cursorManager?: CursorManager,
 ): void {
-  const fromNode = resolveCursorFromHitLeaf(leaf, sceneRoot);
+  const fromNode = resolveCursorFromHitLeaf(leaf, layerRoot);
   if (cursorManager) {
     cursorManager.setFromNode(fromNode);
     canvas.style.cursor = cursorManager.resolve();
   } else {
     canvas.style.cursor = fromNode;
   }
+}
+
+/**
+ * {@link attachCanvasPointerHandlers} 的 `sceneRoot`：静态根、根数组，或**每次命中时**调用的 getter
+ *（用于 `Stage` 在 `modalLayer.visible` 等变化后仍参与命中，避免层列表快照过期）。
+ */
+export type CanvasSceneRootsInput = ViewNode | ViewNode[] | (() => ViewNode | ViewNode[]);
+
+function normalizeCanvasSceneRoots(input: CanvasSceneRootsInput): ViewNode[] {
+  const r = typeof input === "function" ? input() : input;
+  return Array.isArray(r) ? r : [r];
+}
+
+/** 子树所在 Layer 的根（沿 parent 上至顶层）。 */
+function subtreeLayerRoot(node: ViewNode): ViewNode {
+  let n: ViewNode = node;
+  while (n.parent) n = n.parent as ViewNode;
+  return n;
 }
 
 /**
@@ -115,10 +138,13 @@ export function clientToCanvasLogical(
  * `pointerup` / `pointercancel` on `document`。
  *
  * `requestLayoutPaint`：在仅改变 `ScrollView` 的 `scrollX`/`scrollY` 时触发与 `queueLayoutPaintFrame` 一致的重绘。
+ *
+ * `sceneRoot` 可为多个 **Layer 根**（顺序与 `Stage` 可见层一致：zIndex 升序），命中自顶向下（modal 优先）；
+ * 单根时行为与原先一致。亦可传入 `() => roots`，使可见层集合随运行时变化（例如弹窗层 `visible`）。
  */
 export function attachCanvasPointerHandlers(
   canvas: HTMLCanvasElement,
-  sceneRoot: ViewNode,
+  sceneRoot: CanvasSceneRootsInput,
   logicalWidth: number,
   logicalHeight: number,
   canvasKit: CanvasKit,
@@ -129,6 +155,31 @@ export function attachCanvasPointerHandlers(
   cursorManager?: CursorManager,
 ): () => void {
   const readCamera = (): ViewportCamera | null => getCamera?.() ?? null;
+
+  const pickHit = (pageX: number, pageY: number): { hit: ViewNode; layerRoot: ViewNode } | null => {
+    const roots = normalizeCanvasSceneRoots(sceneRoot);
+    if (roots.length === 1) {
+      const h = hitTest(roots[0]!, pageX, pageY, canvasKit, readCamera());
+      return h ? { hit: h, layerRoot: roots[0]! } : null;
+    }
+    return hitTestAmongLayerRoots(roots, pageX, pageY, canvasKit, readCamera());
+  };
+
+  const pickScrollbar = (pageX: number, pageY: number): ScrollViewNode | null => {
+    const roots = normalizeCanvasSceneRoots(sceneRoot);
+    for (let i = roots.length - 1; i >= 0; i--) {
+      const sb = hitTestScrollViewVerticalScrollbar(
+        roots[i]!,
+        pageX,
+        pageY,
+        canvasKit,
+        readCamera(),
+      );
+      if (sb) return sb;
+    }
+    return null;
+  };
+
   const down = new Map<number, PointerDownSnapshot>();
   /** 仅在**垂直滚动条轨道**上按下时拖拽改变 `scrollY`（列表体不再拖拽滚动）。 */
   const scrollBarDrag = new Map<number, { node: ScrollViewNode; lastPageY: number }>();
@@ -140,30 +191,91 @@ export function attachCanvasPointerHandlers(
   const route = (ev: PointerEvent) =>
     clientToCanvasLogical(ev.clientX, ev.clientY, canvas, logicalWidth, logicalHeight);
 
+  const isMouseLikePointer = (ev: PointerEvent): boolean =>
+    ev.pointerType === "mouse" || ev.pointerType === "pen" || ev.pointerType === "";
+
+  const syncHoverInsideCanvas = (ev: PointerEvent) => {
+    const roots = normalizeCanvasSceneRoots(sceneRoot);
+    const primaryRoot = roots[0]!;
+    const multiLayer = roots.length > 1;
+    const { x: pageX, y: pageY } = route(ev);
+    lastPage = { x: pageX, y: pageY };
+
+    const picked = pickHit(pageX, pageY);
+    const hit = picked?.hit ?? null;
+    syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
+    if (hit && picked) {
+      const path = buildPathToRoot(hit, picked.layerRoot);
+      dispatchBubble(
+        path,
+        picked.layerRoot,
+        "pointermove",
+        pageX,
+        pageY,
+        ev.pointerId,
+        ev.timeStamp,
+      );
+    }
+
+    if (isMouseLikePointer(ev)) {
+      if (hoverLeaf === hit) {
+        syncCanvasCursor(canvas, hoverLeaf, picked?.layerRoot ?? primaryRoot, cursorManager);
+        return;
+      }
+      if (multiLayer) {
+        interaction?.afterHoverDiff?.([], []);
+        hoverLeaf = hit;
+        syncCanvasCursor(canvas, hoverLeaf, picked?.layerRoot ?? primaryRoot, cursorManager);
+        return;
+      }
+      const { leave, enter } = diffHoverEnterLeave(hoverLeaf, hit, primaryRoot);
+      for (const n of leave) {
+        dispatchPointerEnterLeave(
+          primaryRoot,
+          "pointerleave",
+          n,
+          pageX,
+          pageY,
+          ev.pointerId,
+          ev.timeStamp,
+        );
+      }
+      for (const n of enter) {
+        dispatchPointerEnterLeave(
+          primaryRoot,
+          "pointerenter",
+          n,
+          pageX,
+          pageY,
+          ev.pointerId,
+          ev.timeStamp,
+        );
+      }
+      interaction?.afterHoverDiff?.(leave, enter);
+      hoverLeaf = hit;
+      syncCanvasCursor(canvas, hoverLeaf, primaryRoot, cursorManager);
+    }
+  };
+
   const onPointerDown = (ev: PointerEvent) => {
     const { x: pageX, y: pageY } = route(ev);
-    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
-    if (!hit) {
+    const picked = pickHit(pageX, pageY);
+    if (!picked) {
       syncScrollbarHoverFromHit(null, lastScrollbarHoverSv, requestLayoutPaint);
       interaction?.onPointerDownHit?.(null);
       return;
     }
+    const { hit, layerRoot } = picked;
     syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
     interaction?.onPointerDownHit?.(hit);
     interaction?.onPressBegin?.(hit);
     down.set(ev.pointerId, { pageX, pageY, target: hit });
-    const scrollbarSv = hitTestScrollViewVerticalScrollbar(
-      sceneRoot,
-      pageX,
-      pageY,
-      canvasKit,
-      readCamera(),
-    );
+    const scrollbarSv = pickScrollbar(pageX, pageY);
     if (scrollbarSv) {
       scrollBarDrag.set(ev.pointerId, { node: scrollbarSv, lastPageY: pageY });
     }
-    const path = buildPathToRoot(hit, sceneRoot);
-    dispatchBubble(path, sceneRoot, "pointerdown", pageX, pageY, ev.pointerId, ev.timeStamp);
+    const path = buildPathToRoot(hit, layerRoot);
+    dispatchBubble(path, layerRoot, "pointerdown", pageX, pageY, ev.pointerId, ev.timeStamp);
   };
 
   const onPointerMove = (ev: PointerEvent) => {
@@ -190,9 +302,10 @@ export function attachCanvasPointerHandlers(
     if (capNode) {
       const { x: pageX, y: pageY } = route(ev);
       lastPage = { x: pageX, y: pageY };
-      const path = buildPathToRoot(capNode, sceneRoot);
-      dispatchBubble(path, sceneRoot, "pointermove", pageX, pageY, ev.pointerId, ev.timeStamp);
-      syncCanvasCursor(canvas, capNode, sceneRoot, cursorManager);
+      const capRoot = subtreeLayerRoot(capNode);
+      const path = buildPathToRoot(capNode, capRoot);
+      dispatchBubble(path, capRoot, "pointermove", pageX, pageY, ev.pointerId, ev.timeStamp);
+      syncCanvasCursor(canvas, capNode, capRoot, cursorManager);
       return;
     }
 
@@ -201,12 +314,13 @@ export function attachCanvasPointerHandlers(
       ev.clientX >= r.left && ev.clientX < r.right && ev.clientY >= r.top && ev.clientY < r.bottom;
 
     if (!inside) {
+      const primaryRoot = normalizeCanvasSceneRoots(sceneRoot)[0]!;
       syncScrollbarHoverFromHit(null, lastScrollbarHoverSv, requestLayoutPaint);
-      if (ev.pointerType === "mouse" || ev.pointerType === "pen") {
-        const { leave } = diffHoverEnterLeave(hoverLeaf, null, sceneRoot);
+      if (isMouseLikePointer(ev)) {
+        const { leave } = diffHoverEnterLeave(hoverLeaf, null, primaryRoot);
         for (const n of leave) {
           dispatchPointerEnterLeave(
-            sceneRoot,
+            primaryRoot,
             "pointerleave",
             n,
             lastPage.x,
@@ -217,50 +331,12 @@ export function attachCanvasPointerHandlers(
         }
         interaction?.afterHoverDiff?.(leave, []);
         hoverLeaf = null;
-        syncCanvasCursor(canvas, hoverLeaf, sceneRoot, cursorManager);
+        syncCanvasCursor(canvas, hoverLeaf, primaryRoot, cursorManager);
       }
       return;
     }
 
-    const { x: pageX, y: pageY } = route(ev);
-    lastPage = { x: pageX, y: pageY };
-
-    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
-    syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
-    if (hit) {
-      const path = buildPathToRoot(hit, sceneRoot);
-      dispatchBubble(path, sceneRoot, "pointermove", pageX, pageY, ev.pointerId, ev.timeStamp);
-    }
-
-    if (ev.pointerType === "mouse" || ev.pointerType === "pen") {
-      if (hoverLeaf === hit) return;
-      const { leave, enter } = diffHoverEnterLeave(hoverLeaf, hit, sceneRoot);
-      for (const n of leave) {
-        dispatchPointerEnterLeave(
-          sceneRoot,
-          "pointerleave",
-          n,
-          pageX,
-          pageY,
-          ev.pointerId,
-          ev.timeStamp,
-        );
-      }
-      for (const n of enter) {
-        dispatchPointerEnterLeave(
-          sceneRoot,
-          "pointerenter",
-          n,
-          pageX,
-          pageY,
-          ev.pointerId,
-          ev.timeStamp,
-        );
-      }
-      interaction?.afterHoverDiff?.(leave, enter);
-      hoverLeaf = hit;
-      syncCanvasCursor(canvas, hoverLeaf, sceneRoot, cursorManager);
-    }
+    syncHoverInsideCanvas(ev);
   };
 
   const onPointerUpOrCancel = (ev: PointerEvent) => {
@@ -276,26 +352,63 @@ export function attachCanvasPointerHandlers(
       ev.type === "pointercancel" ? "pointercancel" : "pointerup";
 
     const capNode = pointerCapture?.getTarget(ev.pointerId);
-    const pathForEnd = capNode
-      ? buildPathToRoot(capNode, sceneRoot)
-      : (() => {
-          const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
-          return hit
-            ? buildPathToRoot(hit, sceneRoot)
-            : snap
-              ? buildPathToRoot(snap.target, sceneRoot)
-              : null;
-        })();
+    let endRoot: ViewNode = normalizeCanvasSceneRoots(sceneRoot)[0]!;
+    let pathForEnd: ViewNode[] | null = null;
+    if (capNode) {
+      endRoot = subtreeLayerRoot(capNode);
+      pathForEnd = buildPathToRoot(capNode, endRoot);
+    } else {
+      const pickedEnd = pickHit(pageX, pageY);
+      if (pickedEnd) {
+        endRoot = pickedEnd.layerRoot;
+        pathForEnd = buildPathToRoot(pickedEnd.hit, endRoot);
+      } else if (snap) {
+        endRoot = subtreeLayerRoot(snap.target);
+        pathForEnd = buildPathToRoot(snap.target, endRoot);
+      }
+    }
     if (pathForEnd) {
-      dispatchBubble(pathForEnd, sceneRoot, kind, pageX, pageY, ev.pointerId, ev.timeStamp);
+      dispatchBubble(pathForEnd, endRoot, kind, pageX, pageY, ev.pointerId, ev.timeStamp);
     }
 
     pointerCapture?.release(ev.pointerId);
 
+    /**
+     * 抬起后若指针未移动，document 不会再次派发 pointermove；而业务在 onPointerUp 里释放
+     * plugin 光标后必须立刻按当前命中重算 {@link CursorManager}，否则 canvas.style.cursor 会卡在 grabbing。
+     */
+    const rUp = canvas.getBoundingClientRect();
+    const insideUp =
+      ev.clientX >= rUp.left &&
+      ev.clientX < rUp.right &&
+      ev.clientY >= rUp.top &&
+      ev.clientY < rUp.bottom;
+    if (insideUp && isMouseLikePointer(ev)) {
+      const pickedUp = pickHit(pageX, pageY);
+      const primaryRoot = normalizeCanvasSceneRoots(sceneRoot)[0]!;
+      syncCanvasCursor(
+        canvas,
+        pickedUp?.hit ?? null,
+        pickedUp?.layerRoot ?? primaryRoot,
+        cursorManager,
+      );
+    }
+
     if (kind === "pointercancel" || !snap) return;
-    if (shouldEmitClick(snap, pageX, pageY, sceneRoot, canvasKit, undefined, readCamera())) {
-      const pathClick = buildPathToRoot(snap.target, sceneRoot);
-      dispatchBubble(pathClick, sceneRoot, "click", pageX, pageY, ev.pointerId, ev.timeStamp);
+    if (
+      shouldEmitClick(
+        snap,
+        pageX,
+        pageY,
+        normalizeCanvasSceneRoots(sceneRoot),
+        canvasKit,
+        undefined,
+        readCamera(),
+      )
+    ) {
+      const clickRoot = subtreeLayerRoot(snap.target);
+      const pathClick = buildPathToRoot(snap.target, clickRoot);
+      dispatchBubble(pathClick, clickRoot, "click", pageX, pageY, ev.pointerId, ev.timeStamp);
     }
   };
 
@@ -309,7 +422,8 @@ export function attachCanvasPointerHandlers(
       logicalWidth,
       logicalHeight,
     );
-    const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
+    const picked = pickHit(pageX, pageY);
+    const hit = picked?.hit ?? null;
     syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
     if (!hit) return;
     const { inScrollView, didScroll } = applyWheelToScrollViewChain(hit, ev.deltaX, ev.deltaY);

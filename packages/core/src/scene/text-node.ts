@@ -215,6 +215,6 @@ function collectSpans(node: TextNode, inherited: TextOnlyProps): ParagraphSpan[]
   return out;
 }
 
-export function collectParagraphSpans(root: TextNode): ParagraphSpan[] {
+function collectParagraphSpans(root: TextNode): ParagraphSpan[] {
   return collectSpans(root, {});
 }

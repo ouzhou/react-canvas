@@ -19,19 +19,13 @@ export type InitCanvasRuntimeOptions = {
 
 export {
   initCanvasRuntime,
-  initCanvasRuntime as preloadCanvasRuntime,
   subscribeCanvasRuntimeInit,
   getCanvasRuntimeInitSnapshot,
   getCanvasRuntimeInitServerSnapshot,
   getFontOptionsFingerprint,
-  initRuntime,
-  subscribeRuntimeInit,
-  getRuntimeSnapshot,
-  getRuntimeServerSnapshot,
   type CanvasRuntimeInitSnapshot,
 } from "./runtime-init-store.ts";
 
 /** 与 `core-design.md` §2 对齐的文档化类型名 */
 export type Runtime = CanvasRuntime;
 export type RuntimeOptions = InitCanvasRuntimeOptions;
-export type { CanvasRuntimeInitSnapshot as RuntimeInitSnapshot } from "./runtime-init-store.ts";

@@ -124,12 +124,3 @@ export function initCanvasRuntime(options?: InitCanvasRuntimeOptions): Promise<C
 
   return initPromise;
 }
-
-export const initRuntime = initCanvasRuntime;
-export const subscribeRuntimeInit = subscribeCanvasRuntimeInit;
-export function getRuntimeSnapshot(): CanvasRuntimeInitSnapshot {
-  return getCanvasRuntimeInitSnapshot();
-}
-export function getRuntimeServerSnapshot(): CanvasRuntimeInitSnapshot {
-  return getCanvasRuntimeInitServerSnapshot();
-}

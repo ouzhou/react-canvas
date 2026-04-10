@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vite-plus/test";
-import { hitTest, buildPathToRoot } from "../../src/index.ts";
+import { hitTest, hitTestAmongLayerRoots, buildPathToRoot } from "../../src/index.ts";
 import type { CanvasKit } from "canvaskit-wasm";
 import { createMatrixMockCanvasKit } from "../helpers/matrix-mock-canvas-kit.ts";
 import { initYoga } from "../../src/layout/yoga.ts";
@@ -132,5 +132,46 @@ describe("hitTest", () => {
     root.calculateLayout(200, 200, canvasKit);
     expect(hitTest(root, 10, 10, canvasKit)).toBe(root);
     expect(hitTest(root, 55, 35, canvasKit)).toBe(box);
+  });
+
+  describe("hitTestAmongLayerRoots (Stage 多 Layer / 弹窗)", () => {
+    it("重叠区域命中 zIndex 更高的一层，不穿透到下层", () => {
+      const defaultLayer = new ViewNode(yoga, "View");
+      defaultLayer.layout = { left: 0, top: 0, width: 200, height: 200 };
+      const behindBtn = new ViewNode(yoga, "View");
+      behindBtn.layout = { left: 50, top: 50, width: 80, height: 80 };
+      defaultLayer.appendChild(behindBtn);
+
+      const modalLayer = new ViewNode(yoga, "View");
+      modalLayer.layout = { left: 0, top: 0, width: 200, height: 200 };
+      const modalBtn = new ViewNode(yoga, "View");
+      modalBtn.layout = { left: 50, top: 50, width: 80, height: 80 };
+      modalLayer.appendChild(modalBtn);
+
+      const roots = [defaultLayer, modalLayer] as const;
+      expect(hitTest(defaultLayer, 60, 60, canvasKit)).toBe(behindBtn);
+
+      const picked = hitTestAmongLayerRoots(roots, 60, 60, canvasKit);
+      expect(picked?.layerRoot).toBe(modalLayer);
+      expect(picked?.hit).toBe(modalBtn);
+    });
+
+    it("上层未覆盖的区域仍命中下层", () => {
+      const defaultLayer = new ViewNode(yoga, "View");
+      defaultLayer.layout = { left: 0, top: 0, width: 200, height: 200 };
+      const leaf = new ViewNode(yoga, "View");
+      leaf.layout = { left: 10, top: 10, width: 40, height: 40 };
+      defaultLayer.appendChild(leaf);
+
+      const modalLayer = new ViewNode(yoga, "View");
+      modalLayer.layout = { left: 100, top: 100, width: 50, height: 50 };
+      const modalChild = new ViewNode(yoga, "View");
+      modalChild.layout = { left: 0, top: 0, width: 50, height: 50 };
+      modalLayer.appendChild(modalChild);
+
+      const roots = [defaultLayer, modalLayer] as const;
+      expect(hitTestAmongLayerRoots(roots, 20, 20, canvasKit)?.hit).toBe(leaf);
+      expect(hitTestAmongLayerRoots(roots, 120, 120, canvasKit)?.hit).toBe(modalChild);
+    });
   });
 });

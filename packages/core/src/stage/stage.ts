@@ -3,7 +3,10 @@ import type { Surface } from "canvaskit-wasm";
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
 import { getWorldBounds } from "../geometry/world-bounds.ts";
 import type { ViewportCamera } from "../render/camera.ts";
-import { attachCanvasPointerHandlers } from "../input/canvas-pointer.ts";
+import {
+  attachCanvasPointerHandlers,
+  type CanvasSceneRootsInput,
+} from "../input/canvas-pointer.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 import { createAndBindFrameScheduler, resetLayoutPaintQueue } from "../runtime/frame-queue.ts";
 import type { BeforePaintEvent, FrameScheduler } from "../runtime/frame-scheduler.ts";
@@ -226,11 +229,12 @@ export class Stage {
    * 绑定指针/滚轮到当前 `<canvas>`（与 `react` 包原 `attachCanvasPointerHandlers` 行为一致）。
    * 再次调用会先解除上一批监听。{@link destroy} 时也会自动解除。
    *
-   * @param sceneRoot 省略时使用 {@link defaultLayer.root}。多 Layer 命中测试后续在 EventDispatcher 中扩展。
+   * @param sceneRoot 省略时使用当前 Stage **全部可见 Layer 根**（zIndex 升序）做自顶向下命中，与 `paintStageLayers` / 弹窗遮挡一致。
    */
   attachPointerHandlers(sceneRoot?: ViewNode, getCamera?: () => ViewportCamera | null): () => void {
     this.detachPointerHandlers();
-    const root = sceneRoot ?? this.defaultLayer.root;
+    const rootsArg: CanvasSceneRootsInput =
+      sceneRoot !== undefined ? sceneRoot : () => this.getVisibleLayerRoots();
     const interaction: CanvasPointerInteractionBinding = {
       onPointerDownHit: (hit) => {
         this.focusManager.onPointerDownHit(hit);
@@ -252,7 +256,7 @@ export class Stage {
     };
     const detach = attachCanvasPointerHandlers(
       this.canvas,
-      root,
+      rootsArg,
       this.width,
       this.height,
       this.runtime.canvasKit,

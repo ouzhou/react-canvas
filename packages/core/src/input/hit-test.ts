@@ -47,6 +47,25 @@ export function hitTest(
   return hitTestRecursive(sceneRoot, x, y, canvasKit, canvasKit.Matrix.identity());
 }
 
+/**
+ * 多 {@link Layer} 同画布叠加时，按 zIndex **从高到低** 探测命中（先 modal 再 default），
+ * 与 `paintStageLayers` 的遮挡关系一致；`layerRootsLowToHigh` 须为各 Layer 根节点且 **zIndex 升序**（与 Stage 可见层枚举一致）。
+ */
+export function hitTestAmongLayerRoots(
+  layerRootsLowToHigh: readonly ViewNode[],
+  pageX: number,
+  pageY: number,
+  canvasKit: CanvasKit,
+  camera?: ViewportCamera | null,
+): { hit: ViewNode; layerRoot: ViewNode } | null {
+  for (let i = layerRootsLowToHigh.length - 1; i >= 0; i--) {
+    const layerRoot = layerRootsLowToHigh[i]!;
+    const h = hitTest(layerRoot, pageX, pageY, canvasKit, camera);
+    if (h) return { hit: h, layerRoot };
+  }
+  return null;
+}
+
 function hitTestRecursive(
   node: ViewNode,
   pageX: number,

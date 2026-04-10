@@ -6,7 +6,8 @@ vi.mock("../../src/render/paint.ts", async (importOriginal) => {
   return { ...mod, paintScene: vi.fn(), paintStageLayers: vi.fn() };
 });
 
-import { initYoga, paintScene } from "../../src/index.ts";
+import { paintScene } from "../../src/index.ts";
+import { initYoga } from "../../src/layout/yoga.ts";
 import type { Yoga } from "../../src/layout/yoga.ts";
 import { ViewNode } from "../../src/scene/view-node.ts";
 import { Stage } from "../../src/stage/stage.ts";

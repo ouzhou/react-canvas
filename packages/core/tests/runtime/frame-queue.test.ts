@@ -6,7 +6,8 @@ vi.mock("../../src/render/paint.ts", async (importOriginal) => {
   return { ...mod, paintScene: vi.fn() };
 });
 
-import { initYoga, paintScene, ViewNode } from "../../src/index.ts";
+import { paintScene, ViewNode } from "../../src/index.ts";
+import { initYoga } from "../../src/layout/yoga.ts";
 import {
   queueLayoutPaintFrame,
   queuePaintOnlyFrame,

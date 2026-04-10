@@ -321,34 +321,3 @@ export function measureParagraphSpans(
     p.delete();
   }
 }
-
-/**
- * Measure text for Yoga `setMeasureFunc`. Uses `getLayoutCanvasKit()` (set during `calculateLayout`).
- */
-export function measureTextForYoga(
-  text: TextOnlyProps,
-  body: string,
-  width: number,
-  widthMode: MeasureMode,
-  _height: number,
-  _heightMode: MeasureMode,
-): { width: number; height: number } {
-  const ck = getLayoutCanvasKit();
-  if (!ck || body.length === 0) {
-    return { width: 0, height: 0 };
-  }
-  const p = buildParagraph(ck, body, text);
-  try {
-    if (widthMode !== MeasureMode.Undefined && Number.isFinite(width) && width <= 0) {
-      return { width: 0, height: 0 };
-    }
-    const maxW = layoutMaxWidthForMeasure(width, widthMode);
-    p.layout(maxW);
-    const lineWidth = p.getLongestLine();
-    const w = widthMode === MeasureMode.Undefined ? lineWidth : Math.min(lineWidth, maxW);
-    const h = p.getHeight();
-    return { width: w, height: h };
-  } finally {
-    p.delete();
-  }
-}
