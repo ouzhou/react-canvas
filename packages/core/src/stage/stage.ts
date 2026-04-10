@@ -8,6 +8,7 @@ import {
   resetLayoutPaintQueue,
 } from "../runtime/frame-queue.ts";
 import type { Runtime } from "../runtime/runtime.ts";
+import { attachCanvasPointerHandlers } from "../input/canvas-pointer.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 import { Layer } from "./layer.ts";
 
@@ -35,6 +36,7 @@ export class Stage {
   readonly defaultLayer: Layer;
   private readonly canvas: HTMLCanvasElement;
   private surface: Surface | null = null;
+  private pointerDetach: (() => void) | null = null;
   private lw = 1;
   private lh = 1;
   /** 与历史 `frameRef.dpr` 一致：逻辑像素与 backing-store 的缩放（来自 `canvasBackingStoreSize` 的 `rootScale`）。 */
@@ -70,8 +72,44 @@ export class Stage {
   }
 
   destroy(): void {
+    this.detachPointerHandlers();
     this.clearDefaultLayerChildren();
     this.teardownSurface();
+  }
+
+  /**
+   * 绑定指针/滚轮到当前 `<canvas>`（与 `react` 包原 `attachCanvasPointerHandlers` 行为一致）。
+   * 再次调用会先解除上一批监听。{@link destroy} 时也会自动解除。
+   *
+   * @param sceneRoot 省略时使用 {@link defaultLayer.root}
+   */
+  attachPointerHandlers(sceneRoot?: ViewNode, getCamera?: () => ViewportCamera | null): () => void {
+    this.detachPointerHandlers();
+    const root = sceneRoot ?? this.defaultLayer.root;
+    const detach = attachCanvasPointerHandlers(
+      this.canvas,
+      root,
+      this.width,
+      this.height,
+      this.runtime.canvasKit,
+      () => {
+        this.requestLayoutPaint(root);
+      },
+      getCamera,
+    );
+    this.pointerDetach = detach;
+    return () => {
+      detach();
+      if (this.pointerDetach === detach) {
+        this.pointerDetach = null;
+      }
+    };
+  }
+
+  /** 解除 {@link attachPointerHandlers} 注册的监听（幂等）。 */
+  detachPointerHandlers(): void {
+    this.pointerDetach?.();
+    this.pointerDetach = null;
   }
 
   /**
