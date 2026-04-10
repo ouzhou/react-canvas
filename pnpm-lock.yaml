@@ -209,6 +209,9 @@ importers:
 
   apps/v2:
     dependencies:
+      '@react-canvas/core-v2':
+        specifier: workspace:*
+        version: link:../../packages/core-v2
       '@react-canvas/react-v2':
         specifier: workspace:*
         version: link:../../packages/react-v2

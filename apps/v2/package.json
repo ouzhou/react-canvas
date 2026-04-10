@@ -9,6 +9,7 @@
     "preview": "vp preview"
   },
   "dependencies": {
+    "@react-canvas/core-v2": "workspace:*",
     "@react-canvas/react-v2": "workspace:*"
   },
   "devDependencies": {
