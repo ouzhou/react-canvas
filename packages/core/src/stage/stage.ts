@@ -1,7 +1,14 @@
 import type { Surface } from "canvaskit-wasm";
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
+import type { ViewportCamera } from "../render/camera.ts";
+import {
+  queueLayoutPaintFrame,
+  queuePaintOnlyFrame,
+  resetLayoutPaintQueue,
+} from "../runtime/frame-queue.ts";
 import type { Runtime } from "../runtime/runtime.ts";
+import type { ViewNode } from "../scene/view-node.ts";
 
 export type StageOptions = {
   canvas: HTMLCanvasElement;
@@ -62,6 +69,44 @@ export class Stage {
     this.teardownSurface();
   }
 
+  /**
+   * 请求下一帧做 Yoga 布局并绘制场景（与 reconciler 中 `queueLayoutPaintFrame` 一致）。
+   */
+  requestLayoutPaint(root: ViewNode, camera?: ViewportCamera | null): void {
+    const surface = this.surface;
+    if (!surface) {
+      throw new Error("[@react-canvas/core] Stage has no surface; cannot requestLayoutPaint.");
+    }
+    queueLayoutPaintFrame(
+      surface,
+      this.runtime.canvasKit,
+      root,
+      this.width,
+      this.height,
+      this.dpr,
+      camera,
+    );
+  }
+
+  /**
+   * 仅重绘（不跑布局）；例如滚动偏移等仅影响绘制的更新。
+   */
+  requestPaintOnly(root: ViewNode, camera?: ViewportCamera | null): void {
+    const surface = this.surface;
+    if (!surface) {
+      throw new Error("[@react-canvas/core] Stage has no surface; cannot requestPaintOnly.");
+    }
+    queuePaintOnlyFrame(
+      surface,
+      this.runtime.canvasKit,
+      root,
+      this.width,
+      this.height,
+      this.dpr,
+      camera,
+    );
+  }
+
   private mountSurface(width: number, height: number, dpr: number): void {
     const lw = Math.max(1, Math.round(width));
     const lh = Math.max(1, Math.round(height));
@@ -89,6 +134,7 @@ export class Stage {
 
   private teardownSurface(): void {
     if (this.surface) {
+      resetLayoutPaintQueue(this.surface);
       this.surface.delete();
       this.surface = null;
     }

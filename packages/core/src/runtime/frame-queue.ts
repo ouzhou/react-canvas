@@ -1,83 +1,30 @@
 import type { CanvasKit, Surface } from "canvaskit-wasm";
 import { resetDefaultParagraphFontLoaderForTests } from "../text/default-paragraph-font.ts";
 import type { ViewportCamera } from "../render/camera.ts";
-import { paintScene } from "../render/paint.ts";
 import { resetParagraphFontStateForTests } from "../text/paragraph-build.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
-type SurfaceQueueState = {
-  /** 下一帧是否执行 Yoga `calculateLayout`。 */
-  pendingLayout: boolean;
-  /** 下一帧是否执行 `paintScene`。 */
-  pendingPaint: boolean;
-  /** 已提交 rAF、回调尚未跑完（含同步立即执行的 mock rAF）。 */
-  hasPendingFrame: boolean;
-  pendingRafId: number | null;
-  frameRoot: ViewNode | null;
-  frameWidth: number;
-  frameHeight: number;
-  frameDpr: number;
-  frameCanvasKit: CanvasKit | null;
-  frameCamera: ViewportCamera | null;
-};
+import { FrameScheduler } from "./frame-scheduler.ts";
 
-const queueStateBySurface = new WeakMap<Surface, SurfaceQueueState>();
+const schedulersBySurface = new WeakMap<Surface, FrameScheduler>();
 
-/** Strong refs for {@link resetLayoutPaintQueueForTests} (WeakMap 不可遍历). */
+/** Strong refs for {@link resetLayoutPaintQueueForTests}（WeakMap 不可遍历）。 */
 const surfacesWithPendingWork = new Set<Surface>();
 
-function getQueueState(surface: Surface): SurfaceQueueState {
-  let st = queueStateBySurface.get(surface);
-  if (!st) {
-    st = {
-      pendingLayout: false,
-      pendingPaint: false,
-      hasPendingFrame: false,
-      pendingRafId: null,
-      frameRoot: null,
-      frameWidth: 0,
-      frameHeight: 0,
-      frameDpr: 1,
-      frameCanvasKit: null,
-      frameCamera: null,
-    };
-    queueStateBySurface.set(surface, st);
+function getScheduler(surface: Surface): FrameScheduler {
+  let s = schedulersBySurface.get(surface);
+  if (!s) {
+    s = new FrameScheduler(surface, {
+      onPendingFrame: (surf) => {
+        surfacesWithPendingWork.add(surf);
+      },
+      onFrameComplete: (surf) => {
+        surfacesWithPendingWork.delete(surf);
+      },
+    });
+    schedulersBySurface.set(surface, s);
   }
-  return st;
-}
-
-function scheduleFrame(surface: Surface, st: SurfaceQueueState): void {
-  if (st.hasPendingFrame) return;
-  st.hasPendingFrame = true;
-  surfacesWithPendingWork.add(surface);
-  const rafId = surface.requestAnimationFrame((skCanvas) => {
-    const doLayout = st.pendingLayout;
-    const doPaint = st.pendingPaint;
-    const root = st.frameRoot;
-    const w = st.frameWidth;
-    const h = st.frameHeight;
-    const d = st.frameDpr;
-    const ck = st.frameCanvasKit;
-    const cam = st.frameCamera;
-    st.pendingLayout = false;
-    st.pendingPaint = false;
-    if (root && ck) {
-      if (doLayout) root.calculateLayout(w, h, ck);
-      if (doPaint) {
-        const paint = new ck.Paint();
-        paint.setAntiAlias(true);
-        paintScene(root, skCanvas, ck, d, paint, cam);
-        paint.delete();
-      }
-    }
-    st.hasPendingFrame = false;
-    st.pendingRafId = null;
-    surfacesWithPendingWork.delete(surface);
-  });
-  /** 同步 rAF mock 会在返回前跑完回调；此时 hasPendingFrame 已为 false，勿用 rAF 返回值覆盖 pendingRafId。 */
-  if (st.hasPendingFrame) {
-    st.pendingRafId = typeof rafId === "number" ? rafId : null;
-  }
+  return s;
 }
 
 export function queueLayoutPaintFrame(
@@ -89,16 +36,7 @@ export function queueLayoutPaintFrame(
   dpr: number,
   camera?: ViewportCamera | null,
 ): void {
-  const st = getQueueState(surface);
-  st.frameRoot = rootNode;
-  st.frameWidth = width;
-  st.frameHeight = height;
-  st.frameDpr = dpr;
-  st.frameCanvasKit = canvasKit;
-  st.frameCamera = camera ?? null;
-  st.pendingLayout = true;
-  st.pendingPaint = true;
-  scheduleFrame(surface, st);
+  getScheduler(surface).queueLayoutPaintFrame(canvasKit, rootNode, width, height, dpr, camera);
 }
 
 /**
@@ -114,16 +52,7 @@ export function queuePaintOnlyFrame(
   dpr: number,
   camera?: ViewportCamera | null,
 ): void {
-  const st = getQueueState(surface);
-  if (st.pendingLayout) return;
-  st.frameRoot = rootNode;
-  st.frameWidth = width;
-  st.frameHeight = height;
-  st.frameDpr = dpr;
-  st.frameCanvasKit = canvasKit;
-  st.frameCamera = camera ?? null;
-  st.pendingPaint = true;
-  scheduleFrame(surface, st);
+  getScheduler(surface).queuePaintOnlyFrame(canvasKit, rootNode, width, height, dpr, camera);
 }
 
 /**
@@ -132,17 +61,10 @@ export function queuePaintOnlyFrame(
  * "function signature mismatch" on e.g. {@link Canvas.scale}).
  */
 export function resetLayoutPaintQueue(surface: Surface): void {
-  const st = queueStateBySurface.get(surface);
-  if (!st) return;
-  const cancel = (globalThis as { cancelAnimationFrame?: (id: number) => void })
-    .cancelAnimationFrame;
-  if (st.pendingRafId !== null && typeof cancel === "function") {
-    cancel(st.pendingRafId);
+  const sch = schedulersBySurface.get(surface);
+  if (sch) {
+    sch.reset();
   }
-  st.pendingRafId = null;
-  st.hasPendingFrame = false;
-  st.pendingLayout = false;
-  st.pendingPaint = false;
   surfacesWithPendingWork.delete(surface);
 }
 
