@@ -3,6 +3,9 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    conditions: ["development", "module", "browser", "import", "default"],
+  },
   pack: {
     dts: {
       tsgo: true,

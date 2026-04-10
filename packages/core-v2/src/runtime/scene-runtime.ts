@@ -39,6 +39,8 @@ export type SceneRuntime = {
   getSceneGraphSnapshot(): SceneGraphSnapshot;
   getLayoutSnapshot(): LayoutSnapshot;
   getLastDispatchTrace(): DispatchTrace;
+  /** 场景树中是否已有该 id（供 React 等按序挂载时等待父节点先注册）。 */
+  hasSceneNode(id: string): boolean;
 };
 
 function rebuildYogaStyle(node: SceneNode): void {
@@ -149,6 +151,10 @@ export async function createSceneRuntime(
 
     getLastDispatchTrace() {
       return lastTrace;
+    },
+
+    hasSceneNode(id) {
+      return store.get(id) !== undefined;
     },
   };
 }
