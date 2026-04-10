@@ -1,23 +1,40 @@
 import "./style.css";
 
 import { mountAnimationDemo } from "./demos/demo-animation.ts";
+import { mountAnimationDemoReact } from "./demos/demo-animation.react.ts";
 import { mountArchitectureDemo } from "./demos/demo-architecture.ts";
+import { mountArchitectureDemoReact } from "./demos/demo-architecture.react.tsx";
 import { mountCursorDemo } from "./demos/demo-cursor.ts";
+import { mountCursorDemoReact } from "./demos/demo-cursor.react.ts";
 import { mountEventsDemo } from "./demos/demo-events.ts";
+import { mountEventsDemoReact } from "./demos/demo-events.react.ts";
 import { mountFrameSchedulerDemo } from "./demos/demo-frame-scheduler.ts";
+import { mountFrameSchedulerDemoReact } from "./demos/demo-frame-scheduler.react.ts";
 import { mountInteractionFocusDemo } from "./demos/demo-interaction-focus.ts";
+import { mountInteractionFocusDemoReact } from "./demos/demo-interaction-focus.react.ts";
 import { mountLayoutEngineDemo } from "./demos/demo-layout-engine.ts";
+import { mountLayoutEngineDemoReact } from "./demos/demo-layout-engine.react.ts";
 import { mountNodeModelDemo } from "./demos/demo-node-model.ts";
+import { mountNodeModelDemoReact } from "./demos/demo-node-model.react.ts";
 import { mountOverflowClipDemo } from "./demos/demo-overflow-clip.ts";
+import { mountOverflowClipDemoReact } from "./demos/demo-overflow-clip.react.ts";
 import { mountPackageBoundaryDemo } from "./demos/demo-package-boundary.ts";
 import { mountPendingIssuesDemo } from "./demos/demo-pending-issues.ts";
+import { mountPendingIssuesDemoReact } from "./demos/demo-pending-issues.react.ts";
 import { mountPluginDemo } from "./demos/demo-plugin.ts";
+import { mountPluginDemoReact } from "./demos/demo-plugin.react.ts";
 import { mountRenderPipelineDemo } from "./demos/demo-opacity-zindex.ts";
+import { mountRenderPipelineDemoReact } from "./demos/demo-opacity-zindex.react.ts";
 import { mountRuntimeStatusDemo } from "./demos/demo-runtime-status.ts";
+import { mountRuntimeStatusDemoReact } from "./demos/demo-runtime-status.react.ts";
 import { mountScrollViewDemo } from "./demos/demo-scroll-view.ts";
+import { mountScrollViewDemoReact } from "./demos/demo-scroll-view.react.ts";
 import { mountStandaloneApiDemo } from "./demos/demo-standalone-api.ts";
 import { mountStageDemo } from "./demos/demo-stage.ts";
+import { mountStageDemoReact } from "./demos/demo-stage.react.ts";
 import { mountStageLayersDemo } from "./demos/demo-stage-layers.ts";
+import { mountStageLayersDemoReact } from "./demos/demo-stage-layers.react.ts";
+import { mountNonReactDemoStub } from "./lib/non-react-demo-stub.ts";
 
 /** 旧 URL `?demo=` 兼容（合并 demo 前的 id） */
 const LEGACY_DEMO_PARAM: Record<string, DemoId> = {
@@ -158,6 +175,13 @@ const DEMOS: { id: DemoId; section: string; label: string; hint: string }[] = [
 ];
 
 const DEMO_PARAM = "demo";
+const IMPL_PARAM = "impl";
+
+type ImplId = "ts" | "react";
+
+function normalizeImplParam(raw: string | null): ImplId {
+  return raw === "react" ? "react" : "ts";
+}
 
 function normalizeDemoParam(raw: string | null): DemoId | null {
   if (!raw) return null;
@@ -174,10 +198,20 @@ function readDemoFromUrl(): DemoId | null {
   }
 }
 
-function writeDemoToUrl(id: DemoId): void {
+function readImplFromUrl(): ImplId {
+  try {
+    const q = new URLSearchParams(window.location.search).get(IMPL_PARAM);
+    return normalizeImplParam(q);
+  } catch {
+    return "ts";
+  }
+}
+
+function writeDemoAndImplToUrl(id: DemoId, impl: ImplId): void {
   try {
     const url = new URL(window.location.href);
     url.searchParams.set(DEMO_PARAM, id);
+    url.searchParams.set(IMPL_PARAM, impl);
     window.history.replaceState({}, "", url.toString());
   } catch {
     /* ignore */
@@ -197,6 +231,11 @@ function main(): void {
           按 <code>docs/core-design.md</code> 目录 §1–§18 逐项对照；说明见
           <code>apps/core-test/CORE_DESIGN_CHECK.md</code>。
         </p>
+        <div class="impl-switch" role="group" aria-label="场景实现">
+          <span class="impl-switch__label">实现</span>
+          <button type="button" class="impl-switch__btn" id="impl-ts" data-impl="ts">原生 TS</button>
+          <button type="button" class="impl-switch__btn" id="impl-react" data-impl="react">React</button>
+        </div>
       </header>
       <div class="body">
         <aside class="sidebar" aria-label="Demo 列表">
@@ -216,6 +255,8 @@ function main(): void {
   const statusEl = app.querySelector<HTMLElement>("#demo-status")!;
   const wrap = app.querySelector<HTMLElement>("#demo-canvas-wrap")!;
   const mainEl = app.querySelector<HTMLElement>("#main-content")!;
+  const implTsBtn = app.querySelector<HTMLButtonElement>("#impl-ts")!;
+  const implReactBtn = app.querySelector<HTMLButtonElement>("#impl-react")!;
 
   const buttons = new Map<DemoId, HTMLButtonElement>();
 
@@ -231,6 +272,7 @@ function main(): void {
   }
 
   let cleanup: (() => void) | null = null;
+  let activeImpl: ImplId = readImplFromUrl();
   let active: DemoId = readDemoFromUrl() ?? "architecture";
 
   const setStatus = (msg: string): void => {
@@ -261,6 +303,11 @@ function main(): void {
     }
   };
 
+  const syncImplNav = (impl: ImplId): void => {
+    implTsBtn.setAttribute("aria-pressed", impl === "ts" ? "true" : "false");
+    implReactBtn.setAttribute("aria-pressed", impl === "react" ? "true" : "false");
+  };
+
   const run = async (id: DemoId): Promise<void> => {
     cleanup?.();
     cleanup = null;
@@ -268,10 +315,56 @@ function main(): void {
     setStatus("");
     active = id;
     syncNav(id);
-    writeDemoToUrl(id);
+    syncImplNav(activeImpl);
+    writeDemoAndImplToUrl(id, activeImpl);
 
     const meta = DEMOS.find((d) => d.id === id);
     hintEl.textContent = meta?.hint ?? "";
+
+    const react = activeImpl === "react";
+    const stub = react && (id === "standalone" || id === "package");
+
+    if (stub) {
+      cleanup = mountNonReactDemoStub(wrap);
+      return;
+    }
+
+    if (react) {
+      if (id === "architecture") {
+        cleanup = await mountArchitectureDemoReact(wrap);
+      } else if (id === "runtime") {
+        cleanup = await mountRuntimeStatusDemoReact(wrap, (html) => setStatus(html));
+      } else if (id === "stage") {
+        cleanup = await mountStageDemoReact(wrap, (msg) => setStatus(msg));
+      } else if (id === "layers") {
+        cleanup = await mountStageLayersDemoReact(wrap, (msg) => setStatus(msg));
+      } else if (id === "nodes") {
+        cleanup = await mountNodeModelDemoReact(wrap, (msg) => setStatus(msg));
+      } else if (id === "layout") {
+        cleanup = await mountLayoutEngineDemoReact(wrap);
+      } else if (id === "render") {
+        cleanup = await mountRenderPipelineDemoReact(wrap, appendEventLog);
+      } else if (id === "events") {
+        cleanup = await mountEventsDemoReact(wrap, appendEventLog);
+      } else if (id === "anim") {
+        cleanup = await mountAnimationDemoReact(wrap, (msg) => setStatus(msg));
+      } else if (id === "frame") {
+        cleanup = await mountFrameSchedulerDemoReact(wrap, (msg) => setStatus(msg));
+      } else if (id === "pending") {
+        cleanup = await mountPendingIssuesDemoReact(wrap);
+      } else if (id === "focus") {
+        cleanup = await mountInteractionFocusDemoReact(wrap, (msg) => setStatus(msg));
+      } else if (id === "cursor") {
+        cleanup = await mountCursorDemoReact(wrap, (msg) => setStatus(msg));
+      } else if (id === "overflow") {
+        cleanup = await mountOverflowClipDemoReact(wrap);
+      } else if (id === "scroll") {
+        cleanup = await mountScrollViewDemoReact(wrap);
+      } else {
+        cleanup = await mountPluginDemoReact(wrap, (msg) => setStatus(msg));
+      }
+      return;
+    }
 
     if (id === "architecture") {
       cleanup = await mountArchitectureDemo(wrap);
@@ -317,6 +410,16 @@ function main(): void {
     if (!t?.dataset.demoId) return;
     const id = t.dataset.demoId as DemoId;
     void run(id);
+  });
+
+  const implRow = app.querySelector<HTMLElement>(".impl-switch")!;
+  implRow.addEventListener("click", (ev) => {
+    const t = (ev.target as HTMLElement).closest<HTMLButtonElement>("[data-impl]");
+    if (!t?.dataset.impl) return;
+    const next = normalizeImplParam(t.dataset.impl);
+    if (next === activeImpl) return;
+    activeImpl = next;
+    void run(active);
   });
 
   void run(active);

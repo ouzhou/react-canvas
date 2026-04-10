@@ -85,6 +85,36 @@ body {
   max-width: 72ch;
 }
 
+.impl-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.impl-switch__label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.impl-switch__btn {
+  touch-action: manipulation;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #cbd5e1;
+}
+
+.impl-switch__btn[aria-pressed="true"] {
+  border-color: #38bdf8;
+  background: #0c4a6e;
+  color: #e0f2fe;
+}
+
 .body {
   flex: 1;
   display: flex;
