@@ -8,6 +8,7 @@ import { createAndBindFrameScheduler, resetLayoutPaintQueue } from "../runtime/f
 import type { FrameScheduler } from "../runtime/frame-scheduler.ts";
 import type { Runtime } from "../runtime/runtime.ts";
 import { Layer } from "./layer.ts";
+import { Ticker } from "./ticker.ts";
 
 export type StageOptions = {
   canvas: HTMLCanvasElement;
@@ -39,6 +40,8 @@ export class Stage {
   private surface: Surface | null = null;
   /** 与 {@link Surface} 一一对应；`teardownSurface` 时随 `resetLayoutPaintQueue` 解除注册。 */
   private frameScheduler: FrameScheduler | null = null;
+  /** 由 {@link createTicker} 创建；{@link teardownSurface} 时全部 {@link Ticker.destroy}。 */
+  private readonly tickers = new Set<Ticker>();
   private pointerDetach: (() => void) | null = null;
   private lw = 1;
   private lh = 1;
@@ -84,6 +87,24 @@ export class Stage {
    */
   getFrameScheduler(): FrameScheduler | null {
     return this.frameScheduler;
+  }
+
+  /**
+   * 创建与当前 Stage 绑定的 {@link Ticker}（`core-design.md` §9）。
+   * `Stage.destroy` / `resize` 换 Surface 前会自动销毁全部 Ticker。
+   */
+  createTicker(): Ticker {
+    const t = new Ticker(this);
+    this.tickers.add(t);
+    return t;
+  }
+
+  /**
+   * 由 {@link Ticker.destroy} 调用，从宿主移除引用。
+   * @internal
+   */
+  detachTicker(t: Ticker): void {
+    this.tickers.delete(t);
   }
 
   resize(width: number, height: number, dpr?: number): void {
@@ -216,6 +237,9 @@ export class Stage {
   }
 
   private teardownSurface(): void {
+    for (const t of Array.from(this.tickers)) {
+      t.destroy();
+    }
     if (this.surface) {
       resetLayoutPaintQueue(this.surface);
       this.frameScheduler = null;

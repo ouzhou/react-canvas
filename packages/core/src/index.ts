@@ -82,6 +82,7 @@ export { getWorldBounds, containsPagePoint, getWorldOffset } from "./geometry/wo
 export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts";
 export { Stage } from "./stage/stage.ts";
 export type { StageOptions } from "./stage/stage.ts";
+export { Ticker, type TickerFrameFn } from "./stage/ticker.ts";
 export { getStageFromViewNode } from "./stage/stage-link.ts";
 export { Layer } from "./stage/layer.ts";
 export type { LayerOptions } from "./stage/layer.ts";

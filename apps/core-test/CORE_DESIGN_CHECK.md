@@ -10,6 +10,7 @@
 | §5 节点          | View / Text / Image / ScrollView / SvgPath | `ViewNode`, `TextNode`, `ImageNode`, `ScrollViewNode`, `SvgPathNode`                 | Flex / 文字 / 图片 / 滚动 / SVG |
 | §6–7 布局与绘制  | Yoga、`paintScene` / `paintStageLayers`    | `queueLayoutPaintFrame`, `paintStageLayers`（内部）                                  | 全部绘制类 demo                 |
 | §8 事件          | 命中、冒泡、合成 click                     | `hitTest`, `dispatchBubble`, `attachCanvasPointerHandlers`                           | **点击命中**（完整指针管线）    |
+| §9 动画          | `Ticker`、`createTicker`                   | `Ticker`, `Stage.createTicker`                                                       | **动画**                        |
 | §10 帧调度       | `requestLayoutPaint`、每 Stage 调度器      | `Stage.requestLayoutPaint`, `Stage.getFrameScheduler`, `createAndBindFrameScheduler` | 全部                            |
 | §11 相机         | `ViewportCamera`                           | `ViewportCamera`, `logicalPointFromCameraViewport`                                   | **视口相机**                    |
 | §12 包边界       | 纯 JS 可用                                 | 本 app 仅依赖 `@react-canvas/core`                                                   | 全局                            |
