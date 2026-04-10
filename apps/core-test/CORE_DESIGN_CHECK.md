@@ -17,7 +17,8 @@
 | §14 交互态       | 焦点、`hovered`/`pressed`/`focused`            | `Stage.focusManager`, `ViewNode.interactionState`, `CanvasPointerInteractionBinding`               | （可后续加 tab）                |
 | §15 光标         | 优先级栈 `node` < `plugin` < `system`          | `Stage.cursorManager`, `CursorManager.set` / `setFromNode` / `resolve`, `resolveCursorFromHitLeaf` | （可后续加 tab）                |
 | §13.4 / §17      | 嵌套滚轮链、`horizontal`、`overscrollBehavior` | `consumeScroll`, `applyWheelToScrollViewChain`, `ScrollViewNode`                                   | **滚动**                        |
+| §18 插件         | `Plugin`、`PluginContext`、`Stage.use`         | `Stage.use`, `getPluginContext`, `HookSlot`, `BeforePaintEvent`, `provide`/`consume`               | （可后续加 tab）                |
 
-**尚未单独做可视化、或仅在文档中的能力**（可在后续加 tab）：插件 §18 等。
+**尚未单独做可视化、或仅在文档中的能力**（可在后续加 tab）：更完整的插件示例 demo 等。
 
 **说明**：Image 异步解码在节点已挂在某 `Layer` 下时走 `Stage.requestPaintOnly()`（经 `getStageFromViewNode`）；未挂载时仍回退 `requestRedrawFromImage`（见 **图片** demo）。

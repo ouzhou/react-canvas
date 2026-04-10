@@ -1,11 +1,26 @@
-import type { CanvasKit, Surface } from "canvaskit-wasm";
+import type { Canvas, CanvasKit, Surface } from "canvaskit-wasm";
 import type { ViewportCamera } from "../render/camera.ts";
 import { paintScene, paintStageLayers } from "../render/paint.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
+/** 布局（若本帧执行）与绘制前/后插件钩子共用载荷，见 `core-design.md` §18。 */
+export type BeforePaintEvent = {
+  surface: Surface;
+  skCanvas: Canvas;
+  canvasKit: CanvasKit;
+  width: number;
+  height: number;
+  dpr: number;
+  frameRoots: ViewNode[];
+  /** 本帧是否执行了 Yoga 布局 */
+  didLayout: boolean;
+};
+
 export type FrameSchedulerHooks = {
   onPendingFrame?: (surface: Surface) => void;
   onFrameComplete?: (surface: Surface) => void;
+  onBeforePaint?: (event: BeforePaintEvent) => void;
+  onAfterPaint?: (event: BeforePaintEvent) => void;
 };
 
 /**
@@ -139,6 +154,17 @@ export class FrameScheduler {
           }
         }
         if (doPaint) {
+          const paintEvent: BeforePaintEvent = {
+            surface,
+            skCanvas,
+            canvasKit: ck,
+            width: w,
+            height: h,
+            dpr: d,
+            frameRoots: roots,
+            didLayout: doLayout,
+          };
+          this.hooks.onBeforePaint?.(paintEvent);
           const paint = new ck.Paint();
           paint.setAntiAlias(true);
           if (roots.length === 1) {
@@ -147,6 +173,7 @@ export class FrameScheduler {
             paintStageLayers(roots, skCanvas, ck, d, paint, cam);
           }
           paint.delete();
+          this.hooks.onAfterPaint?.(paintEvent);
         }
       }
       this.hasPendingFrame = false;

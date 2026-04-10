@@ -66,7 +66,7 @@ export {
   resetLayoutPaintQueue,
   resetLayoutPaintQueueForTests,
 } from "./runtime/frame-queue.ts";
-export type { FrameScheduler } from "./runtime/frame-scheduler.ts";
+export type { BeforePaintEvent, FrameScheduler } from "./runtime/frame-scheduler.ts";
 export {
   hasParagraphFontsRegistered,
   lineHeightToSkHeightMultiplier,
@@ -87,6 +87,7 @@ export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts"
 export { Stage } from "./stage/stage.ts";
 export type { StageOptions } from "./stage/stage.ts";
 export { FocusManager } from "./stage/focus-manager.ts";
+export { HookSlot, type Plugin, type PluginContext } from "./stage/plugin.ts";
 export { Ticker, type TickerFrameFn } from "./stage/ticker.ts";
 export { getStageFromViewNode } from "./stage/stage-link.ts";
 export { Layer } from "./stage/layer.ts";

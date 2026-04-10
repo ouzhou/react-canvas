@@ -6,12 +6,13 @@ import type { ViewportCamera } from "../render/camera.ts";
 import { attachCanvasPointerHandlers } from "../input/canvas-pointer.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 import { createAndBindFrameScheduler, resetLayoutPaintQueue } from "../runtime/frame-queue.ts";
-import type { FrameScheduler } from "../runtime/frame-scheduler.ts";
+import type { BeforePaintEvent, FrameScheduler } from "../runtime/frame-scheduler.ts";
 import type { Runtime } from "../runtime/runtime.ts";
 import type { CanvasPointerInteractionBinding } from "../input/canvas-pointer.ts";
 import { CursorManager } from "../input/cursor-manager.ts";
 import { FocusManager } from "./focus-manager.ts";
 import { Layer } from "./layer.ts";
+import { createPluginContext, HookSlot, type Plugin, type PluginContext } from "./plugin.ts";
 import { Ticker } from "./ticker.ts";
 
 export type StageOptions = {
@@ -52,6 +53,11 @@ export class Stage {
   readonly focusManager = new FocusManager();
   /** 光标优先级栈；见 `core-design.md` §15。 */
   readonly cursorManager = new CursorManager();
+  private readonly beforePaintSlot = new HookSlot<BeforePaintEvent>();
+  private readonly afterPaintSlot = new HookSlot<BeforePaintEvent>();
+  private readonly pluginServices = new Map<symbol, unknown>();
+  private pluginContext: PluginContext | null = null;
+  private readonly pluginsInOrder: Plugin[] = [];
   private pointerDetach: (() => void) | null = null;
   private lw = 1;
   private lh = 1;
@@ -97,6 +103,46 @@ export class Stage {
    */
   getFrameScheduler(): FrameScheduler | null {
     return this.frameScheduler;
+  }
+
+  /**
+   * 插件上下文（懒创建）；见 `core-design.md` §18。
+   */
+  getPluginContext(): PluginContext {
+    if (!this.pluginContext) {
+      this.pluginContext = createPluginContext(this, {
+        runtime: this.runtime,
+        canvas: this.canvas,
+        cursorManager: this.cursorManager,
+        beforePaint: this.beforePaintSlot,
+        afterPaint: this.afterPaintSlot,
+        services: this.pluginServices,
+      });
+    }
+    return this.pluginContext;
+  }
+
+  /**
+   * 注册插件并立即 `attach`；同名重复注册会抛错。`destroy` 时按逆序 `detach`。
+   */
+  use(plugin: Plugin): this {
+    if (this.pluginsInOrder.some((p) => p.name === plugin.name)) {
+      throw new Error(`[@react-canvas/core] duplicate plugin name: ${plugin.name}`);
+    }
+    plugin.attach(this.getPluginContext());
+    this.pluginsInOrder.push(plugin);
+    return this;
+  }
+
+  removePlugin(name: string): void {
+    const i = this.pluginsInOrder.findIndex((p) => p.name === name);
+    if (i === -1) return;
+    const [p] = this.pluginsInOrder.splice(i, 1);
+    p.detach();
+  }
+
+  getPlugin<T extends Plugin>(name: string): T | undefined {
+    return this.pluginsInOrder.find((p) => p.name === name) as T | undefined;
   }
 
   /**
@@ -160,10 +206,20 @@ export class Stage {
   }
 
   destroy(): void {
+    this.detachAllPlugins();
     this.detachPointerHandlers();
     this.pointerCaptureById.clear();
     this.clearAllLayerChildren();
     this.teardownSurface();
+  }
+
+  private detachAllPlugins(): void {
+    for (const p of [...this.pluginsInOrder].reverse()) {
+      p.detach();
+    }
+    this.pluginsInOrder.length = 0;
+    this.pluginServices.clear();
+    this.pluginContext = null;
   }
 
   /**
@@ -307,7 +363,14 @@ export class Stage {
       throw new Error("[@react-canvas/core] Failed to create a CanvasKit surface for <canvas>.");
     }
     this.surface = surface;
-    this.frameScheduler = createAndBindFrameScheduler(surface);
+    this.frameScheduler = createAndBindFrameScheduler(surface, {
+      onBeforePaint: (e) => {
+        this.beforePaintSlot.emit(e);
+      },
+      onAfterPaint: (e) => {
+        this.afterPaintSlot.emit(e);
+      },
+    });
   }
 
   private teardownSurface(): void {

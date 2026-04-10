@@ -25,8 +25,11 @@ function defaultSchedulerHooks(): FrameSchedulerHooks {
 /**
  * 为一块 {@link Surface} 创建调度器并写入模块表；{@link Stage} 与仅调用 `queue*` 的代码路径共用同一实例。
  */
-export function createAndBindFrameScheduler(surface: Surface): FrameScheduler {
-  const sch = new FrameScheduler(surface, defaultSchedulerHooks());
+export function createAndBindFrameScheduler(
+  surface: Surface,
+  extraHooks: Partial<FrameSchedulerHooks> = {},
+): FrameScheduler {
+  const sch = new FrameScheduler(surface, { ...defaultSchedulerHooks(), ...extraHooks });
   schedulersBySurface.set(surface, sch);
   return sch;
 }
