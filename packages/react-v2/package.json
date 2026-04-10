@@ -1,0 +1,55 @@
+{
+  "name": "@react-canvas/react-v2",
+  "version": "0.0.0",
+  "description": "A starter for creating a TypeScript package.",
+  "homepage": "https://github.com/author/library#readme",
+  "bugs": {
+    "url": "https://github.com/author/library/issues"
+  },
+  "license": "MIT",
+  "author": "Author Name <author.name@mail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/author/library.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test",
+    "check": "vp check",
+    "prepublishOnly": "vp run build"
+  },
+  "dependencies": {
+    "@react-canvas/core-v2": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@typescript/native-preview": "7.0.0-dev.20260328.1",
+    "@vitejs/plugin-react": "catalog:",
+    "bumpp": "^11.0.1",
+    "jsdom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "^6.0.2",
+    "vite-plus": "^0.1.14"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0"
+  }
+}
