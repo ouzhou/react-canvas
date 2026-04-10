@@ -1,3 +1,4 @@
+export { clientXYToStageLocal, type StageViewportOrigin } from "./input/stage-client-coords.ts";
 export type { ViewStyle } from "./layout/style-map.ts";
 export { applyStylesToYoga } from "./layout/style-map.ts";
 export { hitTestAt } from "./hit/hit-test.ts";

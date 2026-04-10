@@ -3,8 +3,10 @@ export type {
   PointerEventType,
   ScenePointerEvent,
   SceneRuntime,
+  StageViewportOrigin,
   ViewStyle,
 } from "@react-canvas/core-v2";
+export { clientXYToStageLocal } from "@react-canvas/core-v2";
 export { CanvasRuntime } from "./canvas-runtime.tsx";
 export type { CanvasRuntimeProps } from "./canvas-runtime.tsx";
 export { DebugDomLayer } from "./debug-dom-layer.tsx";

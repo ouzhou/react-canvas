@@ -1,6 +1,8 @@
+import { clientXYToStageLocal } from "@react-canvas/core-v2";
+
 /**
- * 将视口 DOM 坐标（`clientX` / `clientY`）转为与 `SceneRuntime` 一致的 Stage 局部坐标（与 `createSceneRuntime({ width, height })` 的 CSS 像素对齐）。
- * Skia `<canvas>` 或其它作为命中面的元素均可传入同一 `element`（通常为 `event.currentTarget`）。
+ * DOM 宿主便捷方法：用元素的 `getBoundingClientRect()` 与 `clientXYToStageLocal`（见 `@react-canvas/core-v2`）得到 Stage 坐标。
+ * 非 React 环境也可直接调 `clientXYToStageLocal({ left: r.left, top: r.top }, clientX, clientY)`。
  */
 export function clientToStageLocal(
   element: Element,
@@ -8,5 +10,5 @@ export function clientToStageLocal(
   clientY: number,
 ): { x: number; y: number } {
   const r = element.getBoundingClientRect();
-  return { x: clientX - r.left, y: clientY - r.top };
+  return clientXYToStageLocal({ left: r.left, top: r.top }, clientX, clientY);
 }
