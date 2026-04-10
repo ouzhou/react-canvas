@@ -100,9 +100,11 @@ export { diffHoverEnterLeave, dispatchPointerEnterLeave } from "./input/hover.ts
 export {
   attachCanvasPointerHandlers,
   clientToCanvasLogical,
+  resolveCursorFromHitLeaf,
   type CanvasPointerCaptureBinding,
   type CanvasPointerInteractionBinding,
 } from "./input/canvas-pointer.ts";
+export { CursorManager, type CursorPriority } from "./input/cursor-manager.ts";
 export { computeImageSrcDestRects, type ImageRect, type ResizeMode } from "./image/image-rect.ts";
 export { parseViewBox, viewBoxToAffine, type ViewBox } from "./geometry/viewbox.ts";
 export { pointInRoundedRectLocal } from "./geometry/rounded-rect-hit.ts";

@@ -7,6 +7,7 @@ import { diffHoverEnterLeave, dispatchPointerEnterLeave } from "./hover.ts";
 import type { ViewportCamera } from "../render/camera.ts";
 import { getVerticalScrollMetrics, type ScrollViewNode } from "../scene/scroll-view-node.ts";
 import type { ViewNode } from "../scene/view-node.ts";
+import type { CursorManager } from "./cursor-manager.ts";
 
 /** 与 {@link Stage.setPointerCapture} 配合：对处于捕获的 `pointerId` 跳过命中测试。 */
 export type CanvasPointerCaptureBinding = {
@@ -63,7 +64,7 @@ function syncScrollbarHoverFromHit(
 /**
  * 自命中叶沿父链查找首个 `props.cursor`，用于同步 `<canvas style="cursor">`。
  */
-function resolveCursorFromHitLeaf(leaf: ViewNode | null, sceneRoot: ViewNode): string {
+export function resolveCursorFromHitLeaf(leaf: ViewNode | null, sceneRoot: ViewNode): string {
   let n: ViewNode | null = leaf;
   while (n) {
     const c = n.props.cursor;
@@ -78,8 +79,15 @@ function syncCanvasCursor(
   canvas: HTMLCanvasElement,
   leaf: ViewNode | null,
   sceneRoot: ViewNode,
+  cursorManager?: CursorManager,
 ): void {
-  canvas.style.cursor = resolveCursorFromHitLeaf(leaf, sceneRoot);
+  const fromNode = resolveCursorFromHitLeaf(leaf, sceneRoot);
+  if (cursorManager) {
+    cursorManager.setFromNode(fromNode);
+    canvas.style.cursor = cursorManager.resolve();
+  } else {
+    canvas.style.cursor = fromNode;
+  }
 }
 
 /**
@@ -117,6 +125,7 @@ export function attachCanvasPointerHandlers(
   getCamera?: () => ViewportCamera | null,
   pointerCapture?: CanvasPointerCaptureBinding,
   interaction?: CanvasPointerInteractionBinding,
+  cursorManager?: CursorManager,
 ): () => void {
   const readCamera = (): ViewportCamera | null => getCamera?.() ?? null;
   const down = new Map<number, PointerDownSnapshot>();
@@ -182,6 +191,7 @@ export function attachCanvasPointerHandlers(
       lastPage = { x: pageX, y: pageY };
       const path = buildPathToRoot(capNode, sceneRoot);
       dispatchBubble(path, sceneRoot, "pointermove", pageX, pageY, ev.pointerId, ev.timeStamp);
+      syncCanvasCursor(canvas, capNode, sceneRoot, cursorManager);
       return;
     }
 
@@ -206,7 +216,7 @@ export function attachCanvasPointerHandlers(
         }
         interaction?.afterHoverDiff?.(leave, []);
         hoverLeaf = null;
-        syncCanvasCursor(canvas, hoverLeaf, sceneRoot);
+        syncCanvasCursor(canvas, hoverLeaf, sceneRoot, cursorManager);
       }
       return;
     }
@@ -248,7 +258,7 @@ export function attachCanvasPointerHandlers(
       }
       interaction?.afterHoverDiff?.(leave, enter);
       hoverLeaf = hit;
-      syncCanvasCursor(canvas, hoverLeaf, sceneRoot);
+      syncCanvasCursor(canvas, hoverLeaf, sceneRoot, cursorManager);
     }
   };
 
@@ -321,6 +331,7 @@ export function attachCanvasPointerHandlers(
     document.removeEventListener("pointerup", onPointerUpOrCancel);
     document.removeEventListener("pointercancel", onPointerUpOrCancel);
     canvas.removeEventListener("wheel", onWheel);
+    cursorManager?.reset();
     canvas.style.cursor = "";
   };
 }

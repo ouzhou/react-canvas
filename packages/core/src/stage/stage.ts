@@ -1,6 +1,7 @@
 import type { Surface } from "canvaskit-wasm";
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
+import { getWorldBounds } from "../geometry/world-bounds.ts";
 import type { ViewportCamera } from "../render/camera.ts";
 import { attachCanvasPointerHandlers } from "../input/canvas-pointer.ts";
 import type { ViewNode } from "../scene/view-node.ts";
@@ -8,6 +9,7 @@ import { createAndBindFrameScheduler, resetLayoutPaintQueue } from "../runtime/f
 import type { FrameScheduler } from "../runtime/frame-scheduler.ts";
 import type { Runtime } from "../runtime/runtime.ts";
 import type { CanvasPointerInteractionBinding } from "../input/canvas-pointer.ts";
+import { CursorManager } from "../input/cursor-manager.ts";
 import { FocusManager } from "./focus-manager.ts";
 import { Layer } from "./layer.ts";
 import { Ticker } from "./ticker.ts";
@@ -48,6 +50,8 @@ export class Stage {
   private readonly pointerCaptureById = new Map<number, ViewNode>();
   /** 画布内焦点（无 DOM）；见 `core-design.md` §14。 */
   readonly focusManager = new FocusManager();
+  /** 光标优先级栈；见 `core-design.md` §15。 */
+  readonly cursorManager = new CursorManager();
   private pointerDetach: (() => void) | null = null;
   private lw = 1;
   private lh = 1;
@@ -93,6 +97,18 @@ export class Stage {
    */
   getFrameScheduler(): FrameScheduler | null {
     return this.frameScheduler;
+  }
+
+  /**
+   * 节点在 Stage **逻辑像素**下的轴对齐包围盒（相对该节点所在层根 `View`），与 `core-design.md` §13.3 一致。
+   */
+  getNodeWorldRect(node: ViewNode): { x: number; y: number; width: number; height: number } {
+    let root: ViewNode = node;
+    while (root.parent) {
+      root = root.parent as ViewNode;
+    }
+    const b = getWorldBounds(node, root);
+    return { x: b.left, y: b.top, width: b.width, height: b.height };
   }
 
   /**
@@ -193,6 +209,7 @@ export class Stage {
         release: (pointerId) => this.clearPointerCaptureForPointerId(pointerId),
       },
       interaction,
+      this.cursorManager,
     );
     this.pointerDetach = detach;
     return () => {
