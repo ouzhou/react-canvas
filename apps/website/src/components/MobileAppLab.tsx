@@ -2,14 +2,12 @@
 
 import {
   attachInspectorHandlers,
+  attachViewportHandlers,
   InspectorHighlight,
   type InspectorState,
-} from "@react-canvas/plugin-inspector";
-import {
-  attachViewportHandlers,
   useViewportState,
   type ViewportState,
-} from "@react-canvas/plugin-viewport";
+} from "@/lib/mobile-app-lab-canvas-tools.ts";
 import { Canvas, CanvasProvider, Image, ScrollView, Text, View } from "@react-canvas/react";
 import { LiveContext, LiveError, LiveProvider } from "react-live";
 import type { ComponentType, Dispatch, RefObject, SetStateAction } from "react";

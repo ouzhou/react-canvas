@@ -2,8 +2,34 @@ import type { CanvasSyntheticPointerEvent } from "./types.ts";
 import { getWorldOffset } from "../geometry/world-bounds.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
+type BubbleKind = "pointerdown" | "pointerup" | "pointermove" | "pointercancel" | "click";
+
+function callCaptureHandler(
+  h: ViewNode["interactionHandlers"],
+  kind: BubbleKind,
+  e: CanvasSyntheticPointerEvent,
+): void {
+  if (kind === "pointerdown" && h.onPointerDownCapture) h.onPointerDownCapture(e);
+  else if ((kind === "pointerup" || kind === "pointercancel") && h.onPointerUpCapture)
+    h.onPointerUpCapture(e);
+  else if (kind === "pointermove" && h.onPointerMoveCapture) h.onPointerMoveCapture(e);
+  else if (kind === "click" && h.onClickCapture) h.onClickCapture(e);
+}
+
+function callBubbleHandler(
+  h: ViewNode["interactionHandlers"],
+  kind: BubbleKind,
+  e: CanvasSyntheticPointerEvent,
+): void {
+  if (kind === "pointerdown" && h.onPointerDown) h.onPointerDown(e);
+  else if (kind === "pointerup" && h.onPointerUp) h.onPointerUp(e);
+  else if (kind === "pointermove" && h.onPointerMove) h.onPointerMove(e);
+  else if (kind === "pointercancel" && h.onPointerUp) h.onPointerUp(e);
+  else if (kind === "click" && h.onClick) h.onClick(e);
+}
+
 /**
- * Bubble phase only: from `target` (leaf of `path`) up to `sceneRoot`, calling handlers on each node.
+ * Capture + Bubble: capture from sceneRoot to parent-of-target, then bubble from target back up.
  * `path` must be `[sceneRoot, …, target]`.
  */
 export function dispatchBubble(
@@ -20,11 +46,9 @@ export function dispatchBubble(
   let stopped = false;
   let defaultPrevented = false;
 
-  for (let i = path.length - 1; i >= 0; i--) {
-    if (stopped) break;
-    const node = path[i]!;
+  const makeEvent = (node: ViewNode): CanvasSyntheticPointerEvent => {
     const o = getWorldOffset(node, sceneRoot);
-    const e: CanvasSyntheticPointerEvent = {
+    return {
       type: kind,
       pointerId,
       target,
@@ -44,12 +68,20 @@ export function dispatchBubble(
         return defaultPrevented;
       },
     };
+  };
 
-    const h = node.interactionHandlers;
-    if (kind === "pointerdown" && h.onPointerDown) h.onPointerDown(e);
-    else if (kind === "pointerup" && h.onPointerUp) h.onPointerUp(e);
-    else if (kind === "pointermove" && h.onPointerMove) h.onPointerMove(e);
-    else if (kind === "pointercancel" && h.onPointerUp) h.onPointerUp(e);
-    else if (kind === "click" && h.onClick) h.onClick(e);
+  // Capture phase: root → parent of target (exclude target itself)
+  const bubbleKind = kind as BubbleKind;
+  for (let i = 0; i < path.length - 1; i++) {
+    if (stopped) break;
+    const node = path[i]!;
+    callCaptureHandler(node.interactionHandlers, bubbleKind, makeEvent(node));
+  }
+
+  // Bubble phase: target → root
+  for (let i = path.length - 1; i >= 0; i--) {
+    if (stopped) break;
+    const node = path[i]!;
+    callBubbleHandler(node.interactionHandlers, bubbleKind, makeEvent(node));
   }
 }

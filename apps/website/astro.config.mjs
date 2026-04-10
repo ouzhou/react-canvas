@@ -21,10 +21,6 @@ export default defineConfig({
         "@react-canvas/react": path.join(repoRoot, "packages/react/src/index.ts"),
         "@react-canvas/core": path.join(repoRoot, "packages/core/src/index.ts"),
         "@react-canvas/ui": path.join(repoRoot, "packages/ui/src/index.ts"),
-        "@react-canvas/plugin-viewport": path.join(
-          repoRoot,
-          "packages/plugin-viewport/src/index.ts",
-        ),
       },
       dedupe: ["react", "react-dom"],
     },
@@ -34,12 +30,7 @@ export default defineConfig({
     },
     ssr: {
       external: ["fsevents"],
-      noExternal: [
-        "@react-canvas/react",
-        "@react-canvas/core",
-        "@react-canvas/ui",
-        "@react-canvas/plugin-viewport",
-      ],
+      noExternal: ["@react-canvas/react", "@react-canvas/core", "@react-canvas/ui"],
     },
   },
   integrations: [

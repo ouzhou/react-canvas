@@ -5,8 +5,9 @@ import { dispatchBubble } from "./dispatch.ts";
 import {
   buildPathToRoot,
   hitTest,
-  hitTestAmongLayerRoots,
+  hitTestAmongLayers,
   hitTestScrollViewVerticalScrollbar,
+  type LayerHitEntry,
 } from "./hit-test.ts";
 import { diffHoverEnterLeave, dispatchPointerEnterLeave } from "./hover.ts";
 import type { ViewportCamera } from "../render/camera.ts";
@@ -99,12 +100,30 @@ function syncCanvasCursor(
 /**
  * {@link attachCanvasPointerHandlers} 的 `sceneRoot`：静态根、根数组，或**每次命中时**调用的 getter
  *（用于 `Stage` 在 `modalLayer.visible` 等变化后仍参与命中，避免层列表快照过期）。
+ * 支持 `LayerHitEntry[]` 以携带 `captureEvents` 信息。
  */
-export type CanvasSceneRootsInput = ViewNode | ViewNode[] | (() => ViewNode | ViewNode[]);
+export type CanvasSceneRootsInput =
+  | ViewNode
+  | ViewNode[]
+  | LayerHitEntry[]
+  | (() => ViewNode | ViewNode[] | LayerHitEntry[]);
+
+function isLayerHitEntryArray(arr: unknown[]): arr is LayerHitEntry[] {
+  return arr.length > 0 && typeof (arr[0] as LayerHitEntry).root === "object";
+}
 
 function normalizeCanvasSceneRoots(input: CanvasSceneRootsInput): ViewNode[] {
   const r = typeof input === "function" ? input() : input;
-  return Array.isArray(r) ? r : [r];
+  if (!Array.isArray(r)) return [r];
+  if (isLayerHitEntryArray(r)) return r.map((e) => e.root);
+  return r;
+}
+
+function normalizeCanvasSceneEntries(input: CanvasSceneRootsInput): LayerHitEntry[] {
+  const r = typeof input === "function" ? input() : input;
+  if (!Array.isArray(r)) return [{ root: r, captureEvents: false }];
+  if (isLayerHitEntryArray(r)) return r;
+  return r.map((root) => ({ root, captureEvents: false }));
 }
 
 /** 子树所在 Layer 的根（沿 parent 上至顶层）。 */
@@ -157,25 +176,27 @@ export function attachCanvasPointerHandlers(
   const readCamera = (): ViewportCamera | null => getCamera?.() ?? null;
 
   const pickHit = (pageX: number, pageY: number): { hit: ViewNode; layerRoot: ViewNode } | null => {
-    const roots = normalizeCanvasSceneRoots(sceneRoot);
-    if (roots.length === 1) {
-      const h = hitTest(roots[0]!, pageX, pageY, canvasKit, readCamera());
-      return h ? { hit: h, layerRoot: roots[0]! } : null;
+    const entries = normalizeCanvasSceneEntries(sceneRoot);
+    if (entries.length === 1 && !entries[0]!.captureEvents) {
+      const h = hitTest(entries[0]!.root, pageX, pageY, canvasKit, readCamera());
+      return h ? { hit: h, layerRoot: entries[0]!.root } : null;
     }
-    return hitTestAmongLayerRoots(roots, pageX, pageY, canvasKit, readCamera());
+    return hitTestAmongLayers(entries, pageX, pageY, canvasKit, readCamera());
   };
 
   const pickScrollbar = (pageX: number, pageY: number): ScrollViewNode | null => {
-    const roots = normalizeCanvasSceneRoots(sceneRoot);
-    for (let i = roots.length - 1; i >= 0; i--) {
+    const entries = normalizeCanvasSceneEntries(sceneRoot);
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const entry = entries[i]!;
       const sb = hitTestScrollViewVerticalScrollbar(
-        roots[i]!,
+        entry.root,
         pageX,
         pageY,
         canvasKit,
         readCamera(),
       );
       if (sb) return sb;
+      if (entry.captureEvents) return null;
     }
     return null;
   };
@@ -194,10 +215,12 @@ export function attachCanvasPointerHandlers(
   const isMouseLikePointer = (ev: PointerEvent): boolean =>
     ev.pointerType === "mouse" || ev.pointerType === "pen" || ev.pointerType === "";
 
+  /** 上一次 hover 所在的层根（多层 hover diff 需要按层根做路径查找）。 */
+  let hoverLayerRoot: ViewNode | null = null;
+
   const syncHoverInsideCanvas = (ev: PointerEvent) => {
     const roots = normalizeCanvasSceneRoots(sceneRoot);
     const primaryRoot = roots[0]!;
-    const multiLayer = roots.length > 1;
     const { x: pageX, y: pageY } = route(ev);
     lastPage = { x: pageX, y: pageY };
 
@@ -222,16 +245,31 @@ export function attachCanvasPointerHandlers(
         syncCanvasCursor(canvas, hoverLeaf, picked?.layerRoot ?? primaryRoot, cursorManager);
         return;
       }
-      if (multiLayer) {
-        interaction?.afterHoverDiff?.([], []);
-        hoverLeaf = hit;
-        syncCanvasCursor(canvas, hoverLeaf, picked?.layerRoot ?? primaryRoot, cursorManager);
-        return;
+
+      const prevLayerRoot = hoverLayerRoot ?? primaryRoot;
+      const nextLayerRoot = picked?.layerRoot ?? primaryRoot;
+      const crossLayer = prevLayerRoot !== nextLayerRoot;
+
+      // Cross-layer: leave all in old layer, enter all in new layer
+      let leave: ViewNode[] = [];
+      let enter: ViewNode[] = [];
+      if (crossLayer) {
+        if (hoverLeaf) {
+          const prevPath = buildPathToRoot(hoverLeaf, prevLayerRoot);
+          leave = prevPath.slice().reverse(); // leaf → root
+        }
+        if (hit) {
+          enter = buildPathToRoot(hit, nextLayerRoot); // root → leaf
+        }
+      } else {
+        const diff = diffHoverEnterLeave(hoverLeaf, hit, nextLayerRoot);
+        leave = diff.leave;
+        enter = diff.enter;
       }
-      const { leave, enter } = diffHoverEnterLeave(hoverLeaf, hit, primaryRoot);
+
       for (const n of leave) {
         dispatchPointerEnterLeave(
-          primaryRoot,
+          prevLayerRoot,
           "pointerleave",
           n,
           pageX,
@@ -242,7 +280,7 @@ export function attachCanvasPointerHandlers(
       }
       for (const n of enter) {
         dispatchPointerEnterLeave(
-          primaryRoot,
+          nextLayerRoot,
           "pointerenter",
           n,
           pageX,
@@ -253,7 +291,8 @@ export function attachCanvasPointerHandlers(
       }
       interaction?.afterHoverDiff?.(leave, enter);
       hoverLeaf = hit;
-      syncCanvasCursor(canvas, hoverLeaf, primaryRoot, cursorManager);
+      hoverLayerRoot = nextLayerRoot;
+      syncCanvasCursor(canvas, hoverLeaf, nextLayerRoot, cursorManager);
     }
   };
 
@@ -317,10 +356,16 @@ export function attachCanvasPointerHandlers(
       const primaryRoot = normalizeCanvasSceneRoots(sceneRoot)[0]!;
       syncScrollbarHoverFromHit(null, lastScrollbarHoverSv, requestLayoutPaint);
       if (isMouseLikePointer(ev)) {
-        const { leave } = diffHoverEnterLeave(hoverLeaf, null, primaryRoot);
+        const prevRoot = hoverLayerRoot ?? primaryRoot;
+        // When leaving canvas, leave all hovered nodes in the current layer
+        let leave: ViewNode[] = [];
+        if (hoverLeaf) {
+          const prevPath = buildPathToRoot(hoverLeaf, prevRoot);
+          leave = prevPath.slice().reverse();
+        }
         for (const n of leave) {
           dispatchPointerEnterLeave(
-            primaryRoot,
+            prevRoot,
             "pointerleave",
             n,
             lastPage.x,
@@ -331,6 +376,7 @@ export function attachCanvasPointerHandlers(
         }
         interaction?.afterHoverDiff?.(leave, []);
         hoverLeaf = null;
+        hoverLayerRoot = null;
         syncCanvasCursor(canvas, hoverLeaf, primaryRoot, cursorManager);
       }
       return;

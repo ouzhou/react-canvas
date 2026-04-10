@@ -7,6 +7,7 @@ import {
   attachCanvasPointerHandlers,
   type CanvasSceneRootsInput,
 } from "../input/canvas-pointer.ts";
+import type { LayerHitEntry } from "../input/hit-test.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 import { createAndBindFrameScheduler, resetLayoutPaintQueue } from "../runtime/frame-queue.ts";
 import type { BeforePaintEvent, FrameScheduler } from "../runtime/frame-scheduler.ts";
@@ -234,7 +235,7 @@ export class Stage {
   attachPointerHandlers(sceneRoot?: ViewNode, getCamera?: () => ViewportCamera | null): () => void {
     this.detachPointerHandlers();
     const rootsArg: CanvasSceneRootsInput =
-      sceneRoot !== undefined ? sceneRoot : () => this.getVisibleLayerRoots();
+      sceneRoot !== undefined ? sceneRoot : () => this.getVisibleLayerEntries();
     const interaction: CanvasPointerInteractionBinding = {
       onPointerDownHit: (hit) => {
         this.focusManager.onPointerDownHit(hit);
@@ -248,10 +249,18 @@ export class Stage {
         }
       },
       onPressBegin: (target) => {
-        target.beginPointerPress();
+        let n: ViewNode | null = target;
+        while (n) {
+          n.beginPointerPress();
+          n = n.parent as ViewNode | null;
+        }
       },
       onPressEnd: (target) => {
-        target.endPointerPress();
+        let n: ViewNode | null = target;
+        while (n) {
+          n.endPointerPress();
+          n = n.parent as ViewNode | null;
+        }
       },
     };
     const detach = attachCanvasPointerHandlers(
@@ -330,6 +339,12 @@ export class Stage {
     return this.layersInPaintOrder()
       .filter((l) => l.visible)
       .map((l) => l.root);
+  }
+
+  private getVisibleLayerEntries(): LayerHitEntry[] {
+    return this.layersInPaintOrder()
+      .filter((l) => l.visible)
+      .map((l) => ({ root: l.root, captureEvents: l.captureEvents }));
   }
 
   private clearAllLayerChildren(): void {

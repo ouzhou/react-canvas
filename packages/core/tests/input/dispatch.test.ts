@@ -49,4 +49,78 @@ describe("dispatchBubble", () => {
     dispatchBubble([root, child], root, "click", 10, 10, 1, 0);
     expect(order).toEqual(["child", "root"]);
   });
+
+  it("runs capture phase (root→parent-of-target) before bubble phase", () => {
+    const root = new ViewNode(yoga, "View");
+    root.layout = { left: 0, top: 0, width: 100, height: 100 };
+    const mid = new ViewNode(yoga, "View");
+    mid.layout = { left: 0, top: 0, width: 80, height: 80 };
+    const child = new ViewNode(yoga, "View");
+    child.layout = { left: 0, top: 0, width: 50, height: 50 };
+    root.appendChild(mid);
+    mid.appendChild(child);
+
+    const order: string[] = [];
+    root.interactionHandlers = {
+      onClickCapture: () => order.push("root-capture"),
+      onClick: () => order.push("root-bubble"),
+    };
+    mid.interactionHandlers = {
+      onClickCapture: () => order.push("mid-capture"),
+      onClick: () => order.push("mid-bubble"),
+    };
+    child.interactionHandlers = {
+      onClick: () => order.push("child-bubble"),
+    };
+
+    dispatchBubble([root, mid, child], root, "click", 10, 10, 1, 0);
+    expect(order).toEqual([
+      "root-capture",
+      "mid-capture",
+      "child-bubble",
+      "mid-bubble",
+      "root-bubble",
+    ]);
+  });
+
+  it("stopPropagation in capture phase prevents bubble phase", () => {
+    const root = new ViewNode(yoga, "View");
+    root.layout = { left: 0, top: 0, width: 100, height: 100 };
+    const child = new ViewNode(yoga, "View");
+    child.layout = { left: 0, top: 0, width: 50, height: 50 };
+    root.appendChild(child);
+
+    const order: string[] = [];
+    root.interactionHandlers = {
+      onPointerDownCapture: (e) => {
+        order.push("root-capture");
+        e.stopPropagation();
+      },
+      onPointerDown: () => order.push("root-bubble"),
+    };
+    child.interactionHandlers = {
+      onPointerDown: () => order.push("child-bubble"),
+    };
+
+    dispatchBubble([root, child], root, "pointerdown", 10, 10, 1, 0);
+    expect(order).toEqual(["root-capture"]);
+  });
+
+  it("capture handlers do not fire on target node itself", () => {
+    const root = new ViewNode(yoga, "View");
+    root.layout = { left: 0, top: 0, width: 100, height: 100 };
+    const child = new ViewNode(yoga, "View");
+    child.layout = { left: 0, top: 0, width: 50, height: 50 };
+    root.appendChild(child);
+
+    const order: string[] = [];
+    child.interactionHandlers = {
+      onClickCapture: () => order.push("child-capture"),
+      onClick: () => order.push("child-bubble"),
+    };
+
+    dispatchBubble([root, child], root, "click", 10, 10, 1, 0);
+    // capture on target not called; only bubble
+    expect(order).toEqual(["child-bubble"]);
+  });
 });

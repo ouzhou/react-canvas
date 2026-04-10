@@ -66,6 +66,33 @@ export function hitTestAmongLayerRoots(
   return null;
 }
 
+/** 携带 {@link Layer} 事件元信息的命中测试输入条目。 */
+export type LayerHitEntry = {
+  root: ViewNode;
+  /** `true` 时无论命中与否都阻断向低层传递（Modal 语义）。 */
+  captureEvents: boolean;
+};
+
+/**
+ * 与 {@link hitTestAmongLayerRoots} 功能一致，但额外尊重 `captureEvents`：
+ * 当某层的 `captureEvents === true` 时，即使该层未命中也不再向低层继续探测。
+ */
+export function hitTestAmongLayers(
+  layersLowToHigh: readonly LayerHitEntry[],
+  pageX: number,
+  pageY: number,
+  canvasKit: CanvasKit,
+  camera?: ViewportCamera | null,
+): { hit: ViewNode; layerRoot: ViewNode } | null {
+  for (let i = layersLowToHigh.length - 1; i >= 0; i--) {
+    const entry = layersLowToHigh[i]!;
+    const h = hitTest(entry.root, pageX, pageY, canvasKit, camera);
+    if (h) return { hit: h, layerRoot: entry.root };
+    if (entry.captureEvents) return null;
+  }
+  return null;
+}
+
 function hitTestRecursive(
   node: ViewNode,
   pageX: number,

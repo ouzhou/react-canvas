@@ -43,4 +43,10 @@ export type InteractionHandlers = {
   onPointerEnter?: (e: CanvasSyntheticPointerEvent) => void;
   onPointerLeave?: (e: CanvasSyntheticPointerEvent) => void;
   onClick?: (e: CanvasSyntheticPointerEvent) => void;
+
+  // Capture phase (root → parent of target, before bubble)
+  onPointerDownCapture?: (e: CanvasSyntheticPointerEvent) => void;
+  onPointerUpCapture?: (e: CanvasSyntheticPointerEvent) => void;
+  onPointerMoveCapture?: (e: CanvasSyntheticPointerEvent) => void;
+  onClickCapture?: (e: CanvasSyntheticPointerEvent) => void;
 };

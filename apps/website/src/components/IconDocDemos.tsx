@@ -144,7 +144,7 @@ export function IconDemoOnError() {
           size={40}
           color="#e2e8f0"
           strokeWidth={1.5}
-          onError={(err) => {
+          onError={(err: unknown) => {
             console.error("[Icon]", err);
           }}
         />

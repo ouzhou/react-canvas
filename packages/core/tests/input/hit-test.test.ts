@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeAll } from "vite-plus/test";
-import { hitTest, hitTestAmongLayerRoots, buildPathToRoot } from "../../src/index.ts";
+import {
+  hitTest,
+  hitTestAmongLayerRoots,
+  hitTestAmongLayers,
+  buildPathToRoot,
+} from "../../src/index.ts";
+import type { LayerHitEntry } from "../../src/index.ts";
 import type { CanvasKit } from "canvaskit-wasm";
 import { createMatrixMockCanvasKit } from "../helpers/matrix-mock-canvas-kit.ts";
 import { initYoga } from "../../src/layout/yoga.ts";
@@ -172,6 +178,84 @@ describe("hitTest", () => {
       const roots = [defaultLayer, modalLayer] as const;
       expect(hitTestAmongLayerRoots(roots, 20, 20, canvasKit)?.hit).toBe(leaf);
       expect(hitTestAmongLayerRoots(roots, 120, 120, canvasKit)?.hit).toBe(modalChild);
+    });
+  });
+
+  describe("hitTestAmongLayers (captureEvents 支持)", () => {
+    it("captureEvents=true 的层即使未命中也阻断向低层传递", () => {
+      const defaultLayer = new ViewNode(yoga, "View");
+      defaultLayer.layout = { left: 0, top: 0, width: 200, height: 200 };
+      const behindBtn = new ViewNode(yoga, "View");
+      behindBtn.layout = { left: 10, top: 10, width: 180, height: 180 };
+      defaultLayer.appendChild(behindBtn);
+
+      // modalLayer 只有一个小弹窗，不覆盖全屏
+      const modalLayer = new ViewNode(yoga, "View");
+      modalLayer.layout = { left: 100, top: 100, width: 50, height: 50 };
+      const modalBtn = new ViewNode(yoga, "View");
+      modalBtn.layout = { left: 0, top: 0, width: 50, height: 50 };
+      modalLayer.appendChild(modalBtn);
+
+      const entries: LayerHitEntry[] = [
+        { root: defaultLayer, captureEvents: false },
+        { root: modalLayer, captureEvents: true },
+      ];
+
+      // 点击弹窗内 → 命中弹窗
+      expect(hitTestAmongLayers(entries, 110, 110, canvasKit)?.hit).toBe(modalBtn);
+
+      // 点击弹窗外 → captureEvents 阻断，返回 null（不穿透到 defaultLayer）
+      expect(hitTestAmongLayers(entries, 20, 20, canvasKit)).toBe(null);
+    });
+
+    it("captureEvents=false 的层未命中时继续向低层传递", () => {
+      const defaultLayer = new ViewNode(yoga, "View");
+      defaultLayer.layout = { left: 0, top: 0, width: 200, height: 200 };
+      const behindBtn = new ViewNode(yoga, "View");
+      behindBtn.layout = { left: 10, top: 10, width: 80, height: 80 };
+      defaultLayer.appendChild(behindBtn);
+
+      const overlayLayer = new ViewNode(yoga, "View");
+      overlayLayer.layout = { left: 100, top: 100, width: 50, height: 50 };
+
+      const entries: LayerHitEntry[] = [
+        { root: defaultLayer, captureEvents: false },
+        { root: overlayLayer, captureEvents: false },
+      ];
+
+      // overlayLayer 未命中 → 穿透到 defaultLayer
+      expect(hitTestAmongLayers(entries, 20, 20, canvasKit)?.hit).toBe(behindBtn);
+    });
+
+    it("三层结构：modal 阻断时 overlay 和 default 均不可达", () => {
+      const defaultLayer = new ViewNode(yoga, "View");
+      defaultLayer.layout = { left: 0, top: 0, width: 200, height: 200 };
+      const btn0 = new ViewNode(yoga, "View");
+      btn0.layout = { left: 0, top: 0, width: 200, height: 200 };
+      defaultLayer.appendChild(btn0);
+
+      const overlayLayer = new ViewNode(yoga, "View");
+      overlayLayer.layout = { left: 0, top: 0, width: 200, height: 200 };
+      const btn1 = new ViewNode(yoga, "View");
+      btn1.layout = { left: 0, top: 0, width: 200, height: 200 };
+      overlayLayer.appendChild(btn1);
+
+      const modalLayer = new ViewNode(yoga, "View");
+      modalLayer.layout = { left: 50, top: 50, width: 60, height: 60 };
+      const dialog = new ViewNode(yoga, "View");
+      dialog.layout = { left: 0, top: 0, width: 60, height: 60 };
+      modalLayer.appendChild(dialog);
+
+      const entries: LayerHitEntry[] = [
+        { root: defaultLayer, captureEvents: false },
+        { root: overlayLayer, captureEvents: false },
+        { root: modalLayer, captureEvents: true },
+      ];
+
+      // 点击 dialog 内 → 命中 dialog
+      expect(hitTestAmongLayers(entries, 60, 60, canvasKit)?.hit).toBe(dialog);
+      // 点击 dialog 外 → 被 modal captureEvents 阻断
+      expect(hitTestAmongLayers(entries, 10, 10, canvasKit)).toBe(null);
     });
   });
 });

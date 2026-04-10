@@ -4,6 +4,7 @@ import { hitTestAmongLayerRoots } from "../../src/input/hit-test.ts";
 import type { CanvasKit } from "canvaskit-wasm";
 import { createMatrixMockCanvasKit } from "../helpers/matrix-mock-canvas-kit.ts";
 import { initYoga } from "../../src/layout/yoga.ts";
+import { TextNode } from "../../src/scene/text-node.ts";
 import { ViewNode } from "../../src/scene/view-node.ts";
 
 describe("shouldEmitClick", () => {
@@ -46,6 +47,20 @@ describe("shouldEmitClick", () => {
     expect(shouldEmitClick({ pageX: 10, pageY: 10, target }, 12, 11, root, canvasKit, 10)).toBe(
       true,
     );
+  });
+
+  it("按下在父 View、抬起在子 Text 时仍发出 click（同一次交互）", () => {
+    const root = new ViewNode(yoga, "View");
+    root.layout = { left: 0, top: 0, width: 200, height: 200 };
+    const parent = new ViewNode(yoga, "View");
+    parent.layout = { left: 0, top: 0, width: 120, height: 48 };
+    const label = new TextNode(yoga);
+    label.layout = { left: 0, top: 0, width: 120, height: 48 };
+    root.appendChild(parent);
+    parent.appendChild(label);
+    expect(
+      shouldEmitClick({ pageX: 10, pageY: 10, target: parent }, 11, 11, root, canvasKit, 10),
+    ).toBe(true);
   });
 
   describe("多 Layer（弹窗与主场景同画布）", () => {

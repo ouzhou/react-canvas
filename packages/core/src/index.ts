@@ -29,6 +29,7 @@ export type { SceneNode } from "./scene/scene-node.ts";
 export { TextNode, isTextInstance } from "./scene/text-node.ts";
 export type { TextInstance } from "./scene/text-node.ts";
 export { applyStylesToYoga } from "./layout/yoga-map.ts";
+export type { Yoga } from "./layout/yoga.ts";
 export { paintScene, paintStageLayers } from "./render/paint.ts";
 export type { ViewportCamera } from "./render/camera.ts";
 export {
@@ -61,7 +62,13 @@ export type {
   InteractionHandlers,
   InteractionState,
 } from "./input/types.ts";
-export { hitTest, hitTestAmongLayerRoots, buildPathToRoot } from "./input/hit-test.ts";
+export {
+  hitTest,
+  hitTestAmongLayerRoots,
+  hitTestAmongLayers,
+  buildPathToRoot,
+} from "./input/hit-test.ts";
+export type { LayerHitEntry } from "./input/hit-test.ts";
 export { dispatchBubble } from "./input/dispatch.ts";
 export { getWorldBounds, containsPagePoint, getWorldOffset } from "./geometry/world-bounds.ts";
 export { canvasBackingStoreSize } from "./geometry/canvas-backing-store.ts";
