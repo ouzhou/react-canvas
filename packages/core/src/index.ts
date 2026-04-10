@@ -74,6 +74,9 @@ export type { CanvasSyntheticPointerEvent, InteractionHandlers } from "./input/t
 export { hitTest, buildPathToRoot, hitTestScrollViewVerticalScrollbar } from "./input/hit-test.ts";
 export { dispatchBubble } from "./input/dispatch.ts";
 export { getWorldBounds, containsPagePoint, getWorldOffset } from "./geometry/world-bounds.ts";
+export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts";
+export { Stage } from "./stage/stage.ts";
+export type { StageOptions } from "./stage/stage.ts";
 export {
   shouldEmitClick,
   DEFAULT_CLICK_MOVE_THRESHOLD_PX,
