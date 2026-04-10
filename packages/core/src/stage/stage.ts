@@ -4,13 +4,8 @@ import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
 import type { ViewportCamera } from "../render/camera.ts";
 import { attachCanvasPointerHandlers } from "../input/canvas-pointer.ts";
 import type { ViewNode } from "../scene/view-node.ts";
-import {
-  queueLayoutPaintFrame,
-  queueLayoutPaintFrames,
-  queuePaintOnlyFrame,
-  queuePaintOnlyFrames,
-  resetLayoutPaintQueue,
-} from "../runtime/frame-queue.ts";
+import { createAndBindFrameScheduler, resetLayoutPaintQueue } from "../runtime/frame-queue.ts";
+import type { FrameScheduler } from "../runtime/frame-scheduler.ts";
 import type { Runtime } from "../runtime/runtime.ts";
 import { Layer } from "./layer.ts";
 
@@ -42,6 +37,8 @@ export class Stage {
   readonly modalLayer: Layer;
   private readonly canvas: HTMLCanvasElement;
   private surface: Surface | null = null;
+  /** 与 {@link Surface} 一一对应；`teardownSurface` 时随 `resetLayoutPaintQueue` 解除注册。 */
+  private frameScheduler: FrameScheduler | null = null;
   private pointerDetach: (() => void) | null = null;
   private lw = 1;
   private lh = 1;
@@ -79,6 +76,14 @@ export class Stage {
 
   getSurface(): Surface | null {
     return this.surface;
+  }
+
+  /**
+   * 当前画布对应的帧调度器；无 Surface 时为 `null`。
+   * 与 `queueLayoutPaintFrame(surface, …)` 使用同一 `FrameScheduler` 实例（见 `createAndBindFrameScheduler`）。
+   */
+  getFrameScheduler(): FrameScheduler | null {
+    return this.frameScheduler;
   }
 
   resize(width: number, height: number, dpr?: number): void {
@@ -132,8 +137,8 @@ export class Stage {
    * 省略 `root` 时按 {@link layersInPaintOrder} 绘制全部可见层。
    */
   requestLayoutPaint(root?: ViewNode, camera?: ViewportCamera | null): void {
-    const surface = this.surface;
-    if (!surface) {
+    const fs = this.frameScheduler;
+    if (!fs) {
       throw new Error("[@react-canvas/core] Stage has no surface; cannot requestLayoutPaint.");
     }
     const ck = this.runtime.canvasKit;
@@ -141,9 +146,9 @@ export class Stage {
     const h = this.height;
     const d = this.dpr;
     if (root !== undefined) {
-      queueLayoutPaintFrame(surface, ck, root, w, h, d, camera);
+      fs.queueLayoutPaintFrame(ck, root, w, h, d, camera);
     } else {
-      queueLayoutPaintFrames(surface, ck, this.getVisibleLayerRoots(), w, h, d, camera);
+      fs.queueLayoutPaintFrames(ck, this.getVisibleLayerRoots(), w, h, d, camera);
     }
   }
 
@@ -152,8 +157,8 @@ export class Stage {
    * 省略 `root` 时按层顺序重绘全部可见层。
    */
   requestPaintOnly(root?: ViewNode, camera?: ViewportCamera | null): void {
-    const surface = this.surface;
-    if (!surface) {
+    const fs = this.frameScheduler;
+    if (!fs) {
       throw new Error("[@react-canvas/core] Stage has no surface; cannot requestPaintOnly.");
     }
     const ck = this.runtime.canvasKit;
@@ -161,9 +166,9 @@ export class Stage {
     const h = this.height;
     const d = this.dpr;
     if (root !== undefined) {
-      queuePaintOnlyFrame(surface, ck, root, w, h, d, camera);
+      fs.queuePaintOnlyFrame(ck, root, w, h, d, camera);
     } else {
-      queuePaintOnlyFrames(surface, ck, this.getVisibleLayerRoots(), w, h, d, camera);
+      fs.queuePaintOnlyFrames(ck, this.getVisibleLayerRoots(), w, h, d, camera);
     }
   }
 
@@ -207,11 +212,13 @@ export class Stage {
       throw new Error("[@react-canvas/core] Failed to create a CanvasKit surface for <canvas>.");
     }
     this.surface = surface;
+    this.frameScheduler = createAndBindFrameScheduler(surface);
   }
 
   private teardownSurface(): void {
     if (this.surface) {
       resetLayoutPaintQueue(this.surface);
+      this.frameScheduler = null;
       this.surface.delete();
       this.surface = null;
     }

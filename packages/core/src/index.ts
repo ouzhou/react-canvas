@@ -57,13 +57,16 @@ export { buildLocalTransformMatrix } from "./render/transform.ts";
 export type { TextOnlyProps, TextStyle } from "./style/text-style.ts";
 export { mergeTextProps, splitTextStyle } from "./style/text-style.ts";
 export {
+  createAndBindFrameScheduler,
   queueLayoutPaintFrame,
   queueLayoutPaintFrames,
   queuePaintOnlyFrame,
   queuePaintOnlyFrames,
+  peekSchedulerForSurface,
   resetLayoutPaintQueue,
   resetLayoutPaintQueueForTests,
 } from "./runtime/frame-queue.ts";
+export type { FrameScheduler } from "./runtime/frame-scheduler.ts";
 export {
   hasParagraphFontsRegistered,
   lineHeightToSkHeightMultiplier,
@@ -79,6 +82,7 @@ export { getWorldBounds, containsPagePoint, getWorldOffset } from "./geometry/wo
 export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts";
 export { Stage } from "./stage/stage.ts";
 export type { StageOptions } from "./stage/stage.ts";
+export { getStageFromViewNode } from "./stage/stage-link.ts";
 export { Layer } from "./stage/layer.ts";
 export type { LayerOptions } from "./stage/layer.ts";
 export {

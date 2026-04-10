@@ -1,6 +1,7 @@
 import type { SceneNode } from "../scene/scene-node.ts";
 import { ViewNode } from "../scene/view-node.ts";
 import type { Stage } from "./stage.ts";
+import { markLayerRootWithStage } from "./stage-link.ts";
 
 export type LayerOptions = {
   zIndex?: number;
@@ -27,6 +28,7 @@ export class Layer {
     this.visible = options?.visible ?? true;
     this.root = new ViewNode(stage.runtime.yoga, "View");
     this.root.setStyle({ width: "100%", height: "100%" });
+    markLayerRootWithStage(this.root, stage);
   }
 
   add(node: SceneNode): this {

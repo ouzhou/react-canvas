@@ -4,27 +4,42 @@ import type { ViewportCamera } from "../render/camera.ts";
 import { resetParagraphFontStateForTests } from "../text/paragraph-build.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 
-import { FrameScheduler } from "./frame-scheduler.ts";
+import { FrameScheduler, type FrameSchedulerHooks } from "./frame-scheduler.ts";
 
 const schedulersBySurface = new WeakMap<Surface, FrameScheduler>();
 
 /** Strong refs for {@link resetLayoutPaintQueueForTests}（WeakMap 不可遍历）。 */
 const surfacesWithPendingWork = new Set<Surface>();
 
+function defaultSchedulerHooks(): FrameSchedulerHooks {
+  return {
+    onPendingFrame: (surf) => {
+      surfacesWithPendingWork.add(surf);
+    },
+    onFrameComplete: (surf) => {
+      surfacesWithPendingWork.delete(surf);
+    },
+  };
+}
+
+/**
+ * 为一块 {@link Surface} 创建调度器并写入模块表；{@link Stage} 与仅调用 `queue*` 的代码路径共用同一实例。
+ */
+export function createAndBindFrameScheduler(surface: Surface): FrameScheduler {
+  const sch = new FrameScheduler(surface, defaultSchedulerHooks());
+  schedulersBySurface.set(surface, sch);
+  return sch;
+}
+
 function getScheduler(surface: Surface): FrameScheduler {
-  let s = schedulersBySurface.get(surface);
-  if (!s) {
-    s = new FrameScheduler(surface, {
-      onPendingFrame: (surf) => {
-        surfacesWithPendingWork.add(surf);
-      },
-      onFrameComplete: (surf) => {
-        surfacesWithPendingWork.delete(surf);
-      },
-    });
-    schedulersBySurface.set(surface, s);
-  }
-  return s;
+  const existing = schedulersBySurface.get(surface);
+  if (existing) return existing;
+  return createAndBindFrameScheduler(surface);
+}
+
+/** 测试或调试：查看已为该 Surface 注册的调度器（若尚未排队则可能不存在）。 */
+export function peekSchedulerForSurface(surface: Surface): FrameScheduler | undefined {
+  return schedulersBySurface.get(surface);
 }
 
 export function queueLayoutPaintFrame(
@@ -89,6 +104,7 @@ export function resetLayoutPaintQueue(surface: Surface): void {
   const sch = schedulersBySurface.get(surface);
   if (sch) {
     sch.reset();
+    schedulersBySurface.delete(surface);
   }
   surfacesWithPendingWork.delete(surface);
 }

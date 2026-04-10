@@ -3,6 +3,7 @@ import type { Yoga } from "yoga-layout/load";
 import { loadImageFromUri } from "../image/image-decode.ts";
 import { peekCachedImage, putCachedImage } from "../image/image-cache.ts";
 import { requestRedrawFromImage } from "../render/paint-frame-requester.ts";
+import { getStageFromViewNode } from "../stage/stage-link.ts";
 import type { ResizeMode } from "../image/image-rect.ts";
 import type { ViewStyle } from "../style/view-style.ts";
 import { ViewNode } from "./view-node.ts";
@@ -62,7 +63,7 @@ export class ImageNode extends ViewNode {
       this.loadState = "loaded";
       this.loadError = null;
       this.onLoadCb?.();
-      requestRedrawFromImage();
+      this.requestRepaintAfterDecode();
       return;
     }
 
@@ -83,16 +84,26 @@ export class ImageNode extends ViewNode {
         this.skImage = img;
         this.loadState = "loaded";
         this.onLoadCb?.();
-        requestRedrawFromImage();
+        this.requestRepaintAfterDecode();
       } catch (e) {
         if (signal.aborted) return;
         this.loadState = "error";
         this.loadError = e;
         this.skImage = null;
         this.onErrorCb?.(e);
-        requestRedrawFromImage();
+        this.requestRepaintAfterDecode();
       }
     })();
+  }
+
+  /** 解码完成或失败时请求重绘：优先走所属 {@link Stage}，否则回退进程级广播（无 Layer 挂载时）。 */
+  private requestRepaintAfterDecode(): void {
+    const stage = getStageFromViewNode(this);
+    if (stage) {
+      stage.requestPaintOnly();
+    } else {
+      requestRedrawFromImage();
+    }
   }
 
   abortLoad(): void {
