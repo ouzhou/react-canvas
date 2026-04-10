@@ -3,15 +3,18 @@ import { createSceneRuntime } from "@react-canvas/core-v2";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { ParentSceneIdContext, SceneRuntimeContext } from "./context.tsx";
+import { DebugDomLayer } from "./debug-dom-layer.tsx";
 
 export type CanvasRuntimeProps = {
   width: number;
   height: number;
+  /** 为 true 时用定宽容器包裹并叠 DOM 调试层（框线 + 节点 id）。 */
+  debugOverlay?: boolean;
   children?: ReactNode;
 };
 
 export function CanvasRuntime(props: CanvasRuntimeProps): ReactNode {
-  const { width, height, children } = props;
+  const { width, height, debugOverlay, children } = props;
   const [runtime, setRuntime] = useState<SceneRuntime | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
@@ -38,11 +41,22 @@ export function CanvasRuntime(props: CanvasRuntimeProps): ReactNode {
     return null;
   }
 
-  return (
+  const tree = (
     <SceneRuntimeContext.Provider value={runtime}>
       <ParentSceneIdContext.Provider value={runtime.getRootId()}>
         {children}
       </ParentSceneIdContext.Provider>
     </SceneRuntimeContext.Provider>
   );
+
+  if (debugOverlay) {
+    return (
+      <div style={{ position: "relative", width, height }}>
+        {tree}
+        <DebugDomLayer runtime={runtime} />
+      </div>
+    );
+  }
+
+  return tree;
 }

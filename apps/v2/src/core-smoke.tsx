@@ -1,7 +1,7 @@
 import { createSceneRuntime, type SceneRuntime } from "@react-canvas/core-v2";
+import { DebugDomLayer } from "@react-canvas/react-v2";
 import { useEffect, useState } from "react";
 import { PointerDebugPanel } from "./debug-panel.tsx";
-import { LayoutPreview } from "./layout-preview.tsx";
 
 const W = 400;
 const H = 300;
@@ -42,7 +42,7 @@ export function CoreSmoke() {
     <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "flex-start" }}>
       <div>
         <p style={{ margin: "0 0 0.5rem", color: "#444" }}>
-          仅 core-v2 API（insertView / dispatchPointerLike）；彩色框为 div 布局预览
+          仅 core-v2 API（insertView / dispatchPointerLike）；彩色框为 DebugDomLayer（订阅布局提交）
         </p>
         <div
           style={{
@@ -54,7 +54,7 @@ export function CoreSmoke() {
             background: "#f8fafc",
           }}
         >
-          <LayoutPreview runtime={rt} width={W} height={H} />
+          <DebugDomLayer runtime={rt} />
         </div>
       </div>
       <PointerDebugPanel runtime={rt} />

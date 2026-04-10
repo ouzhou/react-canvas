@@ -23,6 +23,14 @@ export type LayoutSnapshot = Record<
   { left: number; top: number; width: number; height: number; absLeft: number; absTop: number }
 >;
 
+/** 一次布局提交后的只读快照（供 DOM 调试层等消费）。 */
+export type LayoutCommitPayload = {
+  viewport: { width: number; height: number };
+  rootId: string;
+  scene: SceneGraphSnapshot;
+  layout: LayoutSnapshot;
+};
+
 export type SceneRuntime = {
   getRootId(): string;
   getViewport(): { width: number; height: number };
@@ -41,6 +49,8 @@ export type SceneRuntime = {
   getLastDispatchTrace(): DispatchTrace;
   /** 场景树中是否已有该 id（供 React 等按序挂载时等待父节点先注册）。 */
   hasSceneNode(id: string): boolean;
+  /** 每次内部布局同步完成后调用；注册时立即派发当前一帧。 */
+  subscribeAfterLayout(listener: (payload: LayoutCommitPayload) => void): () => void;
 };
 
 function rebuildYogaStyle(node: SceneNode): void {
@@ -60,9 +70,56 @@ export async function createSceneRuntime(
   const root = store.createRootNode(options.width, options.height);
   const rootId = root.id;
   let lastTrace: DispatchTrace = { hit: null, targetId: null, entries: [] };
+  const layoutListeners = new Set<(payload: LayoutCommitPayload) => void>();
+
+  function buildSceneGraphSnapshot(): SceneGraphSnapshot {
+    const nodes: SceneGraphSnapshot["nodes"] = {};
+    for (const id of store.getIds()) {
+      const n = store.get(id)!;
+      const entry: SceneGraphSnapshot["nodes"][string] = {
+        parentId: n.parentId,
+        children: [...n.children],
+      };
+      if (n.label !== undefined) entry.label = n.label;
+      nodes[id] = entry;
+    }
+    return { rootId, nodes };
+  }
+
+  function buildLayoutSnapshotWithoutRun(): LayoutSnapshot {
+    const out: LayoutSnapshot = {};
+    for (const id of store.getIds()) {
+      const n = store.get(id)!;
+      const l = n.layout;
+      const abs = absoluteBoundsFor(id, store);
+      if (!l || !abs) continue;
+      out[id] = {
+        left: l.left,
+        top: l.top,
+        width: l.width,
+        height: l.height,
+        absLeft: abs.left,
+        absTop: abs.top,
+      };
+    }
+    return out;
+  }
+
+  function emitLayoutCommit(): void {
+    const payload: LayoutCommitPayload = {
+      viewport: { width: options.width, height: options.height },
+      rootId,
+      scene: buildSceneGraphSnapshot(),
+      layout: buildLayoutSnapshotWithoutRun(),
+    };
+    for (const fn of layoutListeners) {
+      fn(payload);
+    }
+  }
 
   function runLayout(): void {
     calculateAndSyncLayout(store, rootId, options.width, options.height);
+    emitLayoutCommit();
   }
 
   runLayout();
@@ -116,37 +173,12 @@ export async function createSceneRuntime(
     },
 
     getSceneGraphSnapshot(): SceneGraphSnapshot {
-      const nodes: SceneGraphSnapshot["nodes"] = {};
-      for (const id of store.getIds()) {
-        const n = store.get(id)!;
-        const entry: SceneGraphSnapshot["nodes"][string] = {
-          parentId: n.parentId,
-          children: [...n.children],
-        };
-        if (n.label !== undefined) entry.label = n.label;
-        nodes[id] = entry;
-      }
-      return { rootId, nodes };
+      return buildSceneGraphSnapshot();
     },
 
     getLayoutSnapshot(): LayoutSnapshot {
       runLayout();
-      const out: LayoutSnapshot = {};
-      for (const id of store.getIds()) {
-        const n = store.get(id)!;
-        const l = n.layout;
-        const abs = absoluteBoundsFor(id, store);
-        if (!l || !abs) continue;
-        out[id] = {
-          left: l.left,
-          top: l.top,
-          width: l.width,
-          height: l.height,
-          absLeft: abs.left,
-          absTop: abs.top,
-        };
-      }
-      return out;
+      return buildLayoutSnapshotWithoutRun();
     },
 
     getLastDispatchTrace() {
@@ -155,6 +187,14 @@ export async function createSceneRuntime(
 
     hasSceneNode(id) {
       return store.get(id) !== undefined;
+    },
+
+    subscribeAfterLayout(listener) {
+      layoutListeners.add(listener);
+      emitLayoutCommit();
+      return () => {
+        layoutListeners.delete(listener);
+      };
     },
   };
 }

@@ -1,5 +1,6 @@
-import type { SceneRuntime } from "@react-canvas/core-v2";
-import { useEffect, useReducer } from "react";
+import type { LayoutCommitPayload, SceneRuntime } from "@react-canvas/core-v2";
+import type { ReactNode } from "react";
+import { useLayoutEffect, useState } from "react";
 
 function hueForId(id: string): number {
   let h = 0;
@@ -9,28 +10,23 @@ function hueForId(id: string): number {
   return h % 360;
 }
 
-export type LayoutPreviewProps = {
+export type DebugDomLayerProps = {
   runtime: SceneRuntime;
-  width: number;
-  height: number;
-  /** 轮询刷新布局叠层（ms），冒烟用；默认 250 */
-  pollMs?: number;
 };
 
 /**
- * 用绝对定位 div 叠在视口上，展示 `getLayoutSnapshot()` 的盒（与 Yoga 一致，非像素绘制）。
+ * 绝对定位 div 叠层，展示最近一次布局提交的盒（与 Yoga 一致，非像素绘制）。
  * `pointer-events: none` 不挡后续若接 DOM 指针实验。
  */
-export function LayoutPreview(props: LayoutPreviewProps) {
-  const { runtime, pollMs = 250 } = props;
-  const [, tick] = useReducer((n: number) => n + 1, 0);
+export function DebugDomLayer(props: DebugDomLayerProps): ReactNode {
+  const { runtime } = props;
+  const [payload, setPayload] = useState<LayoutCommitPayload | null>(null);
 
-  useEffect(() => {
-    const id = setInterval(() => tick(), pollMs);
-    return () => clearInterval(id);
-  }, [runtime, pollMs]);
+  useLayoutEffect(() => {
+    return runtime.subscribeAfterLayout(setPayload);
+  }, [runtime]);
 
-  const layout = runtime.getLayoutSnapshot();
+  const layout = payload?.layout ?? {};
   const entries = Object.entries(layout).sort(([a], [b]) => a.localeCompare(b));
 
   return (

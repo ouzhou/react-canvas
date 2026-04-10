@@ -16,6 +16,7 @@ export type { SceneNode } from "./scene/scene-node.ts";
 export {
   createSceneRuntime,
   type CreateSceneRuntimeOptions,
+  type LayoutCommitPayload,
   type LayoutSnapshot,
   type SceneGraphSnapshot,
   type SceneRuntime,

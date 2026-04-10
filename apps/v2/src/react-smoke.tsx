@@ -1,6 +1,5 @@
-import { CanvasRuntime, useSceneRuntime, View } from "@react-canvas/react-v2";
+import { CanvasRuntime, DebugDomLayer, useSceneRuntime, View } from "@react-canvas/react-v2";
 import { PointerDebugPanel } from "./debug-panel.tsx";
-import { LayoutPreview } from "./layout-preview.tsx";
 
 function PanelFromContext() {
   const rt = useSceneRuntime();
@@ -23,7 +22,7 @@ function ReactSceneWithPreview() {
         background: "#f8fafc",
       }}
     >
-      <LayoutPreview runtime={rt} width={W} height={H} />
+      <DebugDomLayer runtime={rt} />
       <View id="row" style={{ width: W, height: H, flexDirection: "row" }}>
         <View id="col-a" style={{ flex: 1, height: H }} />
         <View id="col-b" style={{ flex: 1, height: H }} />
@@ -39,7 +38,7 @@ export function ReactSmoke() {
       <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "flex-start" }}>
         <div>
           <p style={{ margin: "0 0 0.5rem", color: "#444" }}>
-            react-v2：CanvasRuntime + View；彩色框为 div 叠层预览布局（与 Yoga 盒一致）
+            react-v2：CanvasRuntime + View；彩色框为 DebugDomLayer（订阅布局提交，与 Yoga 盒一致）
           </p>
           <ReactSceneWithPreview />
         </div>
