@@ -1,5 +1,5 @@
 import { createSceneRuntime, type SceneRuntime } from "@react-canvas/core-v2";
-import { DebugDomLayer } from "@react-canvas/react-v2";
+import { DebugDomLayer, StagePointerSurface } from "@react-canvas/react-v2";
 import { useEffect, useState } from "react";
 import { PointerDebugPanel } from "./debug-panel.tsx";
 
@@ -42,7 +42,7 @@ export function CoreSmoke() {
     <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "flex-start" }}>
       <div>
         <p style={{ margin: "0 0 0.5rem", color: "#444" }}>
-          仅 core-v2 API（insertView / dispatchPointerLike）；彩色框为 DebugDomLayer（订阅布局提交）
+          仅 core-v2 API；透明层 StagePointerSurface（DOM 指针）+ DebugDomLayer（布局框）
         </p>
         <div
           style={{
@@ -54,6 +54,7 @@ export function CoreSmoke() {
             background: "#f8fafc",
           }}
         >
+          <StagePointerSurface runtime={rt} />
           <DebugDomLayer runtime={rt} />
         </div>
       </div>
