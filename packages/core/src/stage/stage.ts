@@ -9,6 +9,7 @@ import {
 } from "../runtime/frame-queue.ts";
 import type { Runtime } from "../runtime/runtime.ts";
 import type { ViewNode } from "../scene/view-node.ts";
+import { Layer } from "./layer.ts";
 
 export type StageOptions = {
   canvas: HTMLCanvasElement;
@@ -30,6 +31,8 @@ function defaultDevicePixelRatio(): number {
  */
 export class Stage {
   readonly runtime: Runtime;
+  /** zIndex=0，普通内容与 reconciler 默认挂载根。 */
+  readonly defaultLayer: Layer;
   private readonly canvas: HTMLCanvasElement;
   private surface: Surface | null = null;
   private lw = 1;
@@ -41,6 +44,7 @@ export class Stage {
     this.runtime = runtime;
     this.canvas = options.canvas;
     this.mountSurface(options.width, options.height, options.dpr ?? defaultDevicePixelRatio());
+    this.defaultLayer = new Layer(this, { zIndex: 0, captureEvents: false, visible: true });
   }
 
   get width(): number {
@@ -66,13 +70,16 @@ export class Stage {
   }
 
   destroy(): void {
+    this.clearDefaultLayerChildren();
     this.teardownSurface();
   }
 
   /**
    * 请求下一帧做 Yoga 布局并绘制场景（与 reconciler 中 `queueLayoutPaintFrame` 一致）。
+   * 省略 `root` 时使用 {@link defaultLayer} 的根节点。
    */
-  requestLayoutPaint(root: ViewNode, camera?: ViewportCamera | null): void {
+  requestLayoutPaint(root?: ViewNode, camera?: ViewportCamera | null): void {
+    const sceneRoot = root ?? this.defaultLayer.root;
     const surface = this.surface;
     if (!surface) {
       throw new Error("[@react-canvas/core] Stage has no surface; cannot requestLayoutPaint.");
@@ -80,7 +87,7 @@ export class Stage {
     queueLayoutPaintFrame(
       surface,
       this.runtime.canvasKit,
-      root,
+      sceneRoot,
       this.width,
       this.height,
       this.dpr,
@@ -90,8 +97,10 @@ export class Stage {
 
   /**
    * 仅重绘（不跑布局）；例如滚动偏移等仅影响绘制的更新。
+   * 省略 `root` 时使用 {@link defaultLayer} 的根节点。
    */
-  requestPaintOnly(root: ViewNode, camera?: ViewportCamera | null): void {
+  requestPaintOnly(root?: ViewNode, camera?: ViewportCamera | null): void {
+    const sceneRoot = root ?? this.defaultLayer.root;
     const surface = this.surface;
     if (!surface) {
       throw new Error("[@react-canvas/core] Stage has no surface; cannot requestPaintOnly.");
@@ -99,12 +108,21 @@ export class Stage {
     queuePaintOnlyFrame(
       surface,
       this.runtime.canvasKit,
-      root,
+      sceneRoot,
       this.width,
       this.height,
       this.dpr,
       camera,
     );
+  }
+
+  private clearDefaultLayerChildren(): void {
+    const r = this.defaultLayer.root;
+    const copy = [...r.children];
+    for (const c of copy) {
+      r.removeChild(c);
+      c.destroy();
+    }
   }
 
   private mountSurface(width: number, height: number, dpr: number): void {

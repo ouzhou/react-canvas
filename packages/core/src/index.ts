@@ -77,6 +77,8 @@ export { getWorldBounds, containsPagePoint, getWorldOffset } from "./geometry/wo
 export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts";
 export { Stage } from "./stage/stage.ts";
 export type { StageOptions } from "./stage/stage.ts";
+export { Layer } from "./stage/layer.ts";
+export type { LayerOptions } from "./stage/layer.ts";
 export {
   shouldEmitClick,
   DEFAULT_CLICK_MOVE_THRESHOLD_PX,

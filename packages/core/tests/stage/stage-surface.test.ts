@@ -1,6 +1,7 @@
-import { describe, expect, test, vi } from "vite-plus/test";
+import { beforeAll, describe, expect, test, vi } from "vite-plus/test";
 import type { CanvasKit, Surface } from "canvaskit-wasm";
 
+import { initYoga } from "../../src/layout/yoga.ts";
 import type { Yoga } from "../../src/layout/yoga.ts";
 import { Stage } from "../../src/stage/stage.ts";
 import type { Runtime } from "../../src/runtime/runtime.ts";
@@ -18,6 +19,12 @@ function fakeCanvas(): HTMLCanvasElement {
 }
 
 describe("Stage", () => {
+  let yoga: Yoga;
+
+  beforeAll(async () => {
+    yoga = await initYoga();
+  });
+
   test("creates surface and applies backing store; destroy deletes surface", () => {
     const deleteFn = vi.fn();
     const mockSurface = {
@@ -36,7 +43,7 @@ describe("Stage", () => {
     } as unknown as CanvasKit;
 
     const runtime: Runtime = {
-      yoga: {} as Yoga,
+      yoga,
       canvasKit: ck,
     };
 
@@ -75,7 +82,7 @@ describe("Stage", () => {
     } as unknown as CanvasKit;
 
     const runtime: Runtime = {
-      yoga: {} as Yoga,
+      yoga,
       canvasKit: ck,
     };
 
