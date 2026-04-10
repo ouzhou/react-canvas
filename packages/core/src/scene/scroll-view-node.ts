@@ -76,8 +76,32 @@ export function isLocalPointOnVerticalScrollbar(
 export class ScrollViewNode extends ViewNode {
   scrollX = 0;
   scrollY = 0;
+  /** `true` 时只沿 X 轴滚轮消费（见 `core-design.md` §17.6）；默认 `false` 为纵向。 */
+  horizontal = false;
+  /**
+   * `auto`：边界处剩余增量传给父 `ScrollView`；`contain`/`none`：本层在边界处吃掉链式（§17.5）。
+   */
+  overscrollBehavior: "auto" | "contain" | "none" = "auto";
   /** 指针进入视口且可垂直滚动时由宿主置为 `true`，离开画布或不再处于该 `ScrollView` 内为 `false`；仅此时绘制滚动条。 */
   scrollbarHoverVisible = false;
+
+  get contentWidth(): number {
+    const first = this.children[0] as ViewNode | undefined;
+    return first ? first.layout.width : 0;
+  }
+
+  get contentHeight(): number {
+    const first = this.children[0] as ViewNode | undefined;
+    return first ? first.layout.height : 0;
+  }
+
+  get viewportWidth(): number {
+    return this.layout.width;
+  }
+
+  get viewportHeight(): number {
+    return this.layout.height;
+  }
 
   constructor(yoga: Yoga) {
     super(yoga, "ScrollView");

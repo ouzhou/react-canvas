@@ -8,6 +8,7 @@ import type { ViewportCamera } from "../render/camera.ts";
 import { getVerticalScrollMetrics, type ScrollViewNode } from "../scene/scroll-view-node.ts";
 import type { ViewNode } from "../scene/view-node.ts";
 import type { CursorManager } from "./cursor-manager.ts";
+import { applyWheelToScrollViewChain } from "./scroll-chain.ts";
 
 /** 与 {@link Stage.setPointerCapture} 配合：对处于捕获的 `pointerId` 跳过命中测试。 */
 export type CanvasPointerCaptureBinding = {
@@ -311,12 +312,10 @@ export function attachCanvasPointerHandlers(
     const hit = hitTest(sceneRoot, pageX, pageY, canvasKit, readCamera());
     syncScrollbarHoverFromHit(hit, lastScrollbarHoverSv, requestLayoutPaint);
     if (!hit) return;
-    const sv = findAncestorScrollView(hit);
-    if (!sv) return;
+    const { inScrollView, didScroll } = applyWheelToScrollViewChain(hit, ev.deltaX, ev.deltaY);
+    if (!inScrollView) return;
     ev.preventDefault();
-    sv.scrollY += ev.deltaY;
-    sv.clampScrollOffsetsAfterLayout();
-    requestLayoutPaint();
+    if (didScroll) requestLayoutPaint();
   };
 
   canvas.addEventListener("pointerdown", onPointerDown);

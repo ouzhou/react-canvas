@@ -98,6 +98,12 @@ export {
 } from "./input/click.ts";
 export { diffHoverEnterLeave, dispatchPointerEnterLeave } from "./input/hover.ts";
 export {
+  applyWheelToScrollViewChain,
+  buildScrollViewChainFromHit,
+  consumeScroll,
+  type WheelScrollChainResult,
+} from "./input/scroll-chain.ts";
+export {
   attachCanvasPointerHandlers,
   clientToCanvasLogical,
   resolveCursorFromHitLeaf,
