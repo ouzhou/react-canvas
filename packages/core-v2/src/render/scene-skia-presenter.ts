@@ -66,6 +66,7 @@ export async function attachSceneSkiaPresenter(
   function paint(): void {
     const payload = lastPayload;
     if (!payload) return;
+    const commit = payload;
     const skCanvas = skSurface.getCanvas();
     skCanvas.save();
     skCanvas.scale(rootScale, rootScale);
@@ -80,33 +81,43 @@ export async function attachSceneSkiaPresenter(
     paintStroke.setStyle(ck.PaintStyle.Stroke);
     paintStroke.setStrokeWidth(2);
 
-    // 大面积先画（背景），小盒后画，避免父级 id 排在子级之后时用半透明底盖住子节点（如 id「flex-root」盖过「b*」）
-    const entries = Object.entries(payload.layout).sort(([, a], [, b]) => {
-      const areaA = a.width * a.height;
-      const areaB = b.width * b.height;
-      return areaB - areaA;
-    });
-    for (const [, box] of entries) {
-      if (!box.backgroundColor) continue;
-      const rgb = parseCssHexColor(box.backgroundColor);
-      if (!rgb) continue;
-      const strokeRgb = {
-        r: Math.max(0, Math.min(255, Math.round(rgb.r * 0.5))),
-        g: Math.max(0, Math.min(255, Math.round(rgb.g * 0.5))),
-        b: Math.max(0, Math.min(255, Math.round(rgb.b * 0.5))),
-      };
-      const fillAlpha = Math.floor(0.88 * 255);
-      paintFill.setColor(ck.Color(rgb.r, rgb.g, rgb.b, fillAlpha));
-      paintStroke.setColor(ck.Color(strokeRgb.r, strokeRgb.g, strokeRgb.b, Math.floor(0.9 * 255)));
-      const rect = ck.LTRBRect(
-        box.absLeft,
-        box.absTop,
-        box.absLeft + box.width,
-        box.absTop + box.height,
-      );
-      skCanvas.drawRect(rect, paintFill);
-      skCanvas.drawRect(rect, paintStroke);
+    /**
+     * 与 `hit-test` 叠放一致：兄弟中 `children` 靠后者在上。
+     * 前序 DFS（先画本节点，再按子节点正序递归）→ 后插入的子节点后绘制、盖住先插入的兄弟。
+     */
+    function paintSubtree(id: string): void {
+      const box = commit.layout[id];
+      if (box?.backgroundColor) {
+        const rgb = parseCssHexColor(box.backgroundColor);
+        if (rgb) {
+          const strokeRgb = {
+            r: Math.max(0, Math.min(255, Math.round(rgb.r * 0.5))),
+            g: Math.max(0, Math.min(255, Math.round(rgb.g * 0.5))),
+            b: Math.max(0, Math.min(255, Math.round(rgb.b * 0.5))),
+          };
+          const fillAlpha = Math.floor(0.88 * 255);
+          paintFill.setColor(ck.Color(rgb.r, rgb.g, rgb.b, fillAlpha));
+          paintStroke.setColor(
+            ck.Color(strokeRgb.r, strokeRgb.g, strokeRgb.b, Math.floor(0.9 * 255)),
+          );
+          const rect = ck.LTRBRect(
+            box.absLeft,
+            box.absTop,
+            box.absLeft + box.width,
+            box.absTop + box.height,
+          );
+          skCanvas.drawRect(rect, paintFill);
+          skCanvas.drawRect(rect, paintStroke);
+        }
+      }
+      const sceneNode = commit.scene.nodes[id];
+      if (!sceneNode) return;
+      for (const childId of sceneNode.children) {
+        paintSubtree(childId);
+      }
     }
+
+    paintSubtree(commit.rootId);
 
     paintFill.delete();
     paintStroke.delete();
