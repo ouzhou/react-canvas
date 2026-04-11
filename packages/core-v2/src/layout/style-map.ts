@@ -19,6 +19,8 @@ export type ViewStyle = {
    * 不传给 Yoga；未设置时视为 `auto`。
    */
   pointerEvents?: "auto" | "none";
+  /** 与 CSS `cursor` 一致；不传给 Yoga，仅用于解析画布光标。 */
+  cursor?: string;
 };
 
 const flexDirectionMap = {

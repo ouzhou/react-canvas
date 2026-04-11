@@ -1,4 +1,5 @@
 export { attachCanvasStagePointer } from "./input/canvas-stage-pointer.ts";
+export { resolveCursorFromHitLeaf } from "./input/resolve-cursor.ts";
 export { clientXYToStageLocal, type StageViewportOrigin } from "./input/stage-client-coords.ts";
 export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts";
 export { initCanvasKit } from "./render/canvaskit.ts";
@@ -22,6 +23,7 @@ export { createNodeStore } from "./runtime/node-store.ts";
 export type { NodeStore } from "./runtime/node-store.ts";
 export type { SceneNode } from "./scene/scene-node.ts";
 export {
+  bindSceneRuntimeCursorTarget,
   createSceneRuntime,
   type CreateSceneRuntimeOptions,
   type LayoutCommitPayload,

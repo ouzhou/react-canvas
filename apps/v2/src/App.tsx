@@ -69,7 +69,8 @@ export function App() {
             </button>
           </div>
           <span className="v2-app__hint">
-            链接：<code>?smoke=core|react</code> <code>&amp;demo=layout|pointer|through|hover</code>
+            链接：<code>?smoke=core|react</code>{" "}
+            <code>&amp;demo=layout|pointer|through|hover|cursor</code>
           </span>
         </header>
 

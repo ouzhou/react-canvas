@@ -1,6 +1,12 @@
 import { Canvas, CanvasProvider, useSceneRuntime, View } from "@react-canvas/react-v2";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import { DEMO_HOVER, DEMO_LAYOUT, DEMO_POINTER, DEMO_THROUGH } from "./demo-dimensions.ts";
+import {
+  DEMO_CURSOR,
+  DEMO_HOVER,
+  DEMO_LAYOUT,
+  DEMO_POINTER,
+  DEMO_THROUGH,
+} from "./demo-dimensions.ts";
 import type { SmokeDemoId } from "./smoke-types.ts";
 
 function PointerClickLog(props: { onHit: (label: string) => void }) {
@@ -165,6 +171,170 @@ function HoverDemoScene() {
   );
 }
 
+/** 默认张开手（grab），按下抓手（grabbing），在画布外松开也恢复 */
+function DragCursorStrip({ W }: { W: number }) {
+  const [pressed, setPressed] = useState(false);
+  useEffect(() => {
+    if (!pressed) return;
+    const onUp = () => setPressed(false);
+    window.addEventListener("pointerup", onUp);
+    return () => window.removeEventListener("pointerup", onUp);
+  }, [pressed]);
+
+  return (
+    <View
+      id="c-drag-strip"
+      style={{
+        width: W - 16,
+        height: 64,
+        backgroundColor: pressed ? "#f9a8d4" : "#fce7f3",
+        cursor: pressed ? "grabbing" : "grab",
+      }}
+      onPointerDown={() => setPressed(true)}
+    />
+  );
+}
+
+/** 光标：静态多类、父链继承与覆盖、hover 联动 cursor、穿透命中 */
+function CursorDemoScene({ W, H }: { W: number; H: number }) {
+  return (
+    <View
+      id="cursor-root"
+      style={{
+        width: W,
+        height: H,
+        flexDirection: "column",
+        padding: 8,
+        backgroundColor: "#f1f5f9",
+      }}
+    >
+      <View id="cursor-row-static" style={{ flexDirection: "row", height: 74 }}>
+        <View
+          id="c-static-ptr"
+          style={{ flex: 1, backgroundColor: "#fecaca", cursor: "pointer" }}
+        />
+        <View id="c-static-txt" style={{ flex: 1, backgroundColor: "#bbf7d0", cursor: "text" }} />
+        <View
+          id="c-static-cross"
+          style={{ flex: 1, backgroundColor: "#dbeafe", cursor: "crosshair" }}
+        />
+      </View>
+
+      <View id="cursor-gap-1" style={{ height: 8 }} />
+
+      <View id="cursor-row-chain" style={{ flexDirection: "row", height: 92 }}>
+        <View
+          id="c-chain-parent-only"
+          style={{
+            flex: 1,
+            position: "relative",
+            backgroundColor: "#e9d5ff",
+            cursor: "progress",
+          }}
+        >
+          <View
+            id="c-chain-inherit"
+            style={{
+              position: "absolute",
+              left: 24,
+              top: 16,
+              width: 120,
+              height: 48,
+              backgroundColor: "#c084fc",
+            }}
+          />
+        </View>
+        <View
+          id="c-chain-child-wins"
+          style={{
+            flex: 1,
+            position: "relative",
+            backgroundColor: "#fef3c7",
+            cursor: "alias",
+          }}
+        >
+          <View
+            id="c-chain-zoom"
+            style={{
+              position: "absolute",
+              left: 24,
+              top: 16,
+              width: 120,
+              height: 48,
+              backgroundColor: "#f59e0b",
+              cursor: "zoom-in",
+            }}
+          />
+        </View>
+      </View>
+
+      <View id="cursor-gap-2" style={{ height: 8 }} />
+
+      <View
+        id="c-hover-wrap"
+        style={{
+          height: 70,
+          position: "relative",
+          backgroundColor: "#e2e8f0",
+        }}
+      >
+        <View
+          id="c-hover-fn"
+          style={({ hovered }) => ({
+            position: "absolute",
+            left: 12,
+            top: 8,
+            width: W - 40,
+            height: 54,
+            backgroundColor: hovered ? "#0ea5e9" : "#94a3b8",
+            cursor: hovered ? "grab" : "col-resize",
+          })}
+        />
+      </View>
+
+      <View id="cursor-gap-3" style={{ height: 8 }} />
+
+      <View
+        id="c-through-wrap"
+        style={{
+          height: 70,
+          position: "relative",
+          backgroundColor: "#cbd5e1",
+        }}
+      >
+        <View
+          id="c-through-back"
+          style={{
+            position: "absolute",
+            left: 16,
+            top: 8,
+            width: 280,
+            height: 54,
+            backgroundColor: "#16a34a",
+            cursor: "pointer",
+          }}
+        />
+        <View
+          id="c-through-front"
+          style={{
+            position: "absolute",
+            left: 16,
+            top: 8,
+            width: 280,
+            height: 54,
+            backgroundColor: "rgba(251, 146, 60, 0.45)",
+            pointerEvents: "none",
+          }}
+        />
+      </View>
+
+      <View id="cursor-gap-4" style={{ height: 8 }} />
+
+      <DragCursorStrip W={W} />
+    </View>
+  );
+}
+
 type ReactSmokeProps = { demo: SmokeDemoId };
 
 /** `CanvasProvider` → `Canvas` + `View`，与 {@link CoreSmoke} 场景对齐。 */
@@ -183,7 +353,9 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
         ? DEMO_POINTER.w
         : demo === "through"
           ? DEMO_THROUGH.w
-          : DEMO_HOVER.w;
+          : demo === "cursor"
+            ? DEMO_CURSOR.w
+            : DEMO_HOVER.w;
   const H =
     demo === "layout"
       ? DEMO_LAYOUT.h
@@ -191,7 +363,9 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
         ? DEMO_POINTER.h
         : demo === "through"
           ? DEMO_THROUGH.h
-          : DEMO_HOVER.h;
+          : demo === "cursor"
+            ? DEMO_CURSOR.h
+            : DEMO_HOVER.h;
 
   const blurb =
     demo === "layout" ? (
@@ -206,6 +380,16 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
         与 Core 相同：<code>through-front</code> 为 <code>pointerEvents: &quot;none&quot;</code>
         ，点击橙区应记为背后绿块。
+      </p>
+    ) : demo === "cursor" ? (
+      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
+        <strong>①</strong> 三列：<code>pointer</code> / <code>text</code> / <code>crosshair</code>。
+        <strong>②</strong> 左：仅父有 <code>progress</code>，子无 cursor → 悬停子块仍为
+        progress；右：子 <code>zoom-in</code> 覆盖父 <code>alias</code>。<strong>③</strong> 函数式
+        style：未悬停 <code>col-resize</code>，悬停 <code>grab</code> + 变色。
+        <strong>④</strong> 橙层 <code>pointer-events: none</code>，光标应为绿块 <code>pointer</code>
+        。<strong>⑤</strong> 拖拽条：常态 <code>grab</code>，按下 <code>grabbing</code>
+        ，松手（含画布外）恢复。
       </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
@@ -233,6 +417,8 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
                   <ThroughDemoScene W={W} H={H} />
                   <ThroughClickLog onHit={onPointerHit} />
                 </>
+              ) : demo === "cursor" ? (
+                <CursorDemoScene W={W} H={H} />
               ) : (
                 <HoverDemoScene />
               )}

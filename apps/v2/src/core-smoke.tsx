@@ -5,7 +5,13 @@ import {
   type SceneRuntime,
 } from "@react-canvas/core-v2";
 import { useEffect, useRef, useState } from "react";
-import { DEMO_HOVER, DEMO_LAYOUT, DEMO_POINTER, DEMO_THROUGH } from "./demo-dimensions.ts";
+import {
+  DEMO_CURSOR,
+  DEMO_HOVER,
+  DEMO_LAYOUT,
+  DEMO_POINTER,
+  DEMO_THROUGH,
+} from "./demo-dimensions.ts";
 import type { SmokeDemoId } from "./smoke-types.ts";
 
 function buildLayoutDemo(r: SceneRuntime, root: string, W: number, H: number): void {
@@ -99,6 +105,118 @@ function buildHoverDemo(r: SceneRuntime, root: string, W: number, H: number): vo
   });
 }
 
+/** 与 {@link CursorDemoScene}（react-smoke）同结构，便于对照光标与 hover 联动 */
+function buildCursorDemo(r: SceneRuntime, root: string, W: number, H: number): void {
+  r.insertView(root, "cursor-root", {
+    width: W,
+    height: H,
+    flexDirection: "column",
+    padding: 8,
+    backgroundColor: "#f1f5f9",
+  });
+  r.insertView("cursor-root", "cursor-row-static", { flexDirection: "row", height: 74 });
+  r.insertView("cursor-row-static", "c-static-ptr", {
+    flex: 1,
+    backgroundColor: "#fecaca",
+    cursor: "pointer",
+  });
+  r.insertView("cursor-row-static", "c-static-txt", {
+    flex: 1,
+    backgroundColor: "#bbf7d0",
+    cursor: "text",
+  });
+  r.insertView("cursor-row-static", "c-static-cross", {
+    flex: 1,
+    backgroundColor: "#dbeafe",
+    cursor: "crosshair",
+  });
+
+  r.insertView("cursor-root", "cursor-gap-1", { height: 8 });
+
+  r.insertView("cursor-root", "cursor-row-chain", { flexDirection: "row", height: 92 });
+  r.insertView("cursor-row-chain", "c-chain-parent-only", {
+    flex: 1,
+    position: "relative",
+    backgroundColor: "#e9d5ff",
+    cursor: "progress",
+  });
+  r.insertView("c-chain-parent-only", "c-chain-inherit", {
+    position: "absolute",
+    left: 24,
+    top: 16,
+    width: 120,
+    height: 48,
+    backgroundColor: "#c084fc",
+  });
+  r.insertView("cursor-row-chain", "c-chain-child-wins", {
+    flex: 1,
+    position: "relative",
+    backgroundColor: "#fef3c7",
+    cursor: "alias",
+  });
+  r.insertView("c-chain-child-wins", "c-chain-zoom", {
+    position: "absolute",
+    left: 24,
+    top: 16,
+    width: 120,
+    height: 48,
+    backgroundColor: "#f59e0b",
+    cursor: "zoom-in",
+  });
+
+  r.insertView("cursor-root", "cursor-gap-2", { height: 8 });
+
+  r.insertView("cursor-root", "c-hover-wrap", {
+    height: 70,
+    position: "relative",
+    backgroundColor: "#e2e8f0",
+  });
+  r.insertView("c-hover-wrap", "c-hover-fn", {
+    position: "absolute",
+    left: 12,
+    top: 8,
+    width: W - 40,
+    height: 54,
+    backgroundColor: "#94a3b8",
+    cursor: "col-resize",
+  });
+
+  r.insertView("cursor-root", "cursor-gap-3", { height: 8 });
+
+  r.insertView("cursor-root", "c-through-wrap", {
+    height: 70,
+    position: "relative",
+    backgroundColor: "#cbd5e1",
+  });
+  r.insertView("c-through-wrap", "c-through-back", {
+    position: "absolute",
+    left: 16,
+    top: 8,
+    width: 280,
+    height: 54,
+    backgroundColor: "#16a34a",
+    cursor: "pointer",
+  });
+  r.insertView("c-through-wrap", "c-through-front", {
+    position: "absolute",
+    left: 16,
+    top: 8,
+    width: 280,
+    height: 54,
+    backgroundColor: "rgba(251, 146, 60, 0.45)",
+    pointerEvents: "none",
+  });
+
+  r.insertView("cursor-root", "cursor-gap-4", { height: 8 });
+
+  r.insertView("cursor-root", "c-drag-strip", {
+    width: W - 16,
+    height: 64,
+    backgroundColor: "#fce7f3",
+    cursor: "grab",
+  });
+}
+
 type CoreSmokeProps = { demo: SmokeDemoId };
 
 /**
@@ -118,7 +236,9 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
         ? DEMO_POINTER
         : demo === "through"
           ? DEMO_THROUGH
-          : DEMO_HOVER;
+          : demo === "cursor"
+            ? DEMO_CURSOR
+            : DEMO_HOVER;
 
   useEffect(() => {
     let cancelled = false;
@@ -158,6 +278,45 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
               setLastClickTarget("错误：through-front（橙）不应收到 click");
             }),
           );
+        } else if (demo === "cursor") {
+          buildCursorDemo(r, root, dim.w, dim.h);
+          listenerOffs.push(
+            r.addListener("c-hover-fn", "pointerenter", () => {
+              r.patchStyle("c-hover-fn", {
+                backgroundColor: "#0ea5e9",
+                cursor: "grab",
+              });
+            }),
+          );
+          listenerOffs.push(
+            r.addListener("c-hover-fn", "pointerleave", () => {
+              r.patchStyle("c-hover-fn", {
+                backgroundColor: "#94a3b8",
+                cursor: "col-resize",
+              });
+            }),
+          );
+          let dragStripActive = false;
+          const dragStripRest = () => {
+            dragStripActive = false;
+            r.patchStyle("c-drag-strip", {
+              backgroundColor: "#fce7f3",
+              cursor: "grab",
+            });
+          };
+          const dragStripPress = () => {
+            dragStripActive = true;
+            r.patchStyle("c-drag-strip", {
+              backgroundColor: "#f9a8d4",
+              cursor: "grabbing",
+            });
+          };
+          listenerOffs.push(r.addListener("c-drag-strip", "pointerdown", dragStripPress));
+          const onWindowPointerUp = () => {
+            if (dragStripActive) dragStripRest();
+          };
+          window.addEventListener("pointerup", onWindowPointerUp);
+          listenerOffs.push(() => window.removeEventListener("pointerup", onWindowPointerUp));
         } else {
           buildHoverDemo(r, root, dim.w, dim.h);
           listenerOffs.push(
@@ -246,6 +405,13 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>
         橙块盖在绿块上，但橙块 <code>pointerEvents: &quot;none&quot;</code>
         ，命中应穿透到 <code>through-back</code>；不应出现「前景收到 click」。
+      </p>
+    ) : demo === "cursor" ? (
+      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
+        与 React 侧同布局：① 三列静态 cursor；② 父链继承 / 子覆盖；③ Core 用 <code>patchStyle</code>{" "}
+        同步 hover 区颜色与 cursor；④ 穿透区光标为绿块 <code>pointer</code>；⑤ 底栏{" "}
+        <code>pointerdown</code> / 窗口 <code>pointerup</code> 切换 <code>grab</code> ↔{" "}
+        <code>grabbing</code>。
       </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>

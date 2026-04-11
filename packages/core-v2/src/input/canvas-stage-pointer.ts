@@ -1,4 +1,4 @@
-import type { SceneRuntime } from "../runtime/scene-runtime.ts";
+import { bindSceneRuntimeCursorTarget, type SceneRuntime } from "../runtime/scene-runtime.ts";
 import { clientXYToStageLocal } from "./stage-client-coords.ts";
 
 /**
@@ -87,6 +87,8 @@ export function attachCanvasStagePointer(
   canvas.style.touchAction = "none";
   canvas.style.userSelect = "none";
 
+  bindSceneRuntimeCursorTarget(runtime, canvas);
+
   return () => {
     if (rafId !== null) {
       cancelAnimationFrame(rafId);
@@ -97,5 +99,6 @@ export function attachCanvasStagePointer(
     canvas.removeEventListener("pointerup", onPointerUp);
     canvas.removeEventListener("pointermove", onPointerMove);
     canvas.removeEventListener("pointerleave", onPointerLeave);
+    bindSceneRuntimeCursorTarget(runtime, null);
   };
 }

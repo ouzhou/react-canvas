@@ -7,11 +7,25 @@ import { createEventRegistry } from "../events/event-registry.ts";
 import type { ScenePointerEvent } from "../events/scene-event.ts";
 import type { PointerEventType } from "../events/scene-event.ts";
 import { hitTestAt } from "../hit/hit-test.ts";
+import { resolveCursorFromHitLeaf } from "../input/resolve-cursor.ts";
 import { absoluteBoundsFor, calculateAndSyncLayout } from "../layout/layout-sync.ts";
 import { applyStylesToYoga, clearYogaLayoutStyle, type ViewStyle } from "../layout/style-map.ts";
 import { loadYoga } from "../layout/yoga.ts";
 import type { SceneNode } from "../scene/scene-node.ts";
 import { createNodeStore, type NodeStore } from "./node-store.ts";
+
+const cursorTargetByRuntime = new WeakMap<object, HTMLCanvasElement | null>();
+
+/**
+ * 由 `attachCanvasStagePointer` 在挂载/卸载时调用，将画布与 runtime 关联以便写入 `cursor`。
+ * 不暴露在对外 {@link SceneRuntime} 类型中。
+ */
+export function bindSceneRuntimeCursorTarget(
+  runtime: SceneRuntime,
+  el: HTMLCanvasElement | null,
+): void {
+  cursorTargetByRuntime.set(runtime as object, el);
+}
 
 export type CreateSceneRuntimeOptions = {
   width: number;
@@ -95,6 +109,19 @@ export async function createSceneRuntime(
   let layoutDirty = true;
   /** 上一帧命中叶（内部 hover；不对外暴露 getter）。 */
   let lastHitTargetId: string | null = null;
+
+  let apiRef!: SceneRuntime;
+
+  function applyResolvedCursor(): void {
+    const canvas = cursorTargetByRuntime.get(apiRef as object) ?? null;
+    if (!canvas) {
+      return;
+    }
+    const resolved = resolveCursorFromHitLeaf(lastHitTargetId, store);
+    if (canvas.style.cursor !== resolved) {
+      canvas.style.cursor = resolved;
+    }
+  }
 
   const propagateCtx = { store, registry };
 
@@ -188,6 +215,8 @@ export async function createSceneRuntime(
       lastHitTargetId = nextLeaf;
     }
 
+    applyResolvedCursor();
+
     if (ev.type === "pointermove" && nextLeaf === null) {
       lastTrace = { hit: null, targetId: null, entries: merged };
       return;
@@ -204,11 +233,13 @@ export async function createSceneRuntime(
       targetId: nextLeaf,
       entries: mergeEntries(merged, main.entries),
     };
+    /** 主事件内可能 `patchStyle` / 监听器改 cursor，须在回写 `lastTrace` 后再刷一次 DOM。 */
+    applyResolvedCursor();
   }
 
   runLayout();
 
-  return {
+  apiRef = {
     getRootId: () => rootId,
     getViewport: () => ({ width: options.width, height: options.height }),
 
@@ -227,6 +258,7 @@ export async function createSceneRuntime(
       const prev = lastHitTargetId;
       lastHitTargetId = null;
       lastTrace = propagateScenePointerEvent("pointerleave", x, y, prev, propagateCtx);
+      applyResolvedCursor();
     },
 
     insertView(parentId, id, style) {
@@ -236,12 +268,14 @@ export async function createSceneRuntime(
         existing.viewStyle = { ...existing.viewStyle, ...style };
         rebuildYogaStyle(existing);
         runLayout();
+        applyResolvedCursor();
         return;
       }
       const n = store.createChildAt(parentId, id);
       n.viewStyle = { ...style };
       applyStylesToYoga(n.yogaNode, n.viewStyle);
       runLayout();
+      applyResolvedCursor();
     },
 
     removeView(id) {
@@ -251,6 +285,7 @@ export async function createSceneRuntime(
       layoutDirty = true;
       store.removeNode(id);
       runLayout();
+      applyResolvedCursor();
     },
 
     updateStyle(id, style) {
@@ -260,6 +295,7 @@ export async function createSceneRuntime(
       n.viewStyle = { ...style };
       rebuildYogaStyle(n);
       runLayout();
+      applyResolvedCursor();
     },
 
     patchStyle(id, patch) {
@@ -269,6 +305,7 @@ export async function createSceneRuntime(
       n.viewStyle = { ...n.viewStyle, ...patch };
       rebuildYogaStyle(n);
       runLayout();
+      applyResolvedCursor();
     },
 
     addListener(nodeId, type, fn, opts) {
@@ -302,4 +339,6 @@ export async function createSceneRuntime(
       };
     },
   };
+
+  return apiRef;
 }
