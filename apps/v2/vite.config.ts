@@ -6,10 +6,16 @@ import { defineConfig } from "vite-plus";
 const appDir = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(appDir, "../..");
 
+const workspaceSrc = {
+  "@react-canvas/core-v2": path.resolve(monorepoRoot, "packages/core-v2/src/index.ts"),
+  "@react-canvas/react-v2": path.resolve(monorepoRoot, "packages/react-v2/src/index.ts"),
+} as const;
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
     conditions: ["development", "module", "browser", "import", "default"],
+    alias: { ...workspaceSrc },
   },
   server: {
     fs: {

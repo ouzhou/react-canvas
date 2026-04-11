@@ -25,7 +25,7 @@ export function View(props: ViewProps): ReactNode {
   // 父 View 尚未 insertView 时，用 queueMicrotask 等到父节点出现在 store 中再挂载。
   useLayoutEffect(() => {
     if (parentId === null) {
-      throw new Error("View must be rendered under CanvasRuntime");
+      throw new Error("View must be rendered under Canvas");
     }
     const parsed: ViewStyle = JSON.parse(styleJson) as ViewStyle;
     let cancelled = false;

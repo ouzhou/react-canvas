@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import type { SceneRuntime } from "@react-canvas/core-v2";
 import { expect, test, vi } from "vite-plus/test";
 import { act } from "react";

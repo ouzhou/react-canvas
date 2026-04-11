@@ -4,50 +4,19 @@ import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
 import type { LayoutCommitPayload, SceneRuntime } from "../runtime/scene-runtime.ts";
 import { initCanvasKit } from "./canvaskit.ts";
 
-function hueForId(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) {
-    h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  }
-  return h % 360;
-}
-
-/** HSL(0–360, 0–100, 0–100) → 0–255 RGB */
-function hslToRgb(hIn: number, s: number, l: number): { r: number; g: number; b: number } {
-  const h = ((hIn % 360) + 360) % 360;
-  const sat = s / 100;
-  const light = l / 100;
-  const c = (1 - Math.abs(2 * light - 1)) * sat;
-  const hp = h / 60;
-  const x = c * (1 - Math.abs((hp % 2) - 1));
-  let r1 = 0;
-  let g1 = 0;
-  let b1 = 0;
-  if (hp >= 0 && hp < 1) {
-    r1 = c;
-    g1 = x;
-  } else if (hp < 2) {
-    r1 = x;
-    g1 = c;
-  } else if (hp < 3) {
-    g1 = c;
-    b1 = x;
-  } else if (hp < 4) {
-    g1 = x;
-    b1 = c;
-  } else if (hp < 5) {
-    r1 = x;
-    b1 = c;
-  } else {
-    r1 = c;
-    b1 = x;
-  }
-  const m = light - c / 2;
-  return {
-    r: Math.round((r1 + m) * 255),
-    g: Math.round((g1 + m) * 255),
-    b: Math.round((b1 + m) * 255),
-  };
+function parseCssHexColor(s: string): { r: number; g: number; b: number } | null {
+  const m = /^#(?:([\da-f]{3})|([\da-f]{6}))$/i.exec(s.trim());
+  if (!m) return null;
+  const hex = (m[1] ?? m[2])!;
+  const full =
+    hex.length === 3
+      ? hex
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : hex;
+  const n = Number.parseInt(full, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
 export type AttachSceneSkiaOptions = {
@@ -57,7 +26,7 @@ export type AttachSceneSkiaOptions = {
 
 /**
  * 将 {@link SceneRuntime} 的布局盒绘制到 `<canvas>`（CanvasKit Skia）。
- * 与 DOM 调试层视觉相近：半透明填充 + 描边；随 `subscribeAfterLayout` 刷新。
+ * 仅当节点提供可解析的 `backgroundColor` 时绘制填充与描边；随 `subscribeAfterLayout` 刷新。
  */
 export async function attachSceneSkiaPresenter(
   runtime: SceneRuntime,
@@ -111,12 +80,23 @@ export async function attachSceneSkiaPresenter(
     paintStroke.setStyle(ck.PaintStyle.Stroke);
     paintStroke.setStrokeWidth(2);
 
-    const entries = Object.entries(payload.layout).sort(([a], [b]) => a.localeCompare(b));
-    for (const [id, box] of entries) {
-      const hue = hueForId(id);
-      const fillRgb = hslToRgb(hue, 70, 55);
-      const strokeRgb = hslToRgb(hue, 65, 42);
-      paintFill.setColor(ck.Color(fillRgb.r, fillRgb.g, fillRgb.b, Math.floor(0.12 * 255)));
+    // 大面积先画（背景），小盒后画，避免父级 id 排在子级之后时用半透明底盖住子节点（如 id「flex-root」盖过「b*」）
+    const entries = Object.entries(payload.layout).sort(([, a], [, b]) => {
+      const areaA = a.width * a.height;
+      const areaB = b.width * b.height;
+      return areaB - areaA;
+    });
+    for (const [, box] of entries) {
+      if (!box.backgroundColor) continue;
+      const rgb = parseCssHexColor(box.backgroundColor);
+      if (!rgb) continue;
+      const strokeRgb = {
+        r: Math.max(0, Math.min(255, Math.round(rgb.r * 0.5))),
+        g: Math.max(0, Math.min(255, Math.round(rgb.g * 0.5))),
+        b: Math.max(0, Math.min(255, Math.round(rgb.b * 0.5))),
+      };
+      const fillAlpha = Math.floor(0.88 * 255);
+      paintFill.setColor(ck.Color(rgb.r, rgb.g, rgb.b, fillAlpha));
       paintStroke.setColor(ck.Color(strokeRgb.r, strokeRgb.g, strokeRgb.b, Math.floor(0.9 * 255)));
       const rect = ck.LTRBRect(
         box.absLeft,

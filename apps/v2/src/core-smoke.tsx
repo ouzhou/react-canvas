@@ -5,7 +5,6 @@ import {
   type SceneRuntime,
 } from "@react-canvas/core-v2";
 import { useEffect, useRef, useState } from "react";
-import { PointerDebugPanel } from "./debug-panel.tsx";
 
 const W = 400;
 const H = 300;
@@ -26,9 +25,14 @@ export function CoreSmoke() {
       .then((r) => {
         if (cancelled) return;
         const root = r.getRootId();
-        r.insertView(root, "row", { width: W, height: H, flexDirection: "row" });
-        r.insertView("row", "col-a", { flex: 1, height: H });
-        r.insertView("row", "col-b", { flex: 1, height: H });
+        r.insertView(root, "row", {
+          width: W,
+          height: H,
+          flexDirection: "row",
+          backgroundColor: "#e2e8f0",
+        });
+        r.insertView("row", "col-a", { flex: 1, height: H, backgroundColor: "#93c5fd" });
+        r.insertView("row", "col-b", { flex: 1, height: H, backgroundColor: "#fca5a5" });
         setRt(r);
       })
       .catch((e: unknown) => {
@@ -79,24 +83,21 @@ export function CoreSmoke() {
   }
 
   return (
-    <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", alignItems: "flex-start" }}>
-      <div>
-        <p style={{ margin: "0 0 0.5rem", color: "#444" }}>
-          仅 core-v2：<code>attachSceneSkiaPresenter</code> + <code>attachCanvasStagePointer</code>
-        </p>
-        <canvas
-          ref={canvasRef}
-          style={{
-            display: "block",
-            width: W,
-            height: H,
-            border: "1px solid #cbd5e1",
-            boxSizing: "border-box",
-            background: "#f8fafc",
-          }}
-        />
-      </div>
-      <PointerDebugPanel runtime={rt} />
+    <div>
+      <p style={{ margin: "0 0 0.5rem", color: "#444" }}>
+        仅 core-v2：<code>attachSceneSkiaPresenter</code> + <code>attachCanvasStagePointer</code>
+      </p>
+      <canvas
+        ref={canvasRef}
+        style={{
+          display: "block",
+          width: W,
+          height: H,
+          border: "1px solid #cbd5e1",
+          boxSizing: "border-box",
+          background: "#f8fafc",
+        }}
+      />
     </div>
   );
 }

@@ -2,7 +2,12 @@ import { vi } from "vite-plus/test";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-/** Node/jsdom 不加载 CanvasKit WASM：仅 mock 宿主挂载，保留真实 `createSceneRuntime` 等。 */
+/** jsdom 不加载 CanvasKit WASM：替换 `initCanvasKit`，使 `initRuntime` 仍能更新快照。 */
+vi.mock("../../core-v2/src/render/canvaskit.ts", () => ({
+  initCanvasKit: vi.fn().mockResolvedValue({}),
+}));
+
+/** Node/jsdom：mock 画布挂载与 Skia presenter，保留真实 `initRuntime` / `createSceneRuntime`。 */
 vi.mock("@react-canvas/core-v2", async (importOriginal) => {
   const mod = await importOriginal<typeof import("@react-canvas/core-v2")>();
   return {

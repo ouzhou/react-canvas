@@ -8,6 +8,8 @@ export type ViewStyle = {
   flex?: number;
   flexDirection?: "row" | "column";
   padding?: number;
+  /** 例如 `#e8f4fc`；未设置时 Skia 不绘制该节点矩形 */
+  backgroundColor?: string;
 };
 
 const flexDirectionMap = {

@@ -29,3 +29,13 @@ export {
   type SceneGraphSnapshot,
   type SceneRuntime,
 } from "./runtime/scene-runtime.ts";
+export {
+  getRuntimeServerSnapshot,
+  getRuntimeSnapshot,
+  initRuntime,
+  resetRuntimeInitForTests,
+  subscribeRuntimeInit,
+  type Runtime,
+  type RuntimeInitSnapshot,
+  type RuntimeOptions,
+} from "./runtime/init-runtime.ts";

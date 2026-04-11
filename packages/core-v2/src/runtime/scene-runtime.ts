@@ -20,7 +20,15 @@ export type SceneGraphSnapshot = {
 
 export type LayoutSnapshot = Record<
   string,
-  { left: number; top: number; width: number; height: number; absLeft: number; absTop: number }
+  {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    absLeft: number;
+    absTop: number;
+    backgroundColor?: string;
+  }
 >;
 
 /** 一次布局提交后的只读快照（供 DOM 调试层等消费）。 */
@@ -93,7 +101,7 @@ export async function createSceneRuntime(
       const l = n.layout;
       const abs = absoluteBoundsFor(id, store);
       if (!l || !abs) continue;
-      out[id] = {
+      const entry: LayoutSnapshot[string] = {
         left: l.left,
         top: l.top,
         width: l.width,
@@ -101,6 +109,9 @@ export async function createSceneRuntime(
         absLeft: abs.left,
         absTop: abs.top,
       };
+      const bg = n.viewStyle?.backgroundColor;
+      if (bg !== undefined) entry.backgroundColor = bg;
+      out[id] = entry;
     }
     return out;
   }
