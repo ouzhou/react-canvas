@@ -1,4 +1,10 @@
-export type PointerEventType = "pointerdown" | "pointerup" | "click";
+export type PointerEventType =
+  | "pointerdown"
+  | "pointerup"
+  | "click"
+  | "pointermove"
+  | "pointerenter"
+  | "pointerleave";
 
 /** 程序化指针事件；`stopPropagation()` 后不再调用后续监听（捕获与冒泡均停止）。 */
 export class ScenePointerEvent {

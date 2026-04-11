@@ -1,0 +1,26 @@
+export type SmokeTab = "core" | "react";
+
+/** 与 URL `demo=` 同步的示例 id */
+export type SmokeDemoId = "layout" | "pointer" | "through" | "hover";
+
+export function readSmokeSearch(): { tab: SmokeTab; demo: SmokeDemoId } {
+  const p = new URLSearchParams(window.location.search);
+  const tab: SmokeTab = p.get("smoke") === "core" ? "core" : "react";
+  const raw = p.get("demo");
+  const demo: SmokeDemoId =
+    raw === "pointer"
+      ? "pointer"
+      : raw === "through"
+        ? "through"
+        : raw === "hover"
+          ? "hover"
+          : "layout";
+  return { tab, demo };
+}
+
+export const SMOKE_DEMO_LIST: ReadonlyArray<{ id: SmokeDemoId; label: string }> = [
+  { id: "layout", label: "布局测试" },
+  { id: "pointer", label: "pointer 事件测试" },
+  { id: "through", label: "穿透命中（pointer-events: none）" },
+  { id: "hover", label: "hover 测试" },
+];

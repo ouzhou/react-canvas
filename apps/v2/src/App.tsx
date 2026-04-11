@@ -1,50 +1,82 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CoreSmoke } from "./core-smoke.tsx";
 import { ReactSmoke } from "./react-smoke.tsx";
+import {
+  SMOKE_DEMO_LIST,
+  type SmokeDemoId,
+  type SmokeTab,
+  readSmokeSearch,
+} from "./smoke-types.ts";
 
-export type SmokeTab = "core" | "react";
-
-function readTab(): SmokeTab {
-  const p = new URLSearchParams(window.location.search).get("smoke");
-  return p === "core" ? "core" : "react";
-}
+export type { SmokeTab } from "./smoke-types.ts";
 
 export function App() {
-  const [tab, setTab] = useState<SmokeTab>(readTab);
+  const [{ tab, demo }, setNav] = useState(readSmokeSearch);
 
   useEffect(() => {
     const u = new URL(window.location.href);
     u.searchParams.set("smoke", tab);
-    history.replaceState(null, "", `${u.pathname}${u.search}${u.hash}`);
-  }, [tab]);
+    u.searchParams.set("demo", demo);
+    history.replaceState(null, "", `${u.pathname}?${u.searchParams.toString()}${u.hash}`);
+  }, [tab, demo]);
+
+  const setTab = useCallback((next: SmokeTab) => {
+    setNav((n) => ({ ...n, tab: next }));
+  }, []);
+
+  const setDemo = useCallback((next: SmokeDemoId) => {
+    setNav((n) => ({ ...n, demo: next }));
+  }, []);
 
   return (
-    <div style={{ padding: "1rem", fontFamily: "system-ui, sans-serif" }}>
-      <h1 style={{ marginTop: 0 }}>react-canvas v2 冒烟</h1>
+    <div className="v2-app">
+      <aside className="v2-app__sidebar" aria-label="示例列表">
+        <div className="v2-app__brand">react-canvas v2</div>
+        <nav className="v2-app__nav">
+          {SMOKE_DEMO_LIST.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`v2-app__nav-item${demo === item.id ? " v2-app__nav-item--active" : ""}`}
+              onClick={() => setDemo(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+      </aside>
 
-      <nav
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          marginBottom: "1rem",
-          flexWrap: "wrap",
-          alignItems: "center",
-        }}
-        aria-label="冒烟类型"
-      >
-        <span style={{ color: "#64748b", marginRight: "0.25rem" }}>页面：</span>
-        <button type="button" disabled={tab === "core"} onClick={() => setTab("core")}>
-          Core（纯 API）
-        </button>
-        <button type="button" disabled={tab === "react"} onClick={() => setTab("react")}>
-          React（CanvasRuntime + View）
-        </button>
-        <span style={{ color: "#94a3b8", fontSize: 12 }}>
-          分享链接：<code>?smoke=core</code> 或 <code>?smoke=react</code>
-        </span>
-      </nav>
+      <div className="v2-app__main">
+        <header className="v2-app__toolbar" aria-label="运行模式">
+          <div className="v2-app__tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "core"}
+              className={`v2-app__tab${tab === "core" ? " v2-app__tab--active" : ""}`}
+              onClick={() => setTab("core")}
+            >
+              Core（纯 API）
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === "react"}
+              className={`v2-app__tab${tab === "react" ? " v2-app__tab--active" : ""}`}
+              onClick={() => setTab("react")}
+            >
+              React（CanvasRuntime + View）
+            </button>
+          </div>
+          <span className="v2-app__hint">
+            链接：<code>?smoke=core|react</code> <code>&amp;demo=layout|pointer|through|hover</code>
+          </span>
+        </header>
 
-      {tab === "core" ? <CoreSmoke /> : <ReactSmoke />}
+        <div className="v2-app__result">
+          {tab === "core" ? <CoreSmoke demo={demo} /> : <ReactSmoke demo={demo} />}
+        </div>
+      </div>
     </div>
   );
 }

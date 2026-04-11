@@ -1,6 +1,13 @@
 import { defineConfig } from "vite-plus";
 
 export default defineConfig({
+  /**
+   * 根目录 `vp test` 不会自动合并子包里的 `vite.config`，因此须在此声明 `setupFiles`，
+   * 否则 `packages/react-v2` 的 WASM mock 不执行，会出现 canvaskit.wasm ENOENT。
+   */
+  test: {
+    setupFiles: ["./packages/react-v2/tests/setup.ts"],
+  },
   staged: {
     "*": "vp check --fix",
   },

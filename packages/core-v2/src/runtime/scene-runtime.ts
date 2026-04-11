@@ -1,12 +1,17 @@
-import { dispatchPointerLike, type DispatchTrace } from "../events/dispatch.ts";
+import {
+  propagateScenePointerEvent,
+  type DispatchTrace,
+  type DispatchTraceEntry,
+} from "../events/dispatch.ts";
 import { createEventRegistry } from "../events/event-registry.ts";
 import type { ScenePointerEvent } from "../events/scene-event.ts";
 import type { PointerEventType } from "../events/scene-event.ts";
+import { hitTestAt } from "../hit/hit-test.ts";
 import { absoluteBoundsFor, calculateAndSyncLayout } from "../layout/layout-sync.ts";
-import { applyStylesToYoga, type ViewStyle } from "../layout/style-map.ts";
+import { applyStylesToYoga, clearYogaLayoutStyle, type ViewStyle } from "../layout/style-map.ts";
 import { loadYoga } from "../layout/yoga.ts";
 import type { SceneNode } from "../scene/scene-node.ts";
-import { applyRNLayoutDefaults, createNodeStore, type NodeStore } from "./node-store.ts";
+import { createNodeStore, type NodeStore } from "./node-store.ts";
 
 export type CreateSceneRuntimeOptions = {
   width: number;
@@ -43,9 +48,15 @@ export type SceneRuntime = {
   getRootId(): string;
   getViewport(): { width: number; height: number };
   dispatchPointerLike(ev: { type: PointerEventType; x: number; y: number }): void;
+  /**
+   * 指针离开 `<canvas>` 命中区时由 input 层调用：对上一命中叶派发 `pointerleave` 并清空内部 hover 状态。
+   */
+  notifyPointerLeftStage(x: number, y: number): void;
   insertView(parentId: string, id: string, style: ViewStyle): void;
   removeView(id: string): void;
-  updateStyle(id: string, patch: Partial<ViewStyle>): void;
+  updateStyle(id: string, style: ViewStyle): void;
+  /** 局部合并样式（merge）：仅覆盖传入的字段，未传入字段保持原值。命令式场景（如 hover 切换单属性）使用。 */
+  patchStyle(id: string, patch: Partial<ViewStyle>): void;
   addListener(
     nodeId: string,
     type: PointerEventType,
@@ -62,8 +73,8 @@ export type SceneRuntime = {
 };
 
 function rebuildYogaStyle(node: SceneNode): void {
-  node.yogaNode.reset();
-  applyRNLayoutDefaults(node.yogaNode);
+  // clearYogaLayoutStyle で全プロパティをデフォルトに戻してから再適用する。
+  clearYogaLayoutStyle(node.yogaNode);
   if (node.viewStyle) {
     applyStylesToYoga(node.yogaNode, node.viewStyle);
   }
@@ -79,6 +90,13 @@ export async function createSceneRuntime(
   const rootId = root.id;
   let lastTrace: DispatchTrace = { hit: null, targetId: null, entries: [] };
   const layoutListeners = new Set<(payload: LayoutCommitPayload) => void>();
+
+  /** 自上次 `calculateAndSyncLayout` 以来场景树或样式是否已变（干净路径下指针派发跳过 Yoga）。 */
+  let layoutDirty = true;
+  /** 上一帧命中叶（内部 hover；不对外暴露 getter）。 */
+  let lastHitTargetId: string | null = null;
+
+  const propagateCtx = { store, registry };
 
   function buildSceneGraphSnapshot(): SceneGraphSnapshot {
     const nodes: SceneGraphSnapshot["nodes"] = {};
@@ -130,7 +148,62 @@ export async function createSceneRuntime(
 
   function runLayout(): void {
     calculateAndSyncLayout(store, rootId, options.width, options.height);
+    layoutDirty = false;
     emitLayoutCommit();
+  }
+
+  function mergeEntries(a: DispatchTraceEntry[], b: DispatchTraceEntry[]): DispatchTraceEntry[] {
+    return [...a, ...b];
+  }
+
+  /** 上一命中叶已从树中删除时（例如 React 先 remove 再 insert 同 id）丢弃内部 hover，避免指向悬空 id。 */
+  function dropHoverIfTargetMissing(): void {
+    if (lastHitTargetId !== null && store.get(lastHitTargetId) === undefined) {
+      lastHitTargetId = null;
+    }
+  }
+
+  /**
+   * 命中 + 方案 A 合成 enter/leave + 主事件。顺序：leave → enter → 主类型（同一次调用内）。
+   */
+  function dispatchPointerPipeline(ev: { type: PointerEventType; x: number; y: number }): void {
+    if (layoutDirty) {
+      runLayout();
+    }
+    dropHoverIfTargetMissing();
+
+    const nextLeaf = hitTestAt(ev.x, ev.y, rootId, store);
+    const prev = lastHitTargetId;
+    let merged: DispatchTraceEntry[] = [];
+
+    if (prev !== nextLeaf) {
+      if (prev !== null) {
+        const t = propagateScenePointerEvent("pointerleave", ev.x, ev.y, prev, propagateCtx);
+        merged = mergeEntries(merged, t.entries);
+      }
+      if (nextLeaf !== null) {
+        const t = propagateScenePointerEvent("pointerenter", ev.x, ev.y, nextLeaf, propagateCtx);
+        merged = mergeEntries(merged, t.entries);
+      }
+      lastHitTargetId = nextLeaf;
+    }
+
+    if (ev.type === "pointermove" && nextLeaf === null) {
+      lastTrace = { hit: null, targetId: null, entries: merged };
+      return;
+    }
+
+    if (nextLeaf === null) {
+      lastTrace = { hit: null, targetId: null, entries: merged };
+      return;
+    }
+
+    const main = propagateScenePointerEvent(ev.type, ev.x, ev.y, nextLeaf, propagateCtx);
+    lastTrace = {
+      hit: nextLeaf,
+      targetId: nextLeaf,
+      entries: mergeEntries(merged, main.entries),
+    };
   }
 
   runLayout();
@@ -140,16 +213,24 @@ export async function createSceneRuntime(
     getViewport: () => ({ width: options.width, height: options.height }),
 
     dispatchPointerLike(ev) {
-      lastTrace = dispatchPointerLike(ev, {
-        store,
-        rootId,
-        registry,
-        viewportWidth: options.width,
-        viewportHeight: options.height,
-      });
+      dispatchPointerPipeline(ev);
+    },
+
+    notifyPointerLeftStage(x, y) {
+      if (layoutDirty) {
+        runLayout();
+      }
+      dropHoverIfTargetMissing();
+      if (lastHitTargetId === null) {
+        return;
+      }
+      const prev = lastHitTargetId;
+      lastHitTargetId = null;
+      lastTrace = propagateScenePointerEvent("pointerleave", x, y, prev, propagateCtx);
     },
 
     insertView(parentId, id, style) {
+      layoutDirty = true;
       const existing = store.get(id);
       if (existing) {
         existing.viewStyle = { ...existing.viewStyle, ...style };
@@ -167,13 +248,24 @@ export async function createSceneRuntime(
       if (id === rootId) {
         throw new Error("removeView: cannot remove root");
       }
+      layoutDirty = true;
       store.removeNode(id);
       runLayout();
     },
 
-    updateStyle(id, patch) {
+    updateStyle(id, style) {
       const n = store.get(id);
       if (!n) return;
+      layoutDirty = true;
+      n.viewStyle = { ...style };
+      rebuildYogaStyle(n);
+      runLayout();
+    },
+
+    patchStyle(id, patch) {
+      const n = store.get(id);
+      if (!n) return;
+      layoutDirty = true;
       n.viewStyle = { ...n.viewStyle, ...patch };
       rebuildYogaStyle(n);
       runLayout();
@@ -188,7 +280,9 @@ export async function createSceneRuntime(
     },
 
     getLayoutSnapshot(): LayoutSnapshot {
-      runLayout();
+      if (layoutDirty) {
+        runLayout();
+      }
       return buildLayoutSnapshotWithoutRun();
     },
 

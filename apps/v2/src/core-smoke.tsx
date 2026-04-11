@@ -5,7 +5,7 @@ import {
   type SceneRuntime,
 } from "@react-canvas/core-v2";
 import { useEffect, useRef, useState } from "react";
-import { DEMO_HOVER, DEMO_LAYOUT, DEMO_POINTER } from "./demo-dimensions.ts";
+import { DEMO_HOVER, DEMO_LAYOUT, DEMO_POINTER, DEMO_THROUGH } from "./demo-dimensions.ts";
 import type { SmokeDemoId } from "./smoke-types.ts";
 
 function buildLayoutDemo(r: SceneRuntime, root: string, W: number, H: number): void {
@@ -55,6 +55,33 @@ function buildPointerDemo(r: SceneRuntime, root: string, W: number, H: number): 
   });
 }
 
+/** 前景后插入、半透明；`pointerEvents: none` 时命中落到背后同区域绿块。 */
+function buildThroughDemo(r: SceneRuntime, root: string, W: number, H: number): void {
+  r.insertView(root, "through-wrap", {
+    width: W,
+    height: H,
+    position: "relative",
+    backgroundColor: "#e2e8f0",
+  });
+  r.insertView("through-wrap", "through-back", {
+    position: "absolute",
+    left: 50,
+    top: 60,
+    width: 280,
+    height: 180,
+    backgroundColor: "#16a34a",
+  });
+  r.insertView("through-wrap", "through-front", {
+    position: "absolute",
+    left: 50,
+    top: 60,
+    width: 280,
+    height: 180,
+    backgroundColor: "#fb923c",
+    pointerEvents: "none",
+  });
+}
+
 function buildHoverDemo(r: SceneRuntime, root: string, W: number, H: number): void {
   r.insertView(root, "hover-wrap", {
     width: W,
@@ -84,7 +111,14 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
   const [lastClickTarget, setLastClickTarget] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const dim = demo === "layout" ? DEMO_LAYOUT : demo === "pointer" ? DEMO_POINTER : DEMO_HOVER;
+  const dim =
+    demo === "layout"
+      ? DEMO_LAYOUT
+      : demo === "pointer"
+        ? DEMO_POINTER
+        : demo === "through"
+          ? DEMO_THROUGH
+          : DEMO_HOVER;
 
   useEffect(() => {
     let cancelled = false;
@@ -112,16 +146,28 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
               setLastClickTarget("hit-lg（绿，后插入）");
             }),
           );
+        } else if (demo === "through") {
+          buildThroughDemo(r, root, dim.w, dim.h);
+          listenerOffs.push(
+            r.addListener("through-back", "click", () => {
+              setLastClickTarget("through-back（绿，背后层）");
+            }),
+          );
+          listenerOffs.push(
+            r.addListener("through-front", "click", () => {
+              setLastClickTarget("错误：through-front（橙）不应收到 click");
+            }),
+          );
         } else {
           buildHoverDemo(r, root, dim.w, dim.h);
           listenerOffs.push(
             r.addListener("v-hover", "pointerenter", () => {
-              r.updateStyle("v-hover", { backgroundColor: "#ff0000" });
+              r.patchStyle("v-hover", { backgroundColor: "#ff0000" });
             }),
           );
           listenerOffs.push(
             r.addListener("v-hover", "pointerleave", () => {
-              r.updateStyle("v-hover", { backgroundColor: "#0000ff" });
+              r.patchStyle("v-hover", { backgroundColor: "#0000ff" });
             }),
           );
         }
@@ -196,6 +242,11 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
         树序绘制与 hit-test：重叠区应<strong>见绿在上</strong>，点击重叠中心应对应{" "}
         <code>hit-lg</code>。
       </p>
+    ) : demo === "through" ? (
+      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>
+        橙块盖在绿块上，但橙块 <code>pointerEvents: &quot;none&quot;</code>
+        ，命中应穿透到 <code>through-back</code>；不应出现「前景收到 click」。
+      </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>
         移入左上角方块应变红（<code>#ff0000</code>），移出变蓝（<code>#0000ff</code>），与 React
@@ -217,7 +268,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
           background: "#f8fafc",
         }}
       />
-      {demo === "pointer" ? (
+      {demo === "pointer" || demo === "through" ? (
         <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "var(--text-h)" }}>
           上次 click 监听来自：<strong>{lastClickTarget ?? "（尚未点击）"}</strong>
         </p>
