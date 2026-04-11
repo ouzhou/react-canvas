@@ -9,6 +9,7 @@ import {
   DEMO_CURSOR,
   DEMO_HOVER,
   DEMO_LAYOUT,
+  DEMO_MODAL,
   DEMO_POINTER,
   DEMO_THROUGH,
 } from "./demo-dimensions.ts";
@@ -85,6 +86,32 @@ function buildThroughDemo(r: SceneRuntime, root: string, W: number, H: number): 
     height: 180,
     backgroundColor: "#fb923c",
     pointerEvents: "none",
+  });
+}
+
+/** 与 {@link ReactSmoke} Modal 示例同布局；弹窗层由点击后用命令式 API 挂到 `getModalRootId()`。 */
+function buildModalPageDemo(r: SceneRuntime, contentRoot: string, W: number, H: number): void {
+  r.insertView(contentRoot, "modal-page", {
+    width: W,
+    height: H,
+    position: "relative",
+    backgroundColor: "#e8eef5",
+  });
+  r.insertView("modal-page", "modal-open-btn", {
+    position: "absolute",
+    left: 16,
+    top: 16,
+    width: 140,
+    height: 44,
+    backgroundColor: "#3b82f6",
+  });
+  r.insertView("modal-page", "modal-main-block", {
+    position: "absolute",
+    left: 16,
+    top: 80,
+    width: 280,
+    height: 100,
+    backgroundColor: "#fca5a5",
   });
 }
 
@@ -238,7 +265,9 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
           ? DEMO_THROUGH
           : demo === "cursor"
             ? DEMO_CURSOR
-            : DEMO_HOVER;
+            : demo === "modal"
+              ? DEMO_MODAL
+              : DEMO_HOVER;
 
   useEffect(() => {
     let cancelled = false;
@@ -250,12 +279,52 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
     void createSceneRuntime({ width: dim.w, height: dim.h })
       .then((r) => {
         if (cancelled) return;
-        const root = r.getRootId();
+        const contentRoot = r.getContentRootId();
+        const modalRoot = r.getModalRootId();
+
+        const openCoreModal = (): void => {
+          if (r.hasSceneNode("core-modal-backdrop")) return;
+          r.patchStyle(modalRoot, { pointerEvents: "auto" });
+          r.insertView(modalRoot, "core-modal-backdrop", {
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.45)",
+          });
+          r.insertView(modalRoot, "core-modal-card", {
+            position: "absolute",
+            left: 70,
+            top: 90,
+            width: 260,
+            height: 140,
+            backgroundColor: "#ffffff",
+          });
+          r.insertView("core-modal-card", "core-modal-strip", {
+            position: "absolute",
+            left: 12,
+            top: 12,
+            width: 220,
+            height: 36,
+            backgroundColor: "#86efac",
+          });
+        };
+
+        const closeCoreModal = (): void => {
+          if (r.hasSceneNode("core-modal-card")) {
+            r.removeView("core-modal-card");
+          }
+          if (r.hasSceneNode("core-modal-backdrop")) {
+            r.removeView("core-modal-backdrop");
+          }
+          r.patchStyle(modalRoot, { pointerEvents: "none" });
+        };
 
         if (demo === "layout") {
-          buildLayoutDemo(r, root, dim.w, dim.h);
+          buildLayoutDemo(r, contentRoot, dim.w, dim.h);
         } else if (demo === "pointer") {
-          buildPointerDemo(r, root, dim.w, dim.h);
+          buildPointerDemo(r, contentRoot, dim.w, dim.h);
           listenerOffs.push(
             r.addListener("hit-sm", "click", () => {
               setLastClickTarget("hit-sm（红，先插入）");
@@ -267,7 +336,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
             }),
           );
         } else if (demo === "through") {
-          buildThroughDemo(r, root, dim.w, dim.h);
+          buildThroughDemo(r, contentRoot, dim.w, dim.h);
           listenerOffs.push(
             r.addListener("through-back", "click", () => {
               setLastClickTarget("through-back（绿，背后层）");
@@ -279,7 +348,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
             }),
           );
         } else if (demo === "cursor") {
-          buildCursorDemo(r, root, dim.w, dim.h);
+          buildCursorDemo(r, contentRoot, dim.w, dim.h);
           listenerOffs.push(
             r.addListener("c-hover-fn", "pointerenter", () => {
               r.patchStyle("c-hover-fn", {
@@ -317,8 +386,32 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
           };
           window.addEventListener("pointerup", onWindowPointerUp);
           listenerOffs.push(() => window.removeEventListener("pointerup", onWindowPointerUp));
+        } else if (demo === "modal") {
+          buildModalPageDemo(r, contentRoot, dim.w, dim.h);
+          listenerOffs.push(
+            r.addListener("modal-open-btn", "click", () => {
+              openCoreModal();
+              setLastClickTarget("已打开 Modal（insertView + patchStyle）");
+            }),
+          );
+          listenerOffs.push(
+            r.addListener("core-modal-backdrop", "click", () => {
+              closeCoreModal();
+              setLastClickTarget("点背板关闭（removeView + scene-modal pointerEvents:none）");
+            }),
+          );
+          listenerOffs.push(
+            r.addListener("modal-main-block", "click", () => {
+              setLastClickTarget("主界面红块收到 click（仅未打开 Modal 时）");
+            }),
+          );
+          listenerOffs.push(
+            r.addListener("core-modal-strip", "click", () => {
+              setLastClickTarget("弹窗内绿条（core）");
+            }),
+          );
         } else {
-          buildHoverDemo(r, root, dim.w, dim.h);
+          buildHoverDemo(r, contentRoot, dim.w, dim.h);
           listenerOffs.push(
             r.addListener("v-hover", "pointerenter", () => {
               r.patchStyle("v-hover", { backgroundColor: "#ff0000" });
@@ -413,6 +506,16 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
         <code>pointerdown</code> / 窗口 <code>pointerup</code> 切换 <code>grab</code> ↔{" "}
         <code>grabbing</code>。
       </p>
+    ) : demo === "modal" ? (
+      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
+        主内容挂在 <code>getContentRootId()</code>；点蓝块用 <code>insertView</code> 往{" "}
+        <code>getModalRootId()</code> 挂背板 + 卡片，并{" "}
+        <code>
+          patchStyle(modalRoot, {"{"} pointerEvents: &quot;auto&quot; {"}"} )
+        </code>
+        。点背板 <code>removeView</code> 后 <code>pointerEvents: &quot;none&quot;</code>，与 React{" "}
+        <code>&lt;Modal&gt;</code> 行为对齐。
+      </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>
         移入左上角方块应变红（<code>#ff0000</code>），移出变蓝（<code>#0000ff</code>），与 React
@@ -434,7 +537,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
           background: "#f8fafc",
         }}
       />
-      {demo === "pointer" || demo === "through" ? (
+      {demo === "pointer" || demo === "through" || demo === "modal" ? (
         <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "var(--text-h)" }}>
           上次 click 监听来自：<strong>{lastClickTarget ?? "（尚未点击）"}</strong>
         </p>

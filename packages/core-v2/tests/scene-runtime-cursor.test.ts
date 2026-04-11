@@ -8,11 +8,11 @@ function fakeCanvas(): HTMLCanvasElement {
 
 test("pointermove writes canvas.style.cursor from viewStyle.cursor", async () => {
   const rt = await createSceneRuntime({ width: 100, height: 100 });
-  const root = rt.getRootId();
+  const contentRoot = rt.getContentRootId();
   const canvas = fakeCanvas();
   bindSceneRuntimeCursorTarget(rt, canvas);
 
-  rt.insertView(root, "box", {
+  rt.insertView(contentRoot, "box", {
     width: 50,
     height: 50,
     cursor: "pointer",
@@ -30,11 +30,11 @@ test("pointermove writes canvas.style.cursor from viewStyle.cursor", async () =>
 
 test("notifyPointerLeftStage resets cursor to default", async () => {
   const rt = await createSceneRuntime({ width: 100, height: 100 });
-  const root = rt.getRootId();
+  const contentRoot = rt.getContentRootId();
   const canvas = fakeCanvas();
   bindSceneRuntimeCursorTarget(rt, canvas);
 
-  rt.insertView(root, "box", {
+  rt.insertView(contentRoot, "box", {
     width: 50,
     height: 50,
     cursor: "crosshair",
@@ -49,11 +49,11 @@ test("notifyPointerLeftStage resets cursor to default", async () => {
 
 test("pointerdown + sync patchStyle updates cursor without pointermove", async () => {
   const rt = await createSceneRuntime({ width: 100, height: 100 });
-  const root = rt.getRootId();
+  const contentRoot = rt.getContentRootId();
   const canvas = fakeCanvas();
   bindSceneRuntimeCursorTarget(rt, canvas);
 
-  rt.insertView(root, "box", {
+  rt.insertView(contentRoot, "box", {
     width: 50,
     height: 50,
     cursor: "grab",
@@ -72,11 +72,11 @@ test("pointerdown + sync patchStyle updates cursor without pointermove", async (
 
 test("updateStyle cursor applies without pointermove while hover target unchanged", async () => {
   const rt = await createSceneRuntime({ width: 100, height: 100 });
-  const root = rt.getRootId();
+  const contentRoot = rt.getContentRootId();
   const canvas = fakeCanvas();
   bindSceneRuntimeCursorTarget(rt, canvas);
 
-  rt.insertView(root, "box", {
+  rt.insertView(contentRoot, "box", {
     width: 50,
     height: 50,
     cursor: "grab",

@@ -46,7 +46,7 @@ export function Canvas(props: CanvasProps): ReactNode {
     <div style={{ position: "relative", width, height }}>
       <SceneSkiaCanvas runtime={runtime} width={width} height={height} />
       <SceneRuntimeContext.Provider value={runtime}>
-        <ParentSceneIdContext.Provider value={runtime.getRootId()}>
+        <ParentSceneIdContext.Provider value={runtime.getContentRootId()}>
           {children}
         </ParentSceneIdContext.Provider>
       </SceneRuntimeContext.Provider>

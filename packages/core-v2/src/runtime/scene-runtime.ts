@@ -16,6 +16,11 @@ import { createNodeStore, type NodeStore } from "./node-store.ts";
 
 const cursorTargetByRuntime = new WeakMap<object, HTMLCanvasElement | null>();
 
+/** 主界面 reconciler 默认挂载点（`root` 的第一子节点）。 */
+export const SCENE_CONTENT_ID = "scene-content";
+/** 弹窗层挂载点（`root` 的第二子节点；无 Modal 时 `pointerEvents: 'none'` 以免挡住 content）。 */
+export const SCENE_MODAL_ID = "scene-modal";
+
 /**
  * 由 `attachCanvasStagePointer` 在挂载/卸载时调用，将画布与 runtime 关联以便写入 `cursor`。
  * 不暴露在对外 {@link SceneRuntime} 类型中。
@@ -60,6 +65,10 @@ export type LayoutCommitPayload = {
 
 export type SceneRuntime = {
   getRootId(): string;
+  /** 主内容槽位 id，与 {@link SCENE_CONTENT_ID} 相同。 */
+  getContentRootId(): string;
+  /** 弹窗槽位 id，与 {@link SCENE_MODAL_ID} 相同。 */
+  getModalRootId(): string;
   getViewport(): { width: number; height: number };
   dispatchPointerLike(ev: { type: PointerEventType; x: number; y: number }): void;
   /**
@@ -237,10 +246,31 @@ export async function createSceneRuntime(
     applyResolvedCursor();
   }
 
-  runLayout();
+  function installDefaultSceneSlots(): void {
+    layoutDirty = true;
+    const content = store.createChildAt(rootId, SCENE_CONTENT_ID);
+    content.viewStyle = { flex: 1 };
+    applyStylesToYoga(content.yogaNode, content.viewStyle);
+    const modal = store.createChildAt(rootId, SCENE_MODAL_ID);
+    modal.viewStyle = {
+      position: "absolute",
+      left: 0,
+      top: 0,
+      width: "100%",
+      height: "100%",
+      /** 无子节点时若不设为 `none`，全屏槽会挡住 `scene-content` 的命中（见 `hitTestAt`）。Modal 打开时由 React 侧 `patchStyle` 改回 `auto`。 */
+      pointerEvents: "none",
+    };
+    applyStylesToYoga(modal.yogaNode, modal.viewStyle);
+    runLayout();
+  }
+
+  installDefaultSceneSlots();
 
   apiRef = {
     getRootId: () => rootId,
+    getContentRootId: () => SCENE_CONTENT_ID,
+    getModalRootId: () => SCENE_MODAL_ID,
     getViewport: () => ({ width: options.width, height: options.height }),
 
     dispatchPointerLike(ev) {
@@ -281,6 +311,9 @@ export async function createSceneRuntime(
     removeView(id) {
       if (id === rootId) {
         throw new Error("removeView: cannot remove root");
+      }
+      if (id === SCENE_CONTENT_ID || id === SCENE_MODAL_ID) {
+        throw new Error(`removeView: cannot remove scene slot "${id}"`);
       }
       layoutDirty = true;
       store.removeNode(id);

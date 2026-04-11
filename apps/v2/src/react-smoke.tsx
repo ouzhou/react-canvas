@@ -1,9 +1,10 @@
-import { Canvas, CanvasProvider, useSceneRuntime, View } from "@react-canvas/react-v2";
+import { Canvas, CanvasProvider, Modal, useSceneRuntime, View } from "@react-canvas/react-v2";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   DEMO_CURSOR,
   DEMO_HOVER,
   DEMO_LAYOUT,
+  DEMO_MODAL,
   DEMO_POINTER,
   DEMO_THROUGH,
 } from "./demo-dimensions.ts";
@@ -337,6 +338,98 @@ function CursorDemoScene({ W, H }: { W: number; H: number }) {
 
 type ReactSmokeProps = { demo: SmokeDemoId };
 
+/** Modal：`scene-modal` 槽 + 全屏背板；打开后点主界面红块区域应落到背板 `onRequestClose`。 */
+function ModalDemoRoot() {
+  const [open, setOpen] = useState(false);
+  const [log, setLog] = useState<string | null>(null);
+  const W = DEMO_MODAL.w;
+  const H = DEMO_MODAL.h;
+  return (
+    <>
+      <CanvasProvider>
+        {({ isReady }) =>
+          isReady && (
+            <Canvas width={W} height={H}>
+              <View
+                id="modal-page"
+                style={{
+                  width: W,
+                  height: H,
+                  position: "relative",
+                  backgroundColor: "#e8eef5",
+                }}
+              >
+                <View
+                  id="modal-open-btn"
+                  style={{
+                    position: "absolute",
+                    left: 16,
+                    top: 16,
+                    width: 140,
+                    height: 44,
+                    backgroundColor: "#3b82f6",
+                  }}
+                  onClick={() => {
+                    setOpen(true);
+                    setLog("已打开 Modal");
+                  }}
+                />
+                <View
+                  id="modal-main-block"
+                  style={{
+                    position: "absolute",
+                    left: 16,
+                    top: 80,
+                    width: 280,
+                    height: 100,
+                    backgroundColor: "#fca5a5",
+                  }}
+                  onClick={() => setLog("主界面红块收到点击（仅 Modal 关闭时）")}
+                />
+              </View>
+              <Modal
+                visible={open}
+                onRequestClose={() => {
+                  setOpen(false);
+                  setLog("onRequestClose（点背板关闭）");
+                }}
+              >
+                <View
+                  id="modal-card"
+                  style={{
+                    position: "absolute",
+                    left: 70,
+                    top: 90,
+                    width: 260,
+                    height: 140,
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  <View
+                    id="modal-inner-strip"
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: 12,
+                      width: 220,
+                      height: 36,
+                      backgroundColor: "#86efac",
+                    }}
+                    onClick={() => setLog("弹窗内绿条（不关闭 Modal）")}
+                  />
+                </View>
+              </Modal>
+            </Canvas>
+          )
+        }
+      </CanvasProvider>
+      <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "var(--text-h)" }}>
+        操作日志：<strong>{log ?? "（尚未点击）"}</strong>
+      </p>
+    </>
+  );
+}
+
 /** `CanvasProvider` → `Canvas` + `View`，与 {@link CoreSmoke} 场景对齐。 */
 export function ReactSmoke({ demo }: ReactSmokeProps) {
   const [lastClickTarget, setLastClickTarget] = useState<string | null>(null);
@@ -355,7 +448,9 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
           ? DEMO_THROUGH.w
           : demo === "cursor"
             ? DEMO_CURSOR.w
-            : DEMO_HOVER.w;
+            : demo === "modal"
+              ? DEMO_MODAL.w
+              : DEMO_HOVER.w;
   const H =
     demo === "layout"
       ? DEMO_LAYOUT.h
@@ -365,10 +460,18 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
           ? DEMO_THROUGH.h
           : demo === "cursor"
             ? DEMO_CURSOR.h
-            : DEMO_HOVER.h;
+            : demo === "modal"
+              ? DEMO_MODAL.h
+              : DEMO_HOVER.h;
 
   const blurb =
-    demo === "layout" ? (
+    demo === "modal" ? (
+      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
+        <code>Modal</code> 挂在 <code>scene-modal</code>{" "}
+        槽；打开后全屏背板在上层。请先点蓝块打开，再点红块区域：应走 <code>onRequestClose</code>
+        （背板），主界面红块不应收到 click。点弹窗内绿条仅记日志，不关闭。
+      </p>
+    ) : demo === "layout" ? (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
         三行 flex：顶 3 格、中 2 格、底 4 格；画布内仅 <code>View</code>（{W}×{H}）。
       </p>
@@ -397,6 +500,15 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
         切换颜色。
       </p>
     );
+
+  if (demo === "modal") {
+    return (
+      <div>
+        {blurb}
+        <ModalDemoRoot />
+      </div>
+    );
+  }
 
   return (
     <div>

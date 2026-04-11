@@ -8,10 +8,10 @@ test("subscribeAfterLayout fires after insertView and on subscribe", async () =>
     count += 1;
   });
   expect(count).toBeGreaterThanOrEqual(1);
-  const root = rt.getRootId();
-  rt.insertView(root, "a", { width: 10, height: 10 });
+  const contentRoot = rt.getContentRootId();
+  rt.insertView(contentRoot, "a", { width: 10, height: 10 });
   expect(count).toBeGreaterThanOrEqual(2);
   off();
-  rt.insertView(root, "b", { width: 10, height: 10 });
+  rt.insertView(contentRoot, "b", { width: 10, height: 10 });
   expect(count).toBeGreaterThanOrEqual(2);
 });

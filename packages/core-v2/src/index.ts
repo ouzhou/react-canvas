@@ -25,6 +25,8 @@ export type { SceneNode } from "./scene/scene-node.ts";
 export {
   bindSceneRuntimeCursorTarget,
   createSceneRuntime,
+  SCENE_CONTENT_ID,
+  SCENE_MODAL_ID,
   type CreateSceneRuntimeOptions,
   type LayoutCommitPayload,
   type LayoutSnapshot,

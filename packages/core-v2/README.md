@@ -52,3 +52,19 @@
 | **P0-3** | **`click` 规则**（与 down/up 目标一致、移动阈值等，按产品定）                                 | 有 `click` 派发，规则可收紧                                 |
 | **P0-4** | **`pointermove`** + 上一目标缓存 + **enter/leave（hover）** + 性能（节流/避免无订阅全量命中） | `pointermove` + rAF 合并；`layoutDirty`；方案 A enter/leave |
 | **P0-5** | **`View` 的 `style` 支持函数**：`({ pressed, hovered }) => ViewStyle`，纯外观不触发布局       | 部分：`({ hovered }) => ViewStyle`（react-v2）              |
+
+---
+
+## P1 规划（与优先级）
+
+| 代号     | 内容                                                                                                                                  | 状态   |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| **P1-A** | **Layer / 类 RN Modal**：`modalLayer`、按层叠放、`captureEvents` 阻断低层指针；与 React Portal 挂到指定 Layer 根（见设计文档 §4）     | 未开始 |
+| **P1-B** | **`ViewStyle` 过渡 / 动画**：时间轴或声明式 transition，对可动画属性插值并驱动 `updateStyle`（布局与绘制策略需单独约定）              | 未开始 |
+| **P1-C** | **`ViewStyle.cursor`**：命中链解析 + 写入 `canvas.style.cursor`（见 `docs/superpowers/specs/2026-04-11-view-style-cursor-design.md`） | 未开始 |
+
+**先做 Modal 还是先做 style transition？**
+
+- **更依赖引擎、且文档已论证应优先补齐的是 Layer / Modal 能力**：单棵树仅靠 `zIndex` 无法可靠得到「顶层渲染 + 打开时底层不响应」的 RN 式语义；见 `docs/core-design.md` **§4 Layer**。
+- **style transition** 更多是体验与 API 形态：在 core 内置插值之前，仍可用 **`requestAnimationFrame` + 逐帧 `updateStyle`** 做淡入淡出等；不阻塞你先做 **弹窗/遮罩** 的产品路径。
+- **建议顺序**：若近期要 **Dialog / 全屏遮罩 / 菜单顶层交互**，优先 **P1-A（Layer + modalLayer）**；待交互分层稳定后，再上 **P1-B** 或与 Modal 进入动效需求同步推进。需要浏览器级光标反馈时可并行或小步落地 **P1-C**。

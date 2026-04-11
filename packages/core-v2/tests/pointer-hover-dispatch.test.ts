@@ -4,15 +4,15 @@ import { createSceneRuntime } from "../src/runtime/scene-runtime.ts";
 
 test("pointer move: leave then enter then move when leaf changes (scheme A)", async () => {
   const rt = await createSceneRuntime({ width: 100, height: 100 });
-  const root = rt.getRootId();
-  rt.insertView(root, "a", {
+  const contentRoot = rt.getContentRootId();
+  rt.insertView(contentRoot, "a", {
     width: 40,
     height: 40,
     position: "absolute",
     left: 0,
     top: 0,
   });
-  rt.insertView(root, "b", {
+  rt.insertView(contentRoot, "b", {
     width: 40,
     height: 40,
     position: "absolute",
@@ -37,8 +37,8 @@ test("pointer move: leave then enter then move when leaf changes (scheme A)", as
 
 test("same leaf move: no enter/leave, only pointermove", async () => {
   const rt = await createSceneRuntime({ width: 100, height: 100 });
-  const root = rt.getRootId();
-  rt.insertView(root, "leaf", { width: 50, height: 50 });
+  const contentRoot = rt.getContentRootId();
+  rt.insertView(contentRoot, "leaf", { width: 50, height: 50 });
 
   const order: string[] = [];
   rt.addListener("leaf", "pointerenter", () => order.push("enter"));
@@ -53,8 +53,8 @@ test("same leaf move: no enter/leave, only pointermove", async () => {
 
 test("notifyPointerLeftStage emits pointerleave and clears hover", async () => {
   const rt = await createSceneRuntime({ width: 100, height: 100 });
-  const root = rt.getRootId();
-  rt.insertView(root, "leaf", { width: 50, height: 50 });
+  const contentRoot = rt.getContentRootId();
+  rt.insertView(contentRoot, "leaf", { width: 50, height: 50 });
 
   const seen: string[] = [];
   rt.addListener("leaf", "pointerleave", () => seen.push("leave"));
@@ -71,8 +71,8 @@ test("notifyPointerLeftStage emits pointerleave and clears hover", async () => {
 test("repeated pointerdown without tree changes does not call calculateAndSyncLayout each time", async () => {
   const spy = vi.spyOn(layoutSync, "calculateAndSyncLayout");
   const rt = await createSceneRuntime({ width: 100, height: 100 });
-  const root = rt.getRootId();
-  rt.insertView(root, "v", { width: 50, height: 50 });
+  const contentRoot = rt.getContentRootId();
+  rt.insertView(contentRoot, "v", { width: 50, height: 50 });
 
   const nAfterInsert = spy.mock.calls.length;
 

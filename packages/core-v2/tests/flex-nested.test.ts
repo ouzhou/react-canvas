@@ -6,8 +6,8 @@ test("nested flex column + row with 4 children gets non-zero widths", async () =
   const W = 800;
   const H = 600;
   const rt = await createSceneRuntime({ width: W, height: H });
-  const root = rt.getRootId();
-  rt.insertView(root, "flex-root", {
+  const contentRoot = rt.getContentRootId();
+  rt.insertView(contentRoot, "flex-root", {
     width: W,
     height: H,
     flexDirection: "column",
