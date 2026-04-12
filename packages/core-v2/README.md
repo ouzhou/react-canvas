@@ -8,13 +8,13 @@
 
 | 模块             | 作用                                                                                                                                                                                                                   |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **runtime**      | `createSceneRuntime`：`insertView` / `removeView` / `updateStyle`、视口、`subscribeAfterLayout`、`dispatchPointerLike`、`addListener`、`getLastDispatchTrace`                                                          |
+| **runtime**      | `createSceneRuntime`：`insertView` / `insertImage` / `insertSvgPath` / `removeView` / `updateStyle`、视口、`subscribeAfterLayout`、`dispatchPointerLike`、`addListener`、`getLastDispatchTrace`                        |
 | **init-runtime** | `initRuntime`：Yoga + CanvasKit 单例；`subscribeRuntimeInit` / `getRuntimeSnapshot` / `getRuntimeServerSnapshot`（供 React `useSyncExternalStore`）                                                                    |
 | **layout**       | `ViewStyle` → Yoga（`style-map`）；`calculateAndSyncLayout`、`absoluteBoundsFor`（相对父级与舞台绝对盒）                                                                                                               |
 | **hit**          | `hitTestAt(stageX, stageY)`：轴对齐矩形命中，**兄弟节点从最后一个子节点向前 DFS**；命中最深节点                                                                                                                        |
 | **events**       | `PointerEventType` 含 `pointermove` / `pointerenter` / `pointerleave` 等；`ScenePointerEvent`（`stopPropagation`）；`dispatchPointerLike`（捕获 → 冒泡）；`EventRegistry`                                              |
 | **input**        | `attachCanvasStagePointer`：`pointermove`（`requestAnimationFrame` 每帧合并一次）、`pointerdown` / `pointerup`、画布 `pointerleave` → `notifyPointerLeftStage`；`pointerup` 主键时额外 `click`；`clientXYToStageLocal` |
-| **render**       | `initCanvasKit`、`attachSceneSkiaPresenter`：订阅布局提交 → Skia 绘制                                                                                                                                                  |
+| **render**       | `initCanvasKit`、`attachSceneSkiaPresenter`：订阅布局提交 → Skia 绘制（含 **`Image`** 位图与 **`SvgPath`** 矢量，`d` + 默认 `viewBox` `0 0 24 24`）                                                                    |
 | **geometry**     | `canvasBackingStoreSize`：backing store 与 DPR 对齐                                                                                                                                                                    |
 
 设计说明见仓库根目录 `docs/core-design.md`（§2.2 与运行时初始化相关）。

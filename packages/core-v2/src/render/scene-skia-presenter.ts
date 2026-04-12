@@ -1,6 +1,9 @@
 import type { CanvasKit, Paint, TypefaceFontProvider } from "canvaskit-wasm";
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
+import { computeImageDestSrcRects } from "../media/image-object-fit.ts";
+import { normalizeUriKey, peekDecodedImage } from "../media/image-uri-cache.ts";
+import { viewBoxToDestTransform } from "../media/view-box.ts";
 import type { ViewStyle } from "../layout/style-map.ts";
 import { setParagraphMeasureContext } from "../layout/paragraph-measure-context.ts";
 import type {
@@ -242,6 +245,102 @@ export async function attachSceneSkiaPresenter(
           skCanvas.drawRect(rect, paintBorder);
         }
       }
+
+      if (box.nodeKind === "image" && box.imageUri) {
+        const key = normalizeUriKey(box.imageUri);
+        const img = peekDecodedImage(key);
+        if (img) {
+          const iw = img.width();
+          const ih = img.height();
+          const { dest, src } = computeImageDestSrcRects({
+            objectFit: box.imageObjectFit ?? "contain",
+            destW: box.width,
+            destH: box.height,
+            imageW: iw,
+            imageH: ih,
+          });
+          const srcR = ck.LTRBRect(src.x, src.y, src.x + src.width, src.y + src.height);
+          const dstR = ck.LTRBRect(
+            box.absLeft + dest.x,
+            box.absTop + dest.y,
+            box.absLeft + dest.x + dest.width,
+            box.absTop + dest.y + dest.height,
+          );
+          const pImg = new ck.Paint();
+          pImg.setAntiAlias(true);
+          if (brx > 0 || bry > 0) {
+            skCanvas.save();
+            skCanvas.clipRRect(ck.RRectXY(rect, brx, bry), ck.ClipOp.Intersect, true);
+            skCanvas.drawImageRect(img, srcR, dstR, pImg, false);
+            skCanvas.restore();
+          } else {
+            skCanvas.drawImageRect(img, srcR, dstR, pImg, false);
+          }
+          pImg.delete();
+        }
+      }
+
+      if (
+        box.nodeKind === "svgPath" &&
+        box.svgPathD &&
+        typeof box.svgPathViewBoxMinX === "number" &&
+        typeof box.svgPathViewBoxMinY === "number" &&
+        typeof box.svgPathViewBoxWidth === "number" &&
+        typeof box.svgPathViewBoxHeight === "number"
+      ) {
+        const pathSvg = ck.Path.MakeFromSVGString(box.svgPathD);
+        if (pathSvg) {
+          const vb = {
+            minX: box.svgPathViewBoxMinX,
+            minY: box.svgPathViewBoxMinY,
+            width: box.svgPathViewBoxWidth,
+            height: box.svgPathViewBoxHeight,
+          };
+          const t = viewBoxToDestTransform(vb, {
+            x: box.absLeft,
+            y: box.absTop,
+            width: box.width,
+            height: box.height,
+          });
+          const invScale = t.scale > 0 ? 1 / t.scale : 1;
+          const strokeW = (box.svgStrokeWidth ?? 1) * invScale;
+
+          if (brx > 0 || bry > 0) {
+            skCanvas.save();
+            skCanvas.clipRRect(ck.RRectXY(rect, brx, bry), ck.ClipOp.Intersect, true);
+          }
+          skCanvas.save();
+          skCanvas.translate(t.translateX, t.translateY);
+          skCanvas.scale(t.scale, t.scale);
+          skCanvas.translate(-vb.minX, -vb.minY);
+
+          const fillPaint = new ck.Paint();
+          fillPaint.setAntiAlias(true);
+          fillPaint.setStyle(ck.PaintStyle.Fill);
+          const strokePaint = new ck.Paint();
+          strokePaint.setAntiAlias(true);
+          strokePaint.setStyle(ck.PaintStyle.Stroke);
+          strokePaint.setStrokeWidth(strokeW);
+
+          if (box.svgFill !== undefined && box.svgFill !== "none") {
+            fillPaint.setColor(colorStringToCkColor(ck, box.svgFill));
+            skCanvas.drawPath(pathSvg, fillPaint);
+          }
+          if (box.svgStroke !== undefined && box.svgStroke.length > 0) {
+            strokePaint.setColor(colorStringToCkColor(ck, box.svgStroke));
+            skCanvas.drawPath(pathSvg, strokePaint);
+          }
+
+          fillPaint.delete();
+          strokePaint.delete();
+          skCanvas.restore();
+          if (brx > 0 || bry > 0) {
+            skCanvas.restore();
+          }
+          pathSvg.delete();
+        }
+      }
+
       if (box.nodeKind === "text" && paragraphFontProvider && defaultParagraphFontFamily) {
         const layoutBoxStyle = (box.textLayoutStyle ?? {}) as ViewStyle;
         if (box.textRuns?.length) {

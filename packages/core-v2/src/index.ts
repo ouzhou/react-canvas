@@ -18,6 +18,8 @@ export type {
   ViewStyle,
   YogaLength,
 } from "./layout/style-map.ts";
+export type { ImageObjectFit } from "./media/image-object-fit.ts";
+export { computeImageDestSrcRects } from "./media/image-object-fit.ts";
 export type { TextFlatRun } from "./text/text-flat-run.ts";
 export { applyStylesToYoga, clampOpacityForSnapshot } from "./layout/style-map.ts";
 export { hitTestAt } from "./hit/hit-test.ts";
@@ -47,6 +49,8 @@ export {
   SCENE_CONTENT_ID,
   SCENE_MODAL_ID,
   type CreateSceneRuntimeOptions,
+  type InsertImageOptions,
+  type InsertSvgPathOptions,
   type LayoutCommitPayload,
   type LayoutSnapshot,
   type SceneGraphSnapshot,

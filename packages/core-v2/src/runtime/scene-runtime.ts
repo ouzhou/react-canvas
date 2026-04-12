@@ -20,6 +20,10 @@ import {
 import { bindTextNodeMeasure } from "../layout/text-yoga-measure.ts";
 import { loadYoga } from "../layout/yoga.ts";
 import type { Yoga } from "yoga-layout/load";
+import type { ImageObjectFit } from "../media/image-object-fit.ts";
+import { getOrStartInflightDecode, normalizeUriKey } from "../media/image-uri-cache.ts";
+import { parseSvgViewBox } from "../media/view-box.ts";
+import { initCanvasKit } from "../render/canvaskit.ts";
 import type { SceneNode, SceneNodeKind } from "../scene/scene-node.ts";
 import type { TextFlatRun } from "../text/text-flat-run.ts";
 import { joinTextFlatRuns } from "../text/text-flat-run.ts";
@@ -123,6 +127,24 @@ export type CreateSceneRuntimeOptions = {
   height: number;
 };
 
+export type InsertImageOptions = {
+  uri: string;
+  objectFit?: ImageObjectFit;
+  style: ViewStyle;
+  onLoad?: () => void;
+  onError?: (err: unknown) => void;
+};
+
+export type InsertSvgPathOptions = {
+  d: string;
+  viewBox?: string;
+  style: ViewStyle;
+  stroke?: string;
+  fill?: string;
+  strokeWidth?: number;
+  onError?: (err: unknown) => void;
+};
+
 export type SceneGraphSnapshot = {
   rootId: string;
   nodes: Record<string, { parentId: string | null; children: string[]; label?: string }>;
@@ -157,6 +179,18 @@ export type LayoutSnapshot = Record<
     textRuns?: TextFlatRun[];
     /** 仅 `scrollView`；纵向滚动偏移（px）。 */
     scrollY?: number;
+    /** `image` */
+    imageUri?: string;
+    imageObjectFit?: ImageObjectFit;
+    /** `svgPath`（仅 viewBox 与 `d` 均有效时写入，供 Skia 绘制） */
+    svgPathD?: string;
+    svgPathViewBoxMinX?: number;
+    svgPathViewBoxMinY?: number;
+    svgPathViewBoxWidth?: number;
+    svgPathViewBoxHeight?: number;
+    svgStroke?: string;
+    svgFill?: string;
+    svgStrokeWidth?: number;
   }
 >;
 
@@ -205,6 +239,8 @@ export type SceneRuntime = {
     content: string | readonly TextFlatRun[],
     style: ViewStyle,
   ): void;
+  insertImage(parentId: string, id: string, options: InsertImageOptions): void;
+  insertSvgPath(parentId: string, id: string, options: InsertSvgPathOptions): void;
   removeView(id: string): void;
   updateStyle(id: string, style: ViewStyle): void;
   /** 局部合并样式（merge）：仅覆盖传入的字段，未传入字段保持原值。命令式场景（如 hover 切换单属性）使用。 */
@@ -259,6 +295,49 @@ export async function createSceneRuntime(
   const rootId = root.id;
   let lastTrace: DispatchTrace = { hit: null, targetId: null, entries: [] };
   const layoutListeners = new Set<(payload: LayoutCommitPayload) => void>();
+  /** 取消「忽略异步解码结果」：`fetch` 仍可能完成，但不再 `onLoad` / `emitLayoutCommit`。 */
+  const imageDecodeAbortByNode = new Map<string, AbortController>();
+
+  function cancelImageDecode(nodeId: string): void {
+    const ac = imageDecodeAbortByNode.get(nodeId);
+    ac?.abort();
+    imageDecodeAbortByNode.delete(nodeId);
+  }
+
+  function scheduleImageDecode(
+    id: string,
+    uri: string,
+    onLoad?: () => void,
+    onError?: (err: unknown) => void,
+  ): void {
+    cancelImageDecode(id);
+    const ac = new AbortController();
+    imageDecodeAbortByNode.set(id, ac);
+    const key = normalizeUriKey(uri);
+    void (async () => {
+      try {
+        const ck = await initCanvasKit();
+        const img = await getOrStartInflightDecode(key, uri, ck, fetch);
+        if (ac.signal.aborted) {
+          return;
+        }
+        const node = store.get(id);
+        if (!node || (node.kind ?? "view") !== "image" || node.imageUri !== uri) {
+          return;
+        }
+        if (!img) {
+          onError?.(new Error("[@react-canvas/core-v2] image decode returned null"));
+          return;
+        }
+        onLoad?.();
+        emitLayoutCommit();
+      } catch (e) {
+        if (!ac.signal.aborted) {
+          onError?.(e);
+        }
+      }
+    })();
+  }
 
   /** 自上次 `calculateAndSyncLayout` 以来场景树或样式是否已变（干净路径下指针派发跳过 Yoga）。 */
   let layoutDirty = true;
@@ -402,6 +481,30 @@ export async function createSceneRuntime(
         }
         if (n.textRuns !== undefined && n.textRuns.length > 0) {
           entry.textRuns = [...n.textRuns];
+        }
+      }
+      if (nk === "image" && n.imageUri !== undefined) {
+        entry.imageUri = n.imageUri;
+        entry.imageObjectFit = n.imageObjectFit ?? "contain";
+      }
+      if (nk === "svgPath") {
+        const d = n.svgPathD;
+        const pr = parseSvgViewBox(n.svgViewBox);
+        if (pr.ok && typeof d === "string" && d.length > 0) {
+          entry.svgPathD = d;
+          entry.svgPathViewBoxMinX = pr.minX;
+          entry.svgPathViewBoxMinY = pr.minY;
+          entry.svgPathViewBoxWidth = pr.width;
+          entry.svgPathViewBoxHeight = pr.height;
+          if (n.svgStroke !== undefined) {
+            entry.svgStroke = n.svgStroke;
+          }
+          if (n.svgFill !== undefined) {
+            entry.svgFill = n.svgFill;
+          }
+          if (typeof n.svgStrokeWidth === "number" && Number.isFinite(n.svgStrokeWidth)) {
+            entry.svgStrokeWidth = n.svgStrokeWidth;
+          }
         }
       }
       out[id] = entry;
@@ -677,6 +780,73 @@ export async function createSceneRuntime(
       applyResolvedCursor();
     },
 
+    insertImage(parentId, id, options) {
+      const { uri, objectFit = "contain", style, onLoad, onError } = options;
+      layoutDirty = true;
+      const existing = store.get(id);
+      if (existing) {
+        if (existing.kind !== "image") {
+          throw new Error(`insertImage: node "${id}" exists but is not an image`);
+        }
+        const prevUri = existing.imageUri;
+        existing.imageUri = uri;
+        existing.imageObjectFit = objectFit;
+        existing.viewStyle = { ...existing.viewStyle, ...style };
+        rebuildYogaStyle(existing, store, yoga);
+        runLayout();
+        if (prevUri !== uri) {
+          scheduleImageDecode(id, uri, onLoad, onError);
+        }
+        applyResolvedCursor();
+        return;
+      }
+      const n = store.createChildAt(parentId, id);
+      n.kind = "image";
+      n.imageUri = uri;
+      n.imageObjectFit = objectFit;
+      n.viewStyle = { ...style };
+      rebuildYogaStyle(n, store, yoga);
+      runLayout();
+      scheduleImageDecode(id, uri, onLoad, onError);
+      applyResolvedCursor();
+    },
+
+    insertSvgPath(parentId, id, options) {
+      const { d, viewBox, style, stroke, fill, strokeWidth, onError } = options;
+      const parsed = parseSvgViewBox(viewBox);
+      if (!parsed.ok) {
+        onError?.(new Error("[@react-canvas/core-v2] invalid viewBox"));
+      }
+      layoutDirty = true;
+      const existing = store.get(id);
+      if (existing) {
+        if (existing.kind !== "svgPath") {
+          throw new Error(`insertSvgPath: node "${id}" exists but is not an svgPath`);
+        }
+        existing.svgPathD = d;
+        existing.svgViewBox = viewBox;
+        existing.svgStroke = stroke;
+        existing.svgFill = fill;
+        existing.svgStrokeWidth = strokeWidth;
+        existing.viewStyle = { ...existing.viewStyle, ...style };
+        rebuildYogaStyle(existing, store, yoga);
+        runLayout();
+        applyResolvedCursor();
+        return;
+      }
+      const n = store.createChildAt(parentId, id);
+      n.kind = "svgPath";
+      n.svgPathD = d;
+      n.svgViewBox = viewBox;
+      n.svgStroke = stroke;
+      n.svgFill = fill;
+      n.svgStrokeWidth = strokeWidth;
+      n.viewStyle = { ...style };
+      rebuildYogaStyle(n, store, yoga);
+      runLayout();
+      applyResolvedCursor();
+    },
+
     removeView(id) {
       if (id === rootId) {
         throw new Error("removeView: cannot remove root");
@@ -685,6 +855,7 @@ export async function createSceneRuntime(
         throw new Error(`removeView: cannot remove scene slot "${id}"`);
       }
       layoutDirty = true;
+      cancelImageDecode(id);
       store.removeNode(id);
       runLayout();
       applyResolvedCursor();
