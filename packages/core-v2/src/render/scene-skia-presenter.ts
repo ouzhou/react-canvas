@@ -1,9 +1,13 @@
-import type { CanvasKit, TypefaceFontProvider } from "canvaskit-wasm";
+import type { CanvasKit, Paint, TypefaceFontProvider } from "canvaskit-wasm";
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
 import type { ViewStyle } from "../layout/style-map.ts";
 import { setParagraphMeasureContext } from "../layout/paragraph-measure-context.ts";
-import type { LayoutCommitPayload, SceneRuntime } from "../runtime/scene-runtime.ts";
+import type {
+  LayoutCommitPayload,
+  LayoutSnapshot,
+  SceneRuntime,
+} from "../runtime/scene-runtime.ts";
 import { parseCssHexColor } from "../text/css-hex.ts";
 import { buildAndDrawParagraphRuns } from "../text/paragraph-from-runs.ts";
 import { mapParagraphTextAlign, mergedRunStyleToCkTextStyle } from "../text/skia-text-style.ts";
@@ -85,11 +89,45 @@ export async function attachSceneSkiaPresenter(
     paintStroke.setStyle(ck.PaintStyle.Stroke);
     paintStroke.setStrokeWidth(2);
 
+    function readOpacity(box: LayoutSnapshot[string] | undefined): number {
+      const o = box?.opacity;
+      if (typeof o === "number" && Number.isFinite(o)) {
+        if (o >= 1) return 1;
+        if (o <= 0) return 0;
+        return o;
+      }
+      return 1;
+    }
+
     /**
      * 与 `hit-test` 叠放一致：兄弟中 `children` 靠后者在上。
      * 前序 DFS（先画本节点，再按子节点正序递归）→ 后插入的子节点后绘制、盖住先插入的兄弟。
+     *
+     * 若日后增加 `clipRect`：须明确 clip 与组透明 `saveLayer` 的先后（当前无 clip）。
      */
     function paintSubtree(id: string): void {
+      const box = commit.layout[id];
+      const a = readOpacity(box);
+      const bounds =
+        box &&
+        ck.LTRBRect(box.absLeft, box.absTop, box.absLeft + box.width, box.absTop + box.height);
+      let layerPaint: Paint | null = null;
+      if (a < 1 && bounds) {
+        layerPaint = new ck.Paint();
+        layerPaint.setAlphaf(a);
+        skCanvas.saveLayer(layerPaint, bounds, null);
+      }
+      try {
+        paintNodeContent(id);
+      } finally {
+        if (layerPaint) {
+          skCanvas.restore();
+          layerPaint.delete();
+        }
+      }
+    }
+
+    function paintNodeContent(id: string): void {
       const box = commit.layout[id];
       if (box?.backgroundColor) {
         const rgb = parseCssHexColor(box.backgroundColor);

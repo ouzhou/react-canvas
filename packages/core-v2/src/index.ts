@@ -19,7 +19,7 @@ export type {
   YogaLength,
 } from "./layout/style-map.ts";
 export type { TextFlatRun } from "./text/text-flat-run.ts";
-export { applyStylesToYoga } from "./layout/style-map.ts";
+export { applyStylesToYoga, clampOpacityForSnapshot } from "./layout/style-map.ts";
 export { hitTestAt } from "./hit/hit-test.ts";
 export { absoluteBoundsFor, calculateAndSyncLayout } from "./layout/layout-sync.ts";
 export type { DispatchTrace, DispatchTraceEntry } from "./events/dispatch.ts";

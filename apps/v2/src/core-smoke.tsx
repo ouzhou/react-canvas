@@ -35,7 +35,13 @@ import {
   TEXT_DEMO_WRAP_MIN,
 } from "./demo-dimensions.ts";
 import type { SmokeDemoId } from "./smoke-types.ts";
-import { STYLE_DEMO_CASES, type StyleDemoCase } from "./style-demo-content.ts";
+import {
+  STYLE_DEMO_CASES,
+  STYLE_OPACITY_SLIDER_DEFAULT,
+  STYLE_OPACITY_SLIDER_MAX,
+  STYLE_OPACITY_SLIDER_MIN,
+  type StyleDemoCase,
+} from "./style-demo-content.ts";
 
 function buildLayoutDemo(r: SceneRuntime, root: string, W: number, H: number): void {
   r.insertView(root, "flex-root", {
@@ -273,6 +279,54 @@ function buildStyleDemo(
     return;
   }
 
+  if (c === "opacity") {
+    const opPlay = STYLE_OPACITY_SLIDER_DEFAULT / 100;
+    r.insertView("style-root", "op-stack", {
+      flex: 1,
+      flexDirection: "column",
+      gap: 14,
+      marginTop: 8,
+    });
+    r.insertView("op-stack", "op-single-row", {
+      flexDirection: "row",
+      gap: 12,
+      alignItems: "center",
+    });
+    r.insertView("op-single-row", "op-ref", {
+      width: 72,
+      height: 56,
+      backgroundColor: "#2563eb",
+    });
+    r.insertView("op-single-row", "op-alone", {
+      width: 72,
+      height: 56,
+      backgroundColor: "#2563eb",
+      opacity: opPlay,
+    });
+    r.insertView("op-stack", "op-ancestor", {
+      width: Math.min(W - 48, 280),
+      height: 112,
+      flexDirection: "row",
+      gap: 10,
+      padding: 10,
+      backgroundColor: "#64748b",
+      opacity: opPlay,
+    });
+    r.insertView("op-ancestor", "op-child-a", {
+      width: 88,
+      height: 88,
+      backgroundColor: "#f97316",
+      opacity: 0.85,
+    });
+    r.insertView("op-ancestor", "op-child-b", {
+      width: 88,
+      height: 88,
+      backgroundColor: "#22d3ee",
+      opacity: 0.85,
+    });
+    return;
+  }
+
   r.insertView("style-root", "ar-stack", {
     flex: 1,
     minHeight: 140,
@@ -425,6 +479,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [styleCase, setStyleCase] = useState<StyleDemoCase>("margin-gap");
+  const [styleOpacityPercent, setStyleOpacityPercent] = useState(STYLE_OPACITY_SLIDER_DEFAULT);
 
   const dim =
     demo === "layout"
@@ -806,6 +861,13 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
     }
   }, [rt, demo, textWrapWidth]);
 
+  useEffect(() => {
+    if (!rt || demo !== "style" || styleCase !== "opacity") return;
+    const v = styleOpacityPercent / 100;
+    if (rt.hasSceneNode("op-alone")) rt.patchStyle("op-alone", { opacity: v });
+    if (rt.hasSceneNode("op-ancestor")) rt.patchStyle("op-ancestor", { opacity: v });
+  }, [rt, demo, styleCase, styleOpacityPercent]);
+
   if (error) {
     return <p style={{ color: "crimson" }}>Core 加载失败：{error.message}</p>;
   }
@@ -862,6 +924,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
         <code>flexGrow</code> / <code>flexShrink</code> / <code>flexBasis</code>、
         <code>flexDirection</code>（含 <code>row-reverse</code>）、<code>aspectRatio</code>、
         <code>overflow</code>（Skia 裁剪另议）。与 Core 命令式树 id 对齐；下方工具栏切换子场景。
+        <code>opacity</code> 子场景带滑块实时 <code>patchStyle</code>。
       </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>
@@ -935,10 +998,39 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
       </label>
     ) : null;
 
+  const styleOpacitySlider =
+    demo === "style" && styleCase === "opacity" ? (
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          margin: "0 0 0.5rem",
+          fontSize: 14,
+          color: "var(--text)",
+          maxWidth: Math.max(DEMO_STYLE.w, 480),
+        }}
+      >
+        <span style={{ whiteSpace: "nowrap" }}>半透明强度</span>
+        <input
+          type="range"
+          min={STYLE_OPACITY_SLIDER_MIN}
+          max={STYLE_OPACITY_SLIDER_MAX}
+          value={styleOpacityPercent}
+          onChange={(e) => setStyleOpacityPercent(Number(e.target.value))}
+          style={{ flex: 1, minWidth: 120 }}
+        />
+        <span style={{ fontVariantNumeric: "tabular-nums", minWidth: "3.5rem" }}>
+          {styleOpacityPercent}%
+        </span>
+      </label>
+    ) : null;
+
   return (
     <div>
       {blurb}
       {styleDemoToolbar}
+      {styleOpacitySlider}
       {textWidthSlider}
       <canvas
         ref={canvasRef}

@@ -73,6 +73,11 @@ export type ViewStyle = {
   /** 例如 `#e8f4fc`；未设置时 Skia 不绘制该节点矩形 */
   backgroundColor?: string;
   /**
+   * 不透明度 `0`–`1`（与 RN/CSS 一致）。不传 Yoga；由布局快照带给 Skia 做组透明。
+   * 缺省视为 `1`。非法值在写入快照时按 {@link clampOpacityForSnapshot} 处理。
+   */
+  opacity?: number;
+  /**
    * 命中测试（第一期：`auto` | `none`）。`none` 时本节点及子树不参与指针目标（与 RN 一致）。
    * 不传给 Yoga；未设置时视为 `auto`。
    */
@@ -507,4 +512,15 @@ export function applyStylesToYoga(node: YogaNode, style: ViewStyle): void {
   if (style.bottom !== undefined) {
     setYogaLengthPosition(node, Edge.Bottom, style.bottom);
   }
+}
+
+/**
+ * 将 `ViewStyle.opacity` 规范化为写入布局快照的值：`undefined` 表示省略（读取方当 `1`）。
+ */
+export function clampOpacityForSnapshot(value: unknown): number | undefined {
+  if (value == null) return undefined;
+  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+  if (value >= 1) return undefined;
+  if (value <= 0) return 0;
+  return value;
 }

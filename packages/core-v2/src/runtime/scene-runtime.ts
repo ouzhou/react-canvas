@@ -12,6 +12,7 @@ import { absoluteBoundsFor, calculateAndSyncLayout } from "../layout/layout-sync
 import {
   applyStylesToYoga,
   clearYogaLayoutStyle,
+  clampOpacityForSnapshot,
   type TextLayoutStyleSnapshot,
   type ViewStyle,
 } from "../layout/style-map.ts";
@@ -61,6 +62,8 @@ export type LayoutSnapshot = Record<
     absLeft: number;
     absTop: number;
     backgroundColor?: string;
+    /** 组透明；省略时视为 `1`。 */
+    opacity?: number;
     nodeKind?: SceneNodeKind;
     textContent?: string;
     textFontSize?: number;
@@ -207,6 +210,8 @@ export async function createSceneRuntime(
       };
       const bg = n.viewStyle?.backgroundColor;
       if (bg !== undefined) entry.backgroundColor = bg;
+      const o = clampOpacityForSnapshot(n.viewStyle?.opacity);
+      if (o !== undefined) entry.opacity = o;
       const nk = n.kind ?? "view";
       entry.nodeKind = nk;
       if (nk === "text" && n.textContent !== undefined) {

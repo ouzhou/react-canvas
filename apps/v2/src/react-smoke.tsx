@@ -14,7 +14,13 @@ import {
   TEXT_DEMO_WRAP_MIN,
 } from "./demo-dimensions.ts";
 import type { SmokeDemoId } from "./smoke-types.ts";
-import { STYLE_DEMO_CASES, type StyleDemoCase } from "./style-demo-content.ts";
+import {
+  STYLE_DEMO_CASES,
+  STYLE_OPACITY_SLIDER_DEFAULT,
+  STYLE_OPACITY_SLIDER_MAX,
+  STYLE_OPACITY_SLIDER_MIN,
+  type StyleDemoCase,
+} from "./style-demo-content.ts";
 import { MODAL_CARD_HELP, MODAL_OPEN_BTN_LABEL, MODAL_STRIP_LABEL } from "./modal-demo-content.ts";
 import {
   TEXT_DEMO_CAPTION,
@@ -231,7 +237,17 @@ function TextDemoScene(props: {
 }
 
 /** 与 {@link buildStyleDemo}（core-smoke）同 id，便于对照 Yoga 扩展字段。 */
-function StyleDemoScene({ W, H, scene }: { W: number; H: number; scene: StyleDemoCase }) {
+function StyleDemoScene({
+  W,
+  H,
+  scene,
+  opacityDemoPercent,
+}: {
+  W: number;
+  H: number;
+  scene: StyleDemoCase;
+  opacityDemoPercent: number;
+}) {
   const innerW = Math.min(W - 48, 308);
   if (scene === "margin-gap") {
     return (
@@ -386,6 +402,66 @@ function StyleDemoScene({ W, H, scene }: { W: number; H: number; scene: StyleDem
         >
           <View id="rv-first" style={{ width: 72, height: 48, backgroundColor: "#e11d48" }} />
           <View id="rv-second" style={{ width: 72, height: 48, backgroundColor: "#0d9488" }} />
+        </View>
+      </View>
+    );
+  }
+  if (scene === "opacity") {
+    const playO = opacityDemoPercent / 100;
+    return (
+      <View
+        key={scene}
+        id="style-root"
+        style={{
+          width: W,
+          height: H,
+          flexDirection: "column",
+          backgroundColor: "#f1f5f9",
+          padding: 12,
+        }}
+      >
+        <View
+          id="op-stack"
+          style={{
+            flex: 1,
+            flexDirection: "column",
+            gap: 14,
+            marginTop: 8,
+          }}
+        >
+          <View id="op-single-row" style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+            <View id="op-ref" style={{ width: 72, height: 56, backgroundColor: "#2563eb" }} />
+            <View
+              id="op-alone"
+              style={{
+                width: 72,
+                height: 56,
+                backgroundColor: "#2563eb",
+                opacity: playO,
+              }}
+            />
+          </View>
+          <View
+            id="op-ancestor"
+            style={{
+              width: Math.min(W - 48, 280),
+              height: 112,
+              flexDirection: "row",
+              gap: 10,
+              padding: 10,
+              backgroundColor: "#64748b",
+              opacity: playO,
+            }}
+          >
+            <View
+              id="op-child-a"
+              style={{ width: 88, height: 88, backgroundColor: "#f97316", opacity: 0.85 }}
+            />
+            <View
+              id="op-child-b"
+              style={{ width: 88, height: 88, backgroundColor: "#22d3ee", opacity: 0.85 }}
+            />
+          </View>
         </View>
       </View>
     );
@@ -877,6 +953,7 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
   const [textWrapWidth, setTextWrapWidth] = useState(TEXT_DEMO_WRAP_MAX);
   const [textDemoClickLog, setTextDemoClickLog] = useState<string | null>(null);
   const [styleCase, setStyleCase] = useState<StyleDemoCase>("margin-gap");
+  const [styleOpacityPercent, setStyleOpacityPercent] = useState(STYLE_OPACITY_SLIDER_DEFAULT);
   const onPointerHit = useCallback((label: string) => setLastClickTarget(label), []);
   const onTextBodyClick = useCallback(() => {
     setTextDemoClickLog(`text-body click · ${new Date().toLocaleTimeString()}`);
@@ -972,7 +1049,8 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
         与 Core 同树：<code>margin</code> / <code>gap</code>、<code>padding</code> 单边覆盖、
         <code>flexWrap</code>、<code>minHeight</code>、<code>flexGrow</code> /{" "}
         <code>flexShrink</code> / <code>flexBasis</code>、<code>row-reverse</code>、
-        <code>aspectRatio</code>、<code>overflow</code>。工具栏切换子场景。
+        <code>aspectRatio</code>、<code>overflow</code>。工具栏切换子场景；<code>opacity</code>{" "}
+        子场景有滑块联动。
       </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
@@ -1055,10 +1133,39 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
       </label>
     ) : null;
 
+  const styleOpacitySlider =
+    demo === "style" && styleCase === "opacity" ? (
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          margin: "0 0 0.5rem",
+          fontSize: 14,
+          color: "var(--text)",
+          maxWidth: Math.max(DEMO_STYLE.w, 480),
+        }}
+      >
+        <span style={{ whiteSpace: "nowrap" }}>半透明强度</span>
+        <input
+          type="range"
+          min={STYLE_OPACITY_SLIDER_MIN}
+          max={STYLE_OPACITY_SLIDER_MAX}
+          value={styleOpacityPercent}
+          onChange={(e) => setStyleOpacityPercent(Number(e.target.value))}
+          style={{ flex: 1, minWidth: 120 }}
+        />
+        <span style={{ fontVariantNumeric: "tabular-nums", minWidth: "3.5rem" }}>
+          {styleOpacityPercent}%
+        </span>
+      </label>
+    ) : null;
+
   return (
     <div>
       {blurb}
       {styleDemoToolbar}
+      {styleOpacitySlider}
       {textWidthSlider}
       <CanvasProvider>
         {({ isReady, runtime }) =>
@@ -1092,7 +1199,12 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
               ) : demo === "cursor" ? (
                 <CursorDemoScene W={W} H={H} />
               ) : demo === "style" ? (
-                <StyleDemoScene W={W} H={H} scene={styleCase} />
+                <StyleDemoScene
+                  W={W}
+                  H={H}
+                  scene={styleCase}
+                  opacityDemoPercent={styleOpacityPercent}
+                />
               ) : (
                 <HoverDemoScene />
               )}
