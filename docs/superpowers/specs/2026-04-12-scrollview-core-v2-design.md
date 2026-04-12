@@ -5,6 +5,8 @@
 **继承：** 与 [阶段四 Step 9 — ScrollView 草案](../archive/superpowers/specs/2026-04-06-step-9-scrollview-design.md) 的 **V1 范围与架构取向** 一致；本文将文件路径与类型落点 **对齐到当前 monorepo 的 `packages/core-v2` 与 `packages/react-v2`**。  
 **非目标：** 本文不写具体 patch 清单；实现计划由 **writing-plans** 在规格通过后产出。
 
+**已确认（2026-04-12）：滚轮策略 B** — V1 在 `wheel` 上 **不调用 `preventDefault`**：仅根据 Stage 命中与 delta 更新 `scrollY` 并重绘；**接受**与浏览器/页面默认滚动 **可能同时发生**（双滚）。后续若需消除双滚，可升级为策略 A（可滚时 `preventDefault`，且需 `passive: false`）。
+
 ---
 
 ## 1. 目标与非目标
@@ -20,7 +22,7 @@
 - **react-v2**
   - 导出 **`<ScrollView>`**（或最终命名），子节点挂载在 **内容根** 下；与现有 `View` / `Text` 相同 **scene id + `useLayoutEffect`** 模式，但注册到 runtime 的 **专用 API**（见 §3），避免与普通 `insertView` 混淆。
 - **输入**
-  - **`packages/core-v2/src/input/canvas-stage-pointer.ts`**：增加 **`wheel`**（`passive: false` 以便在「命中在 ScrollView 内且可滚」时 `preventDefault`，减少与浏览器整页滚动的冲突）；与 `pointer*` 相同，坐标经 `clientXYToStageLocal` 进入 runtime。
+  - **`packages/core-v2/src/input/canvas-stage-pointer.ts`**：增加 **`wheel`** 监听；**`passive: true` 即可**（与策略 B 一致，不在此拦截默认滚动）。坐标经 `clientXYToStageLocal` 后进入 runtime，由 runtime 更新 `scrollY` 并重绘。
   - **拖拽滚动**：在滚动视口内 `pointerdown` 后，根据 `pointermove` 的 **delta** 更新 `scrollY`（V1 可不区分触摸/鼠标，统一按位移）；`pointerleave` 画布时行为与现有一致（不强制结束拖拽，简化 V1；若实现中发现需 `setPointerCapture` 与滚动冲突，在计划中单列）。
 
 ### 1.2 非目标（V1 不验收）
@@ -66,8 +68,8 @@
 
 ### 3.4 滚轮与重绘
 
-- **`attachCanvasStagePointer`**：`wheel` 监听 → `runtime.dispatchWheelLike?` 或在现有 `dispatchPointerLike` 旁增加 **专用入口**（计划中二选一，避免滥用 `pointermove`）。
-- Runtime 内根据 **命中链** 或 **从上向下** 找到最内层 **可滚且 delta 未消费的** `ScrollView`（V1 无嵌套，至多一个候选），更新 `scrollY` 并触发 Skia **重绘**。
+- **`attachCanvasStagePointer`**：`wheel` 监听 → `runtime` 专用入口（如 `dispatchWheelLike`；计划中命名），**不** `preventDefault`（策略 B）。
+- Runtime 内根据 Stage 坐标 **命中** 判定是否落在 **可纵向滚动** 的 `ScrollView` 视口内；若是且 `maxScrollY > 0`，按 `deltaY` 更新 `scrollY` 并 **钳制**，然后触发 Skia **重绘**。V1 无嵌套滚动，**至多一个** ScrollView 消费该次 wheel 逻辑即可。
 
 ---
 
@@ -102,7 +104,7 @@
 
 ## 7. 验收标准（V1）
 
-- 纵向内容高于视口时：**拖拽**与 **滚轮** 均能改变可见内容；滚轮在可滚区域内时 **尽量不触发** 浏览器整页滚动（以 `preventDefault` 是否可行为准，在计划中记录平台差异）。
+- 纵向内容高于视口时：**拖拽**与 **滚轮** 均能改变可见内容。**不**验收「阻止整页滚动」：策略 B 下 **允许** 画布与页面 **同时** 响应滚轮（已知取舍）。
 - **点击 / hover / cursor**：滚动后命中与视觉一致。
 - **边界**：`scrollY` 钳制在 `[0, maxScrollY]`。
 - **apps/v3**：`react-smoke` 主栏 **文档区 + 控件 + 舞台** 包入 `ScrollView` 后，切换中英文 **不再依赖整页高度** 才能操作（与 i18n 目标对齐）。
