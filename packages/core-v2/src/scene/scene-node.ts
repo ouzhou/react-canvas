@@ -1,8 +1,9 @@
 import type { Node as YogaNode } from "yoga-layout/load";
+import type { ImageObjectFit } from "../media/image-object-fit.ts";
 import type { ViewStyle } from "../layout/style-map.ts";
 import type { TextFlatRun } from "../text/text-flat-run.ts";
 
-export type SceneNodeKind = "view" | "text" | "scrollView";
+export type SceneNodeKind = "view" | "text" | "scrollView" | "image" | "svgPath";
 
 /** 场景树节点；布局为 Yoga `getComputedLayout()` 同步后的相对父级盒。 */
 export type SceneNode = {
@@ -22,5 +23,14 @@ export type SceneNode = {
   label?: string;
   /** 当前累积的 View 样式（用于 `updateStyle` 合并后重算 Yoga）。 */
   viewStyle?: ViewStyle;
+  /** `kind === "image"` */
+  imageUri?: string;
+  imageObjectFit?: ImageObjectFit;
+  /** `kind === "svgPath"` */
+  svgPathD?: string;
+  svgViewBox?: string;
+  svgStroke?: string;
+  svgFill?: string;
+  svgStrokeWidth?: number;
   layout: { left: number; top: number; width: number; height: number } | null;
 };
