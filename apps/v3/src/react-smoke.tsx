@@ -1,4 +1,3 @@
-import { DEFAULT_PARAGRAPH_FONT_FAMILY } from "@react-canvas/core-v2";
 import { Canvas, CanvasProvider, Modal, Text, useSceneRuntime, View } from "@react-canvas/react-v2";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
@@ -13,7 +12,7 @@ import {
   TEXT_DEMO_WRAP_MAX,
   TEXT_DEMO_WRAP_MIN,
 } from "./demo-dimensions.ts";
-import type { SmokeDemoId } from "./smoke-types.ts";
+import { SMOKE_DEMO_LIST, readDemoSearch, type SmokeDemoId } from "./smoke-types.ts";
 import {
   STYLE_DEMO_CASES,
   STYLE_OPACITY_SLIDER_DEFAULT,
@@ -65,13 +64,55 @@ function ThroughClickLog(props: { onHit: (label: string) => void }) {
   return null;
 }
 
+const SIDEBAR_W = 212;
+
+function useViewportSize(): { vw: number; vh: number } {
+  const [s, setS] = useState(() => ({
+    vw: typeof window !== "undefined" ? window.innerWidth : 1024,
+    vh: typeof window !== "undefined" ? window.innerHeight : 640,
+  }));
+  useEffect(() => {
+    const on = () => setS({ vw: window.innerWidth, vh: window.innerHeight });
+    on();
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  return s;
+}
+
+function blurbForDemo(demo: SmokeDemoId, styleCase: StyleDemoCase): string {
+  if (demo === "style") {
+    const h = STYLE_DEMO_CASES.find((x) => x.id === styleCase)?.hint;
+    return h ?? "";
+  }
+  switch (demo) {
+    case "modal":
+      return "Modal：先点蓝钮打开；点红区外→背板关闭；绿条不关。";
+    case "layout":
+      return "Flex 三行：顶3·中2·底4。";
+    case "pointer":
+      return "重叠区应命中后绘制的绿块 hit-lg。";
+    case "through":
+      return "橙层 pointer-events:none，命中背后绿块。";
+    case "text":
+      return "段落/对齐/装饰/间距/斜体/rgba/字体回退；± 调宽。";
+    case "cursor":
+      return "静态 cursor、继承/覆盖、hover 改 cursor、穿透、grab/grabbing。";
+    case "hover":
+      return "移入左上块变红，移出变蓝。";
+    default:
+      return "";
+  }
+}
+
 function TextDemoScene(props: {
   W: number;
   H: number;
   wrapWidth: number;
+  defaultParagraphFontFamily: string;
   onBodyClick?: () => void;
 }) {
-  const { W, H, wrapWidth, onBodyClick } = props;
+  const { W, H, wrapWidth, defaultParagraphFontFamily, onBodyClick } = props;
   return (
     <View
       id="text-root"
@@ -227,7 +268,7 @@ function TextDemoScene(props: {
           color: "#14532d",
           backgroundColor: "#dcfce7",
           lineHeight: 1.4,
-          fontFamily: `__NoSuchFont__, ${DEFAULT_PARAGRAPH_FONT_FAMILY}`,
+          fontFamily: `__NoSuchFont__, ${defaultParagraphFontFamily}`,
         }}
       >
         {TEXT_VIZ_FONT_FALLBACK}
@@ -236,7 +277,7 @@ function TextDemoScene(props: {
   );
 }
 
-/** 与 {@link buildStyleDemo}（core-smoke）同 id，便于对照 Yoga 扩展字段。 */
+/** 与命令式 smoke 示例同 id，便于对照 Yoga 扩展字段。 */
 function StyleDemoScene({
   W,
   H,
@@ -869,177 +910,133 @@ function CursorDemoScene({ W, H }: { W: number; H: number }) {
   );
 }
 
-type ReactSmokeProps = { demo: SmokeDemoId };
-
-/** Modal：`scene-modal` 槽 + 全屏背板；打开后点主界面红块区域应落到背板 `onRequestClose`。 */
-function ModalDemoRoot() {
+/** Modal：`scene-modal` 槽 + 全屏背板。 */
+function ModalDemoInCanvas(props: { W: number; H: number; onLog: (msg: string) => void }) {
+  const { W, H, onLog } = props;
   const [open, setOpen] = useState(false);
-  const [log, setLog] = useState<string | null>(null);
-  const W = DEMO_MODAL.w;
-  const H = DEMO_MODAL.h;
   return (
     <>
-      <CanvasProvider>
-        {({ isReady, runtime }) =>
-          isReady &&
-          runtime && (
-            <Canvas
-              width={W}
-              height={H}
-              paragraphFontProvider={runtime.paragraphFontProvider}
-              defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
+      <View
+        id="modal-page"
+        style={{
+          width: W,
+          height: H,
+          position: "relative",
+          backgroundColor: "#e8eef5",
+        }}
+      >
+        <View
+          id="modal-open-btn"
+          style={{
+            position: "absolute",
+            left: 16,
+            top: 16,
+            width: 140,
+            height: 44,
+            backgroundColor: "#3b82f6",
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          onClick={() => {
+            setOpen(true);
+            onLog("已打开 Modal");
+          }}
+        >
+          <Text
+            id="modal-open-btn-label"
+            style={{
+              fontSize: 15,
+              fontWeight: "bold",
+              color: "#ffffff",
+              lineHeight: 1.2,
+            }}
+          >
+            {MODAL_OPEN_BTN_LABEL}
+          </Text>
+        </View>
+        <View
+          id="modal-main-block"
+          style={{
+            position: "absolute",
+            left: 16,
+            top: 80,
+            width: 280,
+            height: 100,
+            backgroundColor: "#fca5a5",
+          }}
+          onClick={() => onLog("主界面红块收到点击（仅 Modal 关闭时）")}
+        />
+      </View>
+      <Modal
+        visible={open}
+        backdropId="modal-backdrop"
+        onRequestClose={() => {
+          setOpen(false);
+          onLog("onRequestClose（点背板关闭）");
+        }}
+      >
+        <View
+          id="modal-card"
+          style={{
+            position: "absolute",
+            left: 70,
+            top: 90,
+            width: 260,
+            height: 140,
+            backgroundColor: "#ffffff",
+          }}
+        >
+          <View
+            id="modal-inner-strip"
+            style={{
+              position: "absolute",
+              left: 12,
+              top: 12,
+              width: 220,
+              height: 36,
+              backgroundColor: "#86efac",
+            }}
+            onClick={() => onLog("弹窗内绿条（不关闭 Modal）")}
+          >
+            <Text
+              id="modal-strip-label"
+              style={{
+                position: "absolute",
+                left: 10,
+                top: 8,
+                width: 200,
+                fontSize: 13,
+                fontWeight: "bold",
+                color: "#14532d",
+                lineHeight: 1.25,
+              }}
             >
-              <View
-                id="modal-page"
-                style={{
-                  width: W,
-                  height: H,
-                  position: "relative",
-                  backgroundColor: "#e8eef5",
-                }}
-              >
-                <View
-                  id="modal-open-btn"
-                  style={{
-                    position: "absolute",
-                    left: 16,
-                    top: 16,
-                    width: 140,
-                    height: 44,
-                    backgroundColor: "#3b82f6",
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                  onClick={() => {
-                    setOpen(true);
-                    setLog("已打开 Modal");
-                  }}
-                >
-                  <Text
-                    id="modal-open-btn-label"
-                    style={{
-                      fontSize: 15,
-                      fontWeight: "bold",
-                      color: "#ffffff",
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {MODAL_OPEN_BTN_LABEL}
-                  </Text>
-                </View>
-                <View
-                  id="modal-main-block"
-                  style={{
-                    position: "absolute",
-                    left: 16,
-                    top: 80,
-                    width: 280,
-                    height: 100,
-                    backgroundColor: "#fca5a5",
-                  }}
-                  onClick={() => setLog("主界面红块收到点击（仅 Modal 关闭时）")}
-                />
-              </View>
-              <Modal
-                visible={open}
-                backdropId="modal-backdrop"
-                onRequestClose={() => {
-                  setOpen(false);
-                  setLog("onRequestClose（点背板关闭）");
-                }}
-              >
-                <View
-                  id="modal-card"
-                  style={{
-                    position: "absolute",
-                    left: 70,
-                    top: 90,
-                    width: 260,
-                    height: 140,
-                    backgroundColor: "#ffffff",
-                  }}
-                >
-                  <View
-                    id="modal-inner-strip"
-                    style={{
-                      position: "absolute",
-                      left: 12,
-                      top: 12,
-                      width: 220,
-                      height: 36,
-                      backgroundColor: "#86efac",
-                    }}
-                    onClick={() => setLog("弹窗内绿条（不关闭 Modal）")}
-                  >
-                    <Text
-                      id="modal-strip-label"
-                      style={{
-                        position: "absolute",
-                        left: 10,
-                        top: 8,
-                        width: 200,
-                        fontSize: 13,
-                        fontWeight: "bold",
-                        color: "#14532d",
-                        lineHeight: 1.25,
-                      }}
-                    >
-                      {MODAL_STRIP_LABEL}
-                    </Text>
-                  </View>
-                  <Text
-                    id="modal-card-help"
-                    style={{
-                      position: "absolute",
-                      left: 12,
-                      top: 52,
-                      width: 236,
-                      fontSize: 13,
-                      color: "#334155",
-                      lineHeight: 1.45,
-                    }}
-                  >
-                    {MODAL_CARD_HELP}
-                  </Text>
-                </View>
-              </Modal>
-            </Canvas>
-          )
-        }
-      </CanvasProvider>
-      <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "var(--text-h)" }}>
-        操作日志：<strong>{log ?? "（尚未点击）"}</strong>
-      </p>
+              {MODAL_STRIP_LABEL}
+            </Text>
+          </View>
+          <Text
+            id="modal-card-help"
+            style={{
+              position: "absolute",
+              left: 12,
+              top: 52,
+              width: 236,
+              fontSize: 13,
+              color: "#334155",
+              lineHeight: 1.45,
+            }}
+          >
+            {MODAL_CARD_HELP}
+          </Text>
+        </View>
+      </Modal>
     </>
   );
 }
 
-/** `CanvasProvider` → `Canvas` + `View`，与 {@link CoreSmoke} 场景对齐。 */
-export function ReactSmoke({ demo }: ReactSmokeProps) {
-  const [lastClickTarget, setLastClickTarget] = useState<string | null>(null);
-  const [textWrapWidth, setTextWrapWidth] = useState(TEXT_DEMO_WRAP_MAX);
-  const [textDemoClickLog, setTextDemoClickLog] = useState<string | null>(null);
-  const [styleCase, setStyleCase] = useState<StyleDemoCase>("margin-gap");
-  const [styleOpacityPercent, setStyleOpacityPercent] = useState(STYLE_OPACITY_SLIDER_DEFAULT);
-  const onPointerHit = useCallback((label: string) => setLastClickTarget(label), []);
-  const onTextBodyClick = useCallback(() => {
-    setTextDemoClickLog(`text-body click · ${new Date().toLocaleTimeString()}`);
-  }, []);
-
-  useEffect(() => {
-    if (demo !== "pointer" && demo !== "through") setLastClickTarget(null);
-  }, [demo]);
-
-  useEffect(() => {
-    if (demo !== "text") setTextDemoClickLog(null);
-  }, [demo]);
-
-  useEffect(() => {
-    if (demo !== "style") setStyleCase("margin-gap");
-  }, [demo]);
-
-  const W =
+function demoStageSize(demo: SmokeDemoId): { dw: number; dh: number } {
+  const dw =
     demo === "layout"
       ? DEMO_LAYOUT.w
       : demo === "pointer"
@@ -1055,7 +1052,7 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
                 : demo === "style"
                   ? DEMO_STYLE.w
                   : DEMO_HOVER.w;
-  const H =
+  const dh =
     demo === "layout"
       ? DEMO_LAYOUT.h
       : demo === "pointer"
@@ -1071,227 +1068,361 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
                 : demo === "style"
                   ? DEMO_STYLE.h
                   : DEMO_HOVER.h;
+  return { dw, dh };
+}
 
-  const blurb =
-    demo === "modal" ? (
-      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
-        <code>Modal</code> 挂在 <code>scene-modal</code> 槽；蓝条内「打开弹窗」、绿条内短文案均为{" "}
-        <code>Text</code>（与 Core 同文案）。请先点蓝块打开，再点红块区域：应走{" "}
-        <code>onRequestClose</code>
-        （背板），主界面红块不应收到 click。点弹窗内绿条仅记日志，不关闭。
-      </p>
-    ) : demo === "layout" ? (
-      <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
-        三行 flex：顶 3 格、中 2 格、底 4 格；画布内仅 <code>View</code>（{W}×{H}）。
-      </p>
-    ) : demo === "pointer" ? (
-      <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
-        与 Core 相同重叠块；点击重叠区应命中 <code>hit-lg</code>。
-      </p>
-    ) : demo === "through" ? (
-      <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
-        与 Core 相同：<code>through-front</code> 为 <code>pointerEvents: &quot;none&quot;</code>
-        ，点击橙区应记为背后绿块。
-      </p>
-    ) : demo === "text" ? (
-      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
-        <strong>两段</strong>（Caption / 主段）+ <strong>样式条</strong>：<code>textAlign</code>
-        （center / right / justify）、<code>textDecorationLine</code> 数组、
-        <code>textDecorationColor</code>、<code>letterSpacing</code>/<code>wordSpacing</code>、
-        <code>fontStyle: italic</code>、<code>rgba()</code>、<code>fontFamily</code> 逗号回退。 主段{" "}
-        <code>lineHeight</code> 与嵌套 <code>Text</code>、硬换行 + 长段换行；拖滑块改宽；主段{" "}
-        <code>onClick</code>。与 Core 命令式树 id 对齐。
-      </p>
-    ) : demo === "cursor" ? (
-      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
-        <strong>①</strong> 三列：<code>pointer</code> / <code>text</code> / <code>crosshair</code>。
-        <strong>②</strong> 左：仅父有 <code>progress</code>，子无 cursor → 悬停子块仍为
-        progress；右：子 <code>zoom-in</code> 覆盖父 <code>alias</code>。<strong>③</strong> 函数式
-        style：未悬停 <code>col-resize</code>，悬停 <code>grab</code> + 变色。
-        <strong>④</strong> 橙层 <code>pointer-events: none</code>，光标应为绿块 <code>pointer</code>
-        。<strong>⑤</strong> 拖拽条：常态 <code>grab</code>，按下 <code>grabbing</code>
-        ，松手（含画布外）恢复。
-      </p>
-    ) : demo === "style" ? (
-      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
-        与 Core 同树：<code>margin</code> / <code>gap</code>、<code>padding</code> 单边覆盖、
-        <code>flexWrap</code>、<code>minHeight</code>、<code>flexGrow</code> /{" "}
-        <code>flexShrink</code> / <code>flexBasis</code>、<code>row-reverse</code>、
-        <code>aspectRatio</code>、<code>overflow</code>、<code>borderRadius</code>
-        （%）。工具栏切换子场景；<code>opacity</code> 子场景有滑块联动；
-        <code>圆角按钮 + hover</code> 为函数式 <code>style</code> 与 Core <code>patchStyle</code>{" "}
-        对照。
-      </p>
-    ) : (
-      <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
-        函数式 <code>style</code> 依赖 <code>pointerenter</code> / <code>pointerleave</code>{" "}
-        切换颜色。
-      </p>
-    );
+/**
+ * 整页仅一块 {@link Canvas}（另含库内部的定位容器与 `<canvas />`）。
+ * 侧栏、说明、工具与日志均在场景树内，无业务用 HTML 控件。
+ */
+export function SmokeCanvasApp() {
+  const [{ demo }, setNav] = useState(readDemoSearch);
+  const setDemo = useCallback((next: SmokeDemoId) => {
+    setNav({ demo: next });
+  }, []);
 
-  if (demo === "modal") {
-    return (
-      <div>
-        {blurb}
-        <ModalDemoRoot />
-      </div>
-    );
+  useEffect(() => {
+    const u = new URL(window.location.href);
+    u.searchParams.set("demo", demo);
+    u.searchParams.delete("smoke");
+    history.replaceState(null, "", `${u.pathname}?${u.searchParams.toString()}${u.hash}`);
+  }, [demo]);
+
+  const { vw, vh } = useViewportSize();
+  const innerW = Math.max(120, vw - SIDEBAR_W);
+
+  const [lastClickTarget, setLastClickTarget] = useState<string | null>(null);
+  const [textWrapWidth, setTextWrapWidth] = useState(TEXT_DEMO_WRAP_MAX);
+  const [textDemoClickLog, setTextDemoClickLog] = useState<string | null>(null);
+  const [styleCase, setStyleCase] = useState<StyleDemoCase>("margin-gap");
+  const [styleOpacityPercent, setStyleOpacityPercent] = useState(STYLE_OPACITY_SLIDER_DEFAULT);
+  const [modalLog, setModalLog] = useState<string | null>(null);
+  const onPointerHit = useCallback((label: string) => setLastClickTarget(label), []);
+  const onTextBodyClick = useCallback(() => {
+    setTextDemoClickLog(`text-body · ${new Date().toLocaleTimeString()}`);
+  }, []);
+  const onModalLog = useCallback((msg: string) => setModalLog(msg), []);
+
+  useEffect(() => {
+    if (demo !== "pointer" && demo !== "through") setLastClickTarget(null);
+  }, [demo]);
+
+  useEffect(() => {
+    if (demo !== "text") setTextDemoClickLog(null);
+  }, [demo]);
+
+  useEffect(() => {
+    if (demo !== "style") setStyleCase("margin-gap");
+  }, [demo]);
+
+  useEffect(() => {
+    if (demo !== "modal") setModalLog(null);
+  }, [demo]);
+
+  const { dw, dh } = demoStageSize(demo);
+
+  let logLine: string | null = null;
+  if (demo === "pointer" || demo === "through") {
+    logLine = `click: ${lastClickTarget ?? "（尚未点击）"}`;
+  } else if (demo === "text") {
+    logLine = `主段: ${textDemoClickLog ?? "（点主灰条）"}`;
+  } else if (demo === "modal") {
+    logLine = `modal: ${modalLog ?? "（尚未点击）"}`;
   }
 
-  const styleDemoToolbar =
-    demo === "style" ? (
-      <div
-        role="toolbar"
-        aria-label="样式子场景"
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: 8,
-          margin: "0 0 0.5rem",
-          maxWidth: Math.max(DEMO_STYLE.w, 480),
-        }}
-      >
-        {STYLE_DEMO_CASES.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => setStyleCase(c.id)}
-            style={{
-              padding: "6px 12px",
-              fontSize: 13,
-              borderRadius: 6,
-              border: `1px solid ${styleCase === c.id ? "var(--accent, #3b82f6)" : "var(--border)"}`,
-              background: styleCase === c.id ? "rgba(59,130,246,0.12)" : "var(--surface, #fff)",
-              cursor: "pointer",
-            }}
-          >
-            {c.label}
-          </button>
-        ))}
-        <span style={{ flex: "1 1 220px", fontSize: 13, color: "var(--text-h)" }}>
-          {STYLE_DEMO_CASES.find((x) => x.id === styleCase)?.hint}
-        </span>
-      </div>
-    ) : null;
+  const bumpTextWrap = (delta: number) => {
+    setTextWrapWidth((w) => Math.min(TEXT_DEMO_WRAP_MAX, Math.max(TEXT_DEMO_WRAP_MIN, w + delta)));
+  };
 
-  const textWidthSlider =
-    demo === "text" ? (
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          margin: "0 0 0.5rem",
-          fontSize: 14,
-          color: "var(--text)",
-          maxWidth: Math.max(DEMO_TEXT.w, 480),
-        }}
-      >
-        <span style={{ whiteSpace: "nowrap" }}>文字区宽度</span>
-        <input
-          type="range"
-          min={TEXT_DEMO_WRAP_MIN}
-          max={TEXT_DEMO_WRAP_MAX}
-          value={textWrapWidth}
-          onChange={(e) => setTextWrapWidth(Number(e.target.value))}
-          style={{ flex: 1, minWidth: 120 }}
-        />
-        <span style={{ fontVariantNumeric: "tabular-nums", minWidth: "3.5rem" }}>
-          {textWrapWidth}px
-        </span>
-      </label>
-    ) : null;
-
-  const styleOpacitySlider =
-    demo === "style" && styleCase === "opacity" ? (
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          margin: "0 0 0.5rem",
-          fontSize: 14,
-          color: "var(--text)",
-          maxWidth: Math.max(DEMO_STYLE.w, 480),
-        }}
-      >
-        <span style={{ whiteSpace: "nowrap" }}>半透明强度</span>
-        <input
-          type="range"
-          min={STYLE_OPACITY_SLIDER_MIN}
-          max={STYLE_OPACITY_SLIDER_MAX}
-          value={styleOpacityPercent}
-          onChange={(e) => setStyleOpacityPercent(Number(e.target.value))}
-          style={{ flex: 1, minWidth: 120 }}
-        />
-        <span style={{ fontVariantNumeric: "tabular-nums", minWidth: "3.5rem" }}>
-          {styleOpacityPercent}%
-        </span>
-      </label>
-    ) : null;
+  const bumpOpacity = (delta: number) => {
+    setStyleOpacityPercent((p) =>
+      Math.min(STYLE_OPACITY_SLIDER_MAX, Math.max(STYLE_OPACITY_SLIDER_MIN, p + delta)),
+    );
+  };
 
   return (
-    <div>
-      {blurb}
-      {styleDemoToolbar}
-      {styleOpacitySlider}
-      {textWidthSlider}
-      <CanvasProvider>
-        {({ isReady, runtime }) =>
-          isReady &&
-          runtime && (
-            <Canvas
-              width={W}
-              height={H}
-              paragraphFontProvider={runtime.paragraphFontProvider}
-              defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
+    <CanvasProvider>
+      {({ isReady, runtime }) =>
+        isReady && runtime ? (
+          <Canvas
+            width={vw}
+            height={vh}
+            paragraphFontProvider={runtime.paragraphFontProvider}
+            defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
+          >
+            <View
+              id="smoke-root"
+              style={{
+                width: vw,
+                height: vh,
+                flexDirection: "row",
+                backgroundColor: "#ffffff",
+              }}
             >
-              {demo === "layout" ? (
-                <FlexDemoScene W={W} H={H} />
-              ) : demo === "text" ? (
-                <TextDemoScene
-                  W={W}
-                  H={H}
-                  wrapWidth={textWrapWidth}
-                  onBodyClick={onTextBodyClick}
-                />
-              ) : demo === "pointer" ? (
-                <>
-                  <PointerDemoScene W={W} H={H} />
-                  <PointerClickLog onHit={onPointerHit} />
-                </>
-              ) : demo === "through" ? (
-                <>
-                  <ThroughDemoScene W={W} H={H} />
-                  <ThroughClickLog onHit={onPointerHit} />
-                </>
-              ) : demo === "cursor" ? (
-                <CursorDemoScene W={W} H={H} />
-              ) : demo === "style" ? (
-                <StyleDemoScene
-                  W={W}
-                  H={H}
-                  scene={styleCase}
-                  opacityDemoPercent={styleOpacityPercent}
-                />
-              ) : (
-                <HoverDemoScene />
-              )}
-            </Canvas>
-          )
-        }
-      </CanvasProvider>
-      {demo === "pointer" || demo === "through" ? (
-        <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "var(--text-h)" }}>
-          上次 click 监听来自：<strong>{lastClickTarget ?? "（尚未点击）"}</strong>
-        </p>
-      ) : null}
-      {demo === "text" ? (
-        <p style={{ margin: "0.5rem 0 0", fontSize: 13, color: "var(--text-h)" }}>
-          主段落点击：<strong>{textDemoClickLog ?? "（点击主灰条 text-body 内文）"}</strong>
-        </p>
-      ) : null}
-    </div>
+              <View
+                id="smoke-sidebar"
+                style={{
+                  width: SIDEBAR_W,
+                  height: vh,
+                  backgroundColor: "#eef2f6",
+                  padding: 8,
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: "bold", color: "#0f172a" }}>
+                  react-canvas v3
+                </Text>
+                {SMOKE_DEMO_LIST.map((item) => (
+                  <View
+                    key={item.id}
+                    id={`nav-${item.id}`}
+                    style={{
+                      paddingLeft: 8,
+                      paddingRight: 8,
+                      paddingTop: 6,
+                      paddingBottom: 6,
+                      borderRadius: 6,
+                      backgroundColor: demo === item.id ? "#c7d2fe" : "#e2e8f0",
+                    }}
+                    onClick={() => setDemo(item.id)}
+                  >
+                    <Text style={{ fontSize: 11, color: "#1e293b" }}>{item.label}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View
+                id="smoke-main"
+                style={{
+                  width: innerW,
+                  height: vh,
+                  flexDirection: "column",
+                  minWidth: 0,
+                }}
+              >
+                <View
+                  style={{
+                    paddingLeft: 8,
+                    paddingRight: 8,
+                    paddingTop: 6,
+                    height: 26,
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ fontSize: 10, color: "#64748b" }}>
+                    全画布 UI · ?demo=layout|pointer|through|hover|cursor|modal|text|style
+                  </Text>
+                </View>
+
+                {demo === "style" ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                      gap: 6,
+                      paddingLeft: 8,
+                      paddingRight: 8,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    {STYLE_DEMO_CASES.map((c) => (
+                      <View
+                        key={c.id}
+                        id={`style-tab-${c.id}`}
+                        style={{
+                          paddingLeft: 8,
+                          paddingRight: 8,
+                          paddingTop: 4,
+                          paddingBottom: 4,
+                          borderRadius: 4,
+                          backgroundColor: styleCase === c.id ? "#bfdbfe" : "#e2e8f0",
+                        }}
+                        onClick={() => setStyleCase(c.id)}
+                      >
+                        <Text style={{ fontSize: 10, color: "#0f172a" }}>{c.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+
+                {demo === "text" ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      paddingLeft: 8,
+                      paddingRight: 8,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    <View
+                      id="text-wrap-minus"
+                      style={{
+                        width: 36,
+                        height: 28,
+                        borderRadius: 4,
+                        backgroundColor: "#cbd5e1",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                      onClick={() => bumpTextWrap(-24)}
+                    >
+                      <Text style={{ fontSize: 14, color: "#0f172a" }}>−</Text>
+                    </View>
+                    <Text style={{ fontSize: 11, color: "#334155" }}>{`${textWrapWidth}px`}</Text>
+                    <View
+                      id="text-wrap-plus"
+                      style={{
+                        width: 36,
+                        height: 28,
+                        borderRadius: 4,
+                        backgroundColor: "#cbd5e1",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                      onClick={() => bumpTextWrap(24)}
+                    >
+                      <Text style={{ fontSize: 14, color: "#0f172a" }}>+</Text>
+                    </View>
+                  </View>
+                ) : null}
+
+                {demo === "style" && styleCase === "opacity" ? (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      paddingLeft: 8,
+                      paddingRight: 8,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    <View
+                      id="opacity-minus"
+                      style={{
+                        width: 36,
+                        height: 28,
+                        borderRadius: 4,
+                        backgroundColor: "#cbd5e1",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                      onClick={() => bumpOpacity(-5)}
+                    >
+                      <Text style={{ fontSize: 14, color: "#0f172a" }}>−</Text>
+                    </View>
+                    <Text
+                      style={{ fontSize: 11, color: "#334155" }}
+                    >{`${styleOpacityPercent}%`}</Text>
+                    <View
+                      id="opacity-plus"
+                      style={{
+                        width: 36,
+                        height: 28,
+                        borderRadius: 4,
+                        backgroundColor: "#cbd5e1",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                      onClick={() => bumpOpacity(5)}
+                    >
+                      <Text style={{ fontSize: 14, color: "#0f172a" }}>+</Text>
+                    </View>
+                  </View>
+                ) : null}
+
+                <View style={{ paddingLeft: 8, paddingRight: 8, paddingBottom: 6, minHeight: 28 }}>
+                  <Text
+                    id="smoke-blurb"
+                    style={{
+                      fontSize: 10,
+                      color: "#475569",
+                      width: Math.max(40, innerW - 16),
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    {blurbForDemo(demo, styleCase)}
+                  </Text>
+                </View>
+
+                <View
+                  id="smoke-stage"
+                  style={{
+                    flex: 1,
+                    minHeight: 40,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "#f8fafc",
+                  }}
+                >
+                  <View
+                    id="smoke-stage-inner"
+                    style={{
+                      width: dw,
+                      height: dh,
+                      position: "relative",
+                    }}
+                  >
+                    {demo === "layout" ? (
+                      <FlexDemoScene W={dw} H={dh} />
+                    ) : demo === "text" ? (
+                      <TextDemoScene
+                        W={dw}
+                        H={dh}
+                        wrapWidth={textWrapWidth}
+                        defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
+                        onBodyClick={onTextBodyClick}
+                      />
+                    ) : demo === "pointer" ? (
+                      <>
+                        <PointerDemoScene W={dw} H={dh} />
+                        <PointerClickLog onHit={onPointerHit} />
+                      </>
+                    ) : demo === "through" ? (
+                      <>
+                        <ThroughDemoScene W={dw} H={dh} />
+                        <ThroughClickLog onHit={onPointerHit} />
+                      </>
+                    ) : demo === "cursor" ? (
+                      <CursorDemoScene W={dw} H={dh} />
+                    ) : demo === "style" ? (
+                      <StyleDemoScene
+                        W={dw}
+                        H={dh}
+                        scene={styleCase}
+                        opacityDemoPercent={styleOpacityPercent}
+                      />
+                    ) : demo === "modal" ? (
+                      <ModalDemoInCanvas W={dw} H={dh} onLog={onModalLog} />
+                    ) : (
+                      <HoverDemoScene />
+                    )}
+                  </View>
+                </View>
+
+                {logLine ? (
+                  <View
+                    id="smoke-log"
+                    style={{
+                      paddingLeft: 8,
+                      paddingRight: 8,
+                      paddingTop: 4,
+                      paddingBottom: 8,
+                      minHeight: 28,
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text style={{ fontSize: 10, color: "#0f172a" }}>{logLine}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          </Canvas>
+        ) : null
+      }
+    </CanvasProvider>
   );
 }

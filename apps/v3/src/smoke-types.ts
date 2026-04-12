@@ -1,5 +1,3 @@
-export type SmokeTab = "core" | "react";
-
 /** 与 URL `demo=` 同步的示例 id */
 export type SmokeDemoId =
   | "layout"
@@ -11,9 +9,8 @@ export type SmokeDemoId =
   | "text"
   | "style";
 
-export function readSmokeSearch(): { tab: SmokeTab; demo: SmokeDemoId } {
+export function readDemoSearch(): { demo: SmokeDemoId } {
   const p = new URLSearchParams(window.location.search);
-  const tab: SmokeTab = p.get("smoke") === "core" ? "core" : "react";
   const raw = p.get("demo");
   const demo: SmokeDemoId =
     raw === "pointer"
@@ -31,7 +28,7 @@ export function readSmokeSearch(): { tab: SmokeTab; demo: SmokeDemoId } {
                 : raw === "style"
                   ? "style"
                   : "layout";
-  return { tab, demo };
+  return { demo };
 }
 
 export const SMOKE_DEMO_LIST: ReadonlyArray<{ id: SmokeDemoId; label: string }> = [
