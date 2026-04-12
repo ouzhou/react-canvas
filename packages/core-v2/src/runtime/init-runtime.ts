@@ -1,5 +1,8 @@
-import type { CanvasKit } from "canvaskit-wasm";
+import type { CanvasKit, TypefaceFontProvider } from "canvaskit-wasm";
 
+import { BUILTIN_PARAGRAPH_FONT_URL } from "../fonts/builtin.ts";
+import { loadDefaultParagraphFont } from "../fonts/load-default-paragraph-font.ts";
+import { setParagraphMeasureContext } from "../layout/paragraph-measure-context.ts";
 import { loadYoga, type Yoga } from "../layout/yoga.ts";
 import { initCanvasKit } from "../render/canvaskit.ts";
 
@@ -7,11 +10,19 @@ import { initCanvasKit } from "../render/canvaskit.ts";
 export type Runtime = {
   yoga: Yoga;
   canvasKit: CanvasKit;
+  /** 空字符串表示未加载默认段落字体（`loadDefaultParagraphFonts: false`）。 */
+  defaultParagraphFontFamily: string;
+  /** 持有注册字体，避免被 GC 回收。未加载时为 `null`。 */
+  paragraphFontProvider: TypefaceFontProvider | null;
 };
 
-/** 预留与 `initRuntime` 对齐；字体等接入后再透传。 */
 export type RuntimeOptions = {
+  /**
+   * 是否在 `initRuntime` 中拉取并注册默认段落字体。
+   * 单测或离线环境可传 `false`；默认 `true`（与规格默认字体一致）。
+   */
   loadDefaultParagraphFonts?: boolean;
+  /** 覆盖 {@link BUILTIN_PARAGRAPH_FONT_URL}。 */
   defaultParagraphFontUrl?: string;
 };
 
@@ -61,12 +72,36 @@ export function initRuntime(options?: RuntimeOptions): Promise<Runtime> {
   if (!runtimePromise) {
     setSnapshot({ status: "loading" });
     runtimePromise = Promise.all([loadYoga(), initCanvasKit()])
-      .then(([yoga, canvasKit]) => {
-        const runtime: Runtime = { yoga, canvasKit };
+      .then(async ([yoga, canvasKit]) => {
+        const opts = firstOptions;
+        let paragraphFontProvider: TypefaceFontProvider | null = null;
+        let defaultParagraphFontFamily = "";
+        if (opts?.loadDefaultParagraphFonts !== false) {
+          const url = opts?.defaultParagraphFontUrl ?? BUILTIN_PARAGRAPH_FONT_URL;
+          const loaded = await loadDefaultParagraphFont(canvasKit, url);
+          paragraphFontProvider = loaded.provider;
+          defaultParagraphFontFamily = loaded.familyName;
+        }
+        const runtime: Runtime = {
+          yoga,
+          canvasKit,
+          defaultParagraphFontFamily,
+          paragraphFontProvider,
+        };
+        if (paragraphFontProvider && defaultParagraphFontFamily) {
+          setParagraphMeasureContext({
+            ck: canvasKit,
+            fontFamily: defaultParagraphFontFamily,
+            fontProvider: paragraphFontProvider,
+          });
+        } else {
+          setParagraphMeasureContext(null);
+        }
         setSnapshot({ status: "ready", runtime });
         return runtime;
       })
       .catch((e: unknown) => {
+        setParagraphMeasureContext(null);
         const error = e instanceof Error ? e : new Error(String(e));
         setSnapshot({ status: "error", error });
         return Promise.reject(error);
@@ -84,4 +119,5 @@ export function resetRuntimeInitForTests(): void {
   firstOptions = undefined;
   runtimePromise = null;
   snapshot = { status: "idle" };
+  setParagraphMeasureContext(null);
 }

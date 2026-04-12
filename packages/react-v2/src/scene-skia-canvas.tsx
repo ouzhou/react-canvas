@@ -2,6 +2,7 @@ import {
   attachCanvasStagePointer,
   attachSceneSkiaPresenter,
   type SceneRuntime,
+  type TypefaceFontProvider,
 } from "@react-canvas/core-v2";
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
@@ -10,13 +11,15 @@ export type SceneSkiaCanvasProps = {
   runtime: SceneRuntime;
   width: number;
   height: number;
+  paragraphFontProvider?: TypefaceFontProvider | null;
+  defaultParagraphFontFamily?: string;
 };
 
 /**
  * Skia（CanvasKit）绘制 + 画布指针转发；实现均在 `@react-canvas/core-v2`。
  */
 export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
-  const { runtime, width, height } = props;
+  const { runtime, width, height, paragraphFontProvider, defaultParagraphFontFamily } = props;
   const ref = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -34,7 +37,11 @@ export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
         ? (globalThis as { devicePixelRatio: number }).devicePixelRatio
         : 1;
 
-    void attachSceneSkiaPresenter(runtime, canvas, { dpr })
+    void attachSceneSkiaPresenter(runtime, canvas, {
+      dpr,
+      paragraphFontProvider,
+      defaultParagraphFontFamily,
+    })
       .then((detach) => {
         if (!cancelled) detachSkia = detach;
       })
@@ -49,7 +56,7 @@ export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
       detachSkia?.();
       detachPointer?.();
     };
-  }, [runtime, width, height]);
+  }, [runtime, width, height, paragraphFontProvider, defaultParagraphFontFamily]);
 
   return (
     <canvas

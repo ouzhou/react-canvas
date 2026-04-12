@@ -2,8 +2,12 @@ import {
   attachCanvasStagePointer,
   attachSceneSkiaPresenter,
   createSceneRuntime,
+  initRuntime,
+  type AttachSceneSkiaOptions,
   type SceneRuntime,
 } from "@react-canvas/core-v2";
+import { MODAL_CARD_HELP, MODAL_OPEN_BTN_LABEL, MODAL_STRIP_LABEL } from "./modal-demo-content.ts";
+import { textDemoBodyFlatRuns, textDemoCaptionFlatRuns } from "./text-demo-content.ts";
 import { useEffect, useRef, useState } from "react";
 import {
   DEMO_CURSOR,
@@ -11,7 +15,10 @@ import {
   DEMO_LAYOUT,
   DEMO_MODAL,
   DEMO_POINTER,
+  DEMO_TEXT,
   DEMO_THROUGH,
+  TEXT_DEMO_WRAP_MAX,
+  TEXT_DEMO_WRAP_MIN,
 } from "./demo-dimensions.ts";
 import type { SmokeDemoId } from "./smoke-types.ts";
 
@@ -104,6 +111,15 @@ function buildModalPageDemo(r: SceneRuntime, contentRoot: string, W: number, H: 
     width: 140,
     height: 44,
     backgroundColor: "#3b82f6",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  });
+  r.insertText("modal-open-btn", "modal-open-btn-label", MODAL_OPEN_BTN_LABEL, {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#ffffff",
+    lineHeight: 1.2,
   });
   r.insertView("modal-page", "modal-main-block", {
     position: "absolute",
@@ -254,6 +270,8 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
   const [rt, setRt] = useState<SceneRuntime | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [lastClickTarget, setLastClickTarget] = useState<string | null>(null);
+  const [textWrapWidth, setTextWrapWidth] = useState(TEXT_DEMO_WRAP_MAX);
+  const [textDemoClickLog, setTextDemoClickLog] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const dim =
@@ -267,7 +285,9 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
             ? DEMO_CURSOR
             : demo === "modal"
               ? DEMO_MODAL
-              : DEMO_HOVER;
+              : demo === "text"
+                ? DEMO_TEXT
+                : DEMO_HOVER;
 
   useEffect(() => {
     let cancelled = false;
@@ -275,17 +295,28 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
     setError(null);
     setRt(null);
     setLastClickTarget(null);
+    setTextDemoClickLog(null);
 
     void createSceneRuntime({ width: dim.w, height: dim.h })
-      .then((r) => {
+      .then(async (r) => {
+        if (cancelled) return;
+        // 与 React：Canvas 仅在 initRuntime ready 后挂载子树一致。否则首帧 Yoga 测量拿不到
+        // Paragraph 上下文，会走 approximate，盒高偏矮；拖滑块 patch 后才与绘制对齐。
+        if (demo === "text" || demo === "modal") {
+          try {
+            await initRuntime();
+          } catch (e: unknown) {
+            console.error("[core-smoke] initRuntime（含 Text 的场景首帧测量需要段落上下文）:", e);
+          }
+        }
         if (cancelled) return;
         const contentRoot = r.getContentRootId();
         const modalRoot = r.getModalRootId();
 
         const openCoreModal = (): void => {
-          if (r.hasSceneNode("core-modal-backdrop")) return;
+          if (r.hasSceneNode("modal-backdrop")) return;
           r.patchStyle(modalRoot, { pointerEvents: "auto" });
-          r.insertView(modalRoot, "core-modal-backdrop", {
+          r.insertView(modalRoot, "modal-backdrop", {
             position: "absolute",
             left: 0,
             top: 0,
@@ -293,7 +324,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
             height: "100%",
             backgroundColor: "rgba(0,0,0,0.45)",
           });
-          r.insertView(modalRoot, "core-modal-card", {
+          r.insertView(modalRoot, "modal-card", {
             position: "absolute",
             left: 70,
             top: 90,
@@ -301,7 +332,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
             height: 140,
             backgroundColor: "#ffffff",
           });
-          r.insertView("core-modal-card", "core-modal-strip", {
+          r.insertView("modal-card", "modal-inner-strip", {
             position: "absolute",
             left: 12,
             top: 12,
@@ -309,14 +340,33 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
             height: 36,
             backgroundColor: "#86efac",
           });
+          r.insertText("modal-inner-strip", "modal-strip-label", MODAL_STRIP_LABEL, {
+            position: "absolute",
+            left: 10,
+            top: 8,
+            width: 200,
+            fontSize: 13,
+            fontWeight: "bold",
+            color: "#14532d",
+            lineHeight: 1.25,
+          });
+          r.insertText("modal-card", "modal-card-help", MODAL_CARD_HELP, {
+            position: "absolute",
+            left: 12,
+            top: 52,
+            width: 236,
+            fontSize: 13,
+            color: "#334155",
+            lineHeight: 1.45,
+          });
         };
 
         const closeCoreModal = (): void => {
-          if (r.hasSceneNode("core-modal-card")) {
-            r.removeView("core-modal-card");
+          if (r.hasSceneNode("modal-card")) {
+            r.removeView("modal-card");
           }
-          if (r.hasSceneNode("core-modal-backdrop")) {
-            r.removeView("core-modal-backdrop");
+          if (r.hasSceneNode("modal-backdrop")) {
+            r.removeView("modal-backdrop");
           }
           r.patchStyle(modalRoot, { pointerEvents: "none" });
         };
@@ -391,23 +441,50 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
           listenerOffs.push(
             r.addListener("modal-open-btn", "click", () => {
               openCoreModal();
-              setLastClickTarget("已打开 Modal（insertView + patchStyle）");
+              setLastClickTarget("已打开 Modal");
             }),
           );
           listenerOffs.push(
-            r.addListener("core-modal-backdrop", "click", () => {
+            r.addListener("modal-backdrop", "click", () => {
               closeCoreModal();
-              setLastClickTarget("点背板关闭（removeView + scene-modal pointerEvents:none）");
+              setLastClickTarget("onRequestClose（点背板关闭）");
             }),
           );
           listenerOffs.push(
             r.addListener("modal-main-block", "click", () => {
-              setLastClickTarget("主界面红块收到 click（仅未打开 Modal 时）");
+              setLastClickTarget("主界面红块收到点击（仅 Modal 关闭时）");
             }),
           );
           listenerOffs.push(
-            r.addListener("core-modal-strip", "click", () => {
-              setLastClickTarget("弹窗内绿条（core）");
+            r.addListener("modal-inner-strip", "click", () => {
+              setLastClickTarget("弹窗内绿条（不关闭 Modal）");
+            }),
+          );
+        } else if (demo === "text") {
+          r.insertView(contentRoot, "text-root", {
+            width: dim.w,
+            height: dim.h,
+            flexDirection: "column",
+            backgroundColor: "#f8fafc",
+            padding: 16,
+          });
+          r.insertText("text-root", "text-caption", textDemoCaptionFlatRuns(), {
+            width: TEXT_DEMO_WRAP_MAX,
+            fontSize: 12,
+            color: "#64748b",
+            backgroundColor: "#eef2f6",
+            lineHeight: 1.38,
+          });
+          r.insertText("text-root", "text-body", textDemoBodyFlatRuns(), {
+            width: TEXT_DEMO_WRAP_MAX,
+            fontSize: 15,
+            color: "#0f172a",
+            backgroundColor: "#e2e8f0",
+            lineHeight: 1.82,
+          });
+          listenerOffs.push(
+            r.addListener("text-body", "click", () => {
+              setTextDemoClickLog(`text-body click · ${new Date().toLocaleTimeString()}`);
             }),
           );
         } else {
@@ -459,13 +536,24 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
         ? (globalThis as { devicePixelRatio: number }).devicePixelRatio
         : 1;
 
-    void attachSceneSkiaPresenter(rt, canvas, { dpr })
-      .then((d) => {
-        if (!cancelled) detachSkia = d;
-      })
-      .catch((e: unknown) => {
+    void (async () => {
+      const skiaOpts: AttachSceneSkiaOptions = { dpr };
+      if (demo === "text" || demo === "modal") {
+        try {
+          const mod = await initRuntime();
+          skiaOpts.paragraphFontProvider = mod.paragraphFontProvider;
+          skiaOpts.defaultParagraphFontFamily = mod.defaultParagraphFontFamily;
+        } catch (e: unknown) {
+          console.error("[core-smoke] initRuntime（含 Text 的 demo 需要默认字体）:", e);
+        }
+      }
+      try {
+        const detach = await attachSceneSkiaPresenter(rt, canvas, skiaOpts);
+        if (!cancelled) detachSkia = detach;
+      } catch (e: unknown) {
         console.error("[core-smoke] attachSceneSkiaPresenter:", e);
-      });
+      }
+    })();
 
     detachPointer = attachCanvasStagePointer(canvas, rt);
 
@@ -474,7 +562,13 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
       detachSkia?.();
       detachPointer?.();
     };
-  }, [rt]);
+  }, [rt, demo]);
+
+  useEffect(() => {
+    if (!rt || demo !== "text") return;
+    rt.patchStyle("text-caption", { width: textWrapWidth });
+    rt.patchStyle("text-body", { width: textWrapWidth });
+  }, [rt, demo, textWrapWidth]);
 
   if (error) {
     return <p style={{ color: "crimson" }}>Core 加载失败：{error.message}</p>;
@@ -508,13 +602,20 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
       </p>
     ) : demo === "modal" ? (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
-        主内容挂在 <code>getContentRootId()</code>；点蓝块用 <code>insertView</code> 往{" "}
-        <code>getModalRootId()</code> 挂背板 + 卡片，并{" "}
+        与 React 同树名：<code>modal-backdrop</code> / <code>modal-card</code> /{" "}
+        <code>modal-inner-strip</code>；蓝条 / 绿条内 <code>insertText</code> 与 <code>Text</code>{" "}
+        同文案。点蓝块往 <code>getModalRootId()</code> 挂层并{" "}
         <code>
           patchStyle(modalRoot, {"{"} pointerEvents: &quot;auto&quot; {"}"} )
         </code>
-        。点背板 <code>removeView</code> 后 <code>pointerEvents: &quot;none&quot;</code>，与 React{" "}
-        <code>&lt;Modal&gt;</code> 行为对齐。
+        ；下方「操作日志」与 React Modal 示例同句。
+      </p>
+    ) : demo === "text" ? (
+      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
+        与 React 对齐：<strong>两段</strong>（Caption + 主段）、<code>lineHeight</code>（整段 + 嵌套
+        run 更高倍率）、主段 <code>insertText</code> 多 run、硬换行 + 长段换行；
+        <code>await initRuntime()</code> 后首帧测量；滑块 <code>patchStyle</code>{" "}
+        双节点宽度。点击主灰条 <code>addListener(text-body)</code>。
       </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>
@@ -523,9 +624,38 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
       </p>
     );
 
+  const textWidthSlider =
+    demo === "text" ? (
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          margin: "0 0 0.5rem",
+          fontSize: 14,
+          color: "var(--text)",
+          maxWidth: Math.max(DEMO_TEXT.w, 480),
+        }}
+      >
+        <span style={{ whiteSpace: "nowrap" }}>文字区宽度</span>
+        <input
+          type="range"
+          min={TEXT_DEMO_WRAP_MIN}
+          max={TEXT_DEMO_WRAP_MAX}
+          value={textWrapWidth}
+          onChange={(e) => setTextWrapWidth(Number(e.target.value))}
+          style={{ flex: 1, minWidth: 120 }}
+        />
+        <span style={{ fontVariantNumeric: "tabular-nums", minWidth: "3.5rem" }}>
+          {textWrapWidth}px
+        </span>
+      </label>
+    ) : null;
+
   return (
     <div>
       {blurb}
+      {textWidthSlider}
       <canvas
         ref={canvasRef}
         style={{
@@ -537,9 +667,19 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
           background: "#f8fafc",
         }}
       />
-      {demo === "pointer" || demo === "through" || demo === "modal" ? (
+      {demo === "pointer" || demo === "through" ? (
         <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "var(--text-h)" }}>
           上次 click 监听来自：<strong>{lastClickTarget ?? "（尚未点击）"}</strong>
+        </p>
+      ) : null}
+      {demo === "modal" ? (
+        <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "var(--text-h)" }}>
+          操作日志：<strong>{lastClickTarget ?? "（尚未点击）"}</strong>
+        </p>
+      ) : null}
+      {demo === "text" ? (
+        <p style={{ margin: "0.5rem 0 0", fontSize: 13, color: "var(--text-h)" }}>
+          主段落点击：<strong>{textDemoClickLog ?? "（点击主灰条 text-body）"}</strong>
         </p>
       ) : null}
     </div>

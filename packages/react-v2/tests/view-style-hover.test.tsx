@@ -5,6 +5,7 @@ import { act } from "react";
 import { useLayoutEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { CanvasRuntime } from "../src/canvas-runtime.tsx";
+import { vitestRuntimeInitOptions } from "./test-runtime-options.ts";
 import { useSceneRuntime } from "../src/hooks.ts";
 import { View } from "../src/view.tsx";
 
@@ -23,7 +24,7 @@ test("function style receives hovered from pointerenter / pointerleave", async (
 
   await act(async () => {
     root.render(
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <View
           id="v-hover"

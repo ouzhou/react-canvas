@@ -5,6 +5,7 @@ import { act } from "react";
 import { useLayoutEffect, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { CanvasRuntime } from "../src/canvas-runtime.tsx";
+import { vitestRuntimeInitOptions } from "./test-runtime-options.ts";
 import { useSceneRuntime } from "../src/hooks.ts";
 import { Modal } from "../src/modal.tsx";
 import { View } from "../src/view.tsx";
@@ -25,7 +26,7 @@ test("Modal visible: click on backdrop calls onRequestClose", async () => {
 
   await act(async () => {
     root.render(
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <Modal visible onRequestClose={onClose}>
           <View
@@ -60,7 +61,7 @@ test("Modal visible=false does not mount modal subtree; onRequestClose not calle
 
   await act(async () => {
     root.render(
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <Modal visible={false} onRequestClose={onClose}>
           <View id="never-mounted" style={{ width: 10, height: 10 }} />
@@ -85,7 +86,7 @@ test("click on modal card does not call onRequestClose", async () => {
 
   await act(async () => {
     root.render(
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <Modal visible onRequestClose={onClose}>
           <View
@@ -119,7 +120,7 @@ test("transparent backdrop still receives click and calls onRequestClose (spec Â
 
   await act(async () => {
     root.render(
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <Modal visible transparent onRequestClose={onClose}>
           <View
@@ -155,7 +156,7 @@ test("when Modal open, click does not reach scene-content View behind (stacking)
 
   await act(async () => {
     root.render(
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <View
           id="main-underlay"

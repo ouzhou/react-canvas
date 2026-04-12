@@ -5,6 +5,7 @@ import { beforeEach, expect, test, vi } from "vite-plus/test";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { CanvasProvider } from "../src/canvas-provider.tsx";
+import { vitestRuntimeInitOptions } from "./test-runtime-options.ts";
 
 beforeEach(() => {
   resetRuntimeInitForTests();
@@ -22,13 +23,13 @@ test("two CanvasProvider trees share the same module runtime when ready", async 
   await act(async () => {
     root.render(
       <>
-        <CanvasProvider>
+        <CanvasProvider initOptions={vitestRuntimeInitOptions}>
           {({ runtime }) => {
             a = runtime;
             return null;
           }}
         </CanvasProvider>
-        <CanvasProvider>
+        <CanvasProvider initOptions={vitestRuntimeInitOptions}>
           {({ runtime }) => {
             b = runtime;
             return null;
@@ -58,7 +59,7 @@ test("second CanvasProvider mounts after first is ready still sees same runtime"
   const root = createRoot(el);
   await act(async () => {
     root.render(
-      <CanvasProvider>
+      <CanvasProvider initOptions={vitestRuntimeInitOptions}>
         {({ runtime }) => {
           first = runtime;
           return null;
@@ -74,13 +75,13 @@ test("second CanvasProvider mounts after first is ready still sees same runtime"
   await act(async () => {
     root.render(
       <>
-        <CanvasProvider>
+        <CanvasProvider initOptions={vitestRuntimeInitOptions}>
           {({ runtime }) => {
             first = runtime;
             return null;
           }}
         </CanvasProvider>
-        <CanvasProvider>
+        <CanvasProvider initOptions={vitestRuntimeInitOptions}>
           {({ runtime }) => {
             second = runtime;
             return null;

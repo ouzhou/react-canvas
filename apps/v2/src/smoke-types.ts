@@ -1,7 +1,7 @@
 export type SmokeTab = "core" | "react";
 
 /** 与 URL `demo=` 同步的示例 id */
-export type SmokeDemoId = "layout" | "pointer" | "through" | "hover" | "cursor" | "modal";
+export type SmokeDemoId = "layout" | "pointer" | "through" | "hover" | "cursor" | "modal" | "text";
 
 export function readSmokeSearch(): { tab: SmokeTab; demo: SmokeDemoId } {
   const p = new URLSearchParams(window.location.search);
@@ -18,7 +18,9 @@ export function readSmokeSearch(): { tab: SmokeTab; demo: SmokeDemoId } {
             ? "cursor"
             : raw === "modal"
               ? "modal"
-              : "layout";
+              : raw === "text"
+                ? "text"
+                : "layout";
   return { tab, demo };
 }
 
@@ -29,4 +31,5 @@ export const SMOKE_DEMO_LIST: ReadonlyArray<{ id: SmokeDemoId; label: string }> 
   { id: "hover", label: "hover 测试" },
   { id: "cursor", label: "cursor（多场景 + hover）" },
   { id: "modal", label: "Modal（scene-modal + 背板）" },
+  { id: "text", label: "文字（Paragraph M1）" },
 ];

@@ -1,27 +1,20 @@
-import type { CanvasKit } from "canvaskit-wasm";
+import type { CanvasKit, TextStyle, TypefaceFontProvider } from "canvaskit-wasm";
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
+import type { ViewStyle } from "../layout/style-map.ts";
+import { setParagraphMeasureContext } from "../layout/paragraph-measure-context.ts";
 import type { LayoutCommitPayload, SceneRuntime } from "../runtime/scene-runtime.ts";
+import { parseCssHexColor } from "../text/css-hex.ts";
+import { clampLineHeightMultiplier } from "../text/text-flat-run.ts";
+import { buildAndDrawParagraphRuns } from "../text/paragraph-from-runs.ts";
 import { initCanvasKit } from "./canvaskit.ts";
-
-function parseCssHexColor(s: string): { r: number; g: number; b: number } | null {
-  const m = /^#(?:([\da-f]{3})|([\da-f]{6}))$/i.exec(s.trim());
-  if (!m) return null;
-  const hex = (m[1] ?? m[2])!;
-  const full =
-    hex.length === 3
-      ? hex
-          .split("")
-          .map((c) => c + c)
-          .join("")
-      : hex;
-  const n = Number.parseInt(full, 16);
-  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
-}
 
 export type AttachSceneSkiaOptions = {
   /** 默认 `globalThis.devicePixelRatio` 或 1 */
   dpr?: number;
+  /** 与 `initRuntime` 注册的段落字体一致；缺省时跳过文本绘制。 */
+  paragraphFontProvider?: TypefaceFontProvider | null;
+  defaultParagraphFontFamily?: string;
 };
 
 /**
@@ -44,6 +37,16 @@ export async function attachSceneSkiaPresenter(
     cancelAnimationFrame?: (id: number) => void;
   };
   const dpr = options?.dpr ?? (typeof g.devicePixelRatio === "number" ? g.devicePixelRatio : 1);
+  const paragraphFontProvider = options?.paragraphFontProvider ?? null;
+  const defaultParagraphFontFamily = options?.defaultParagraphFontFamily ?? "";
+
+  if (paragraphFontProvider && defaultParagraphFontFamily) {
+    setParagraphMeasureContext({
+      ck,
+      fontFamily: defaultParagraphFontFamily,
+      fontProvider: paragraphFontProvider,
+    });
+  }
 
   const { bw, bh, rootScale } = canvasBackingStoreSize(lw, lh, dpr);
   canvas.width = bw;
@@ -108,6 +111,68 @@ export async function attachSceneSkiaPresenter(
           );
           skCanvas.drawRect(rect, paintFill);
           skCanvas.drawRect(rect, paintStroke);
+        }
+      }
+      if (box && box.nodeKind === "text" && paragraphFontProvider && defaultParagraphFontFamily) {
+        const layoutBoxStyle = (box.textLayoutStyle ?? {}) as ViewStyle;
+        if (box.textRuns?.length) {
+          buildAndDrawParagraphRuns(
+            ck,
+            paragraphFontProvider,
+            defaultParagraphFontFamily,
+            box.textRuns,
+            layoutBoxStyle,
+            Math.max(1, box.width),
+            skCanvas,
+            box.absLeft,
+            box.absTop,
+          );
+        } else if (box.textContent) {
+          const colorHex = layoutBoxStyle.color ?? "#111827";
+          const textRgb = parseCssHexColor(colorHex) ?? { r: 17, g: 24, b: 39 };
+          const fs = box.textFontSize ?? layoutBoxStyle.fontSize ?? 16;
+          const families =
+            typeof layoutBoxStyle.fontFamily === "string" && layoutBoxStyle.fontFamily.length > 0
+              ? [layoutBoxStyle.fontFamily]
+              : [defaultParagraphFontFamily];
+          const weight =
+            layoutBoxStyle.fontWeight === "bold" || layoutBoxStyle.fontWeight === 700
+              ? ck.FontWeight.Bold
+              : typeof layoutBoxStyle.fontWeight === "number" && layoutBoxStyle.fontWeight >= 600
+                ? ck.FontWeight.Bold
+                : ck.FontWeight.Normal;
+          const textStyle: TextStyle = {
+            color: ck.Color(textRgb.r, textRgb.g, textRgb.b, 255),
+            decoration: ck.NoDecoration,
+            decorationStyle: ck.DecorationStyle.Solid,
+            decorationThickness: 1,
+            fontSize: fs,
+            fontFamilies: families,
+            fontStyle: {
+              weight,
+              width: ck.FontWidth.Normal,
+              slant: ck.FontSlant.Upright,
+            },
+            heightMultiplier: clampLineHeightMultiplier(layoutBoxStyle.lineHeight),
+            halfLeading: false,
+            letterSpacing: 0,
+            wordSpacing: 0,
+          };
+          const paraStyle = new ck.ParagraphStyle({
+            textAlign: ck.TextAlign.Left,
+            textStyle,
+          });
+          const builder = ck.ParagraphBuilder.MakeFromFontProvider(
+            paraStyle,
+            paragraphFontProvider,
+          );
+          builder.pushStyle(textStyle);
+          builder.addText(box.textContent);
+          const paragraph = builder.build();
+          paragraph.layout(Math.max(1, box.width));
+          skCanvas.drawParagraph(paragraph, box.absLeft, box.absTop);
+          paragraph.delete();
+          builder.delete();
         }
       }
       const sceneNode = commit.scene.nodes[id];

@@ -7,6 +7,7 @@ import { createRoot } from "react-dom/client";
 import { CanvasRuntime } from "../src/canvas-runtime.tsx";
 import { useSceneRuntime } from "../src/hooks.ts";
 import { View } from "../src/view.tsx";
+import { vitestRuntimeInitOptions } from "./test-runtime-options.ts";
 
 function GrabRuntime(props: { onReady: (r: SceneRuntime) => void }) {
   const rt = useSceneRuntime();
@@ -22,7 +23,7 @@ test("View syncs layout into SceneRuntime", async () => {
   const root = createRoot(el);
   await act(async () => {
     root.render(
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <View id="v-test" style={{ width: 100, height: 60 }} />
       </CanvasRuntime>,
@@ -46,7 +47,7 @@ test("updating object style calls updateStyle without removing the node", async 
     const [width, setW] = useState(100);
     setWidth = setW;
     return (
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <View id="v-update" style={{ width, height: 50 }} />
       </CanvasRuntime>
@@ -91,7 +92,7 @@ test("removing a style property causes it to disappear from layout snapshot", as
       ? { width: 100, height: 50, backgroundColor: "#ff0000" }
       : { width: 100, height: 50 };
     return (
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <View id="v-rm-prop" style={style} />
       </CanvasRuntime>
@@ -127,7 +128,7 @@ test("parent style update preserves child node in layout", async () => {
     const [bg, setBg] = useState("#000000");
     setParentBg = setBg;
     return (
-      <CanvasRuntime width={200} height={200}>
+      <CanvasRuntime width={200} height={200} initOptions={vitestRuntimeInitOptions}>
         <GrabRuntime onReady={(r) => (captured = r)} />
         <View id="v-parent" style={{ width: 100, height: 100, backgroundColor: bg }}>
           <View id="v-child" style={{ width: 50, height: 50 }} />

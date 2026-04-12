@@ -7,6 +7,8 @@ export type {
   ScenePointerEvent,
   SceneRuntime,
   StageViewportOrigin,
+  TypefaceFontProvider,
+  TextFlatRun,
   ViewStyle,
 } from "@react-canvas/core-v2";
 export {
@@ -32,5 +34,7 @@ export { Modal } from "./modal.tsx";
 export type { ModalProps } from "./modal.tsx";
 export { SceneSkiaCanvas } from "./scene-skia-canvas.tsx";
 export type { SceneSkiaCanvasProps } from "./scene-skia-canvas.tsx";
+export { Text } from "./text.tsx";
+export type { TextProps } from "./text.tsx";
 export { View } from "./view.tsx";
 export type { ViewProps } from "./view.tsx";

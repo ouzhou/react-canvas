@@ -1,8 +1,41 @@
 import type { ScenePointerEvent, ViewStyle } from "@react-canvas/core-v2";
 import type { ReactNode } from "react";
-import { useContext, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  isValidElement,
+  useContext,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ParentSceneIdContext } from "./context.tsx";
 import { useSceneRuntime } from "./hooks.ts";
+
+/** 与 {@link Text} 的 `displayName` 一致；`View` 校验裸文本时不进入 Text 子树。 */
+const TEXT_COMPONENT_DISPLAY_NAME = "RcCanvasText";
+
+function assertNoBareTextChildren(children: ReactNode): void {
+  const hasBareText = (node: ReactNode): boolean => {
+    if (node == null || typeof node === "boolean") return false;
+    if (typeof node === "string" || typeof node === "number") return true;
+    if (Array.isArray(node)) return node.some(hasBareText);
+    if (isValidElement(node)) {
+      if ((node.type as { displayName?: string }).displayName === TEXT_COMPONENT_DISPLAY_NAME) {
+        return false;
+      }
+      if (node.type === Fragment) {
+        return hasBareText((node.props as { children?: ReactNode }).children);
+      }
+      return hasBareText((node.props as { children?: ReactNode }).children);
+    }
+    return false;
+  };
+  if (hasBareText(children)) {
+    throw new Error("View 下不能直接写文字，请使用 <Text>。");
+  }
+}
 
 export type ViewProps = {
   id?: string;
@@ -22,6 +55,7 @@ export type ViewProps = {
 
 export function View(props: ViewProps): ReactNode {
   const { style, children, onPointerDown, onPointerUp, onClick, id: idProp } = props;
+  assertNoBareTextChildren(children);
   const rt = useSceneRuntime();
   const parentId = useContext(ParentSceneIdContext);
   const generated = useId().replace(/:/g, "");

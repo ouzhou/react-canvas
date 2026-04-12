@@ -10,6 +10,11 @@ export type ModalProps = {
   children?: ReactNode;
   /** `false`（默认）时使用半透明遮罩；`true` 时背板透明但仍全屏占位命中。 */
   transparent?: boolean;
+  /**
+   * 背板场景节点 id；不设时由 `useId` 生成，避免多 Modal 冲突。
+   * 与命令式 `insertView(modalRoot, id, …)` 对照时请传同一字符串。
+   */
+  backdropId?: string;
   /** 例如点背板关闭；不修改 `visible`，由父组件更新状态。 */
   onRequestClose?: () => void;
 };
@@ -19,11 +24,18 @@ export type ModalProps = {
  * 槽位在 core 中默认可穿透（`pointerEvents: 'none'`），打开时由本组件改回 `auto`。
  */
 export function Modal(props: ModalProps): ReactNode {
-  const { visible, children, transparent = false, onRequestClose } = props;
+  const {
+    visible,
+    children,
+    transparent = false,
+    onRequestClose,
+    backdropId: backdropIdProp,
+  } = props;
   const rt = useSceneRuntime();
   const modalRootId = rt.getModalRootId();
   const wasVisibleRef = useRef(false);
-  const backdropId = `modal-backdrop-${useId().replace(/:/g, "")}`;
+  const generatedBackdropId = useId().replace(/:/g, "");
+  const backdropId = backdropIdProp ?? `modal-backdrop-${generatedBackdropId}`;
 
   useLayoutEffect(() => {
     return () => {

@@ -8,6 +8,7 @@ export {
   type AttachSceneSkiaOptions,
 } from "./render/scene-skia-presenter.ts";
 export type { ViewStyle } from "./layout/style-map.ts";
+export type { TextFlatRun } from "./text/text-flat-run.ts";
 export { applyStylesToYoga } from "./layout/style-map.ts";
 export { hitTestAt } from "./hit/hit-test.ts";
 export { absoluteBoundsFor, calculateAndSyncLayout } from "./layout/layout-sync.ts";
@@ -21,7 +22,14 @@ export { loadYoga } from "./layout/yoga.ts";
 export type { Yoga } from "./layout/yoga.ts";
 export { createNodeStore } from "./runtime/node-store.ts";
 export type { NodeStore } from "./runtime/node-store.ts";
-export type { SceneNode } from "./scene/scene-node.ts";
+export type { SceneNode, SceneNodeKind } from "./scene/scene-node.ts";
+export type { TypefaceFontProvider } from "canvaskit-wasm";
+export { BUILTIN_PARAGRAPH_FONT_URL } from "./fonts/builtin.ts";
+export {
+  DEFAULT_PARAGRAPH_FONT_FAMILY,
+  loadDefaultParagraphFont,
+  type LoadedParagraphFont,
+} from "./fonts/load-default-paragraph-font.ts";
 export {
   bindSceneRuntimeCursorTarget,
   createSceneRuntime,

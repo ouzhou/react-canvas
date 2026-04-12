@@ -1,4 +1,4 @@
-import { Canvas, CanvasProvider, Modal, useSceneRuntime, View } from "@react-canvas/react-v2";
+import { Canvas, CanvasProvider, Modal, Text, useSceneRuntime, View } from "@react-canvas/react-v2";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   DEMO_CURSOR,
@@ -6,9 +6,14 @@ import {
   DEMO_LAYOUT,
   DEMO_MODAL,
   DEMO_POINTER,
+  DEMO_TEXT,
   DEMO_THROUGH,
+  TEXT_DEMO_WRAP_MAX,
+  TEXT_DEMO_WRAP_MIN,
 } from "./demo-dimensions.ts";
 import type { SmokeDemoId } from "./smoke-types.ts";
+import { MODAL_CARD_HELP, MODAL_OPEN_BTN_LABEL, MODAL_STRIP_LABEL } from "./modal-demo-content.ts";
+import { TEXT_DEMO_CAPTION, TEXT_DEMO_LONG_WRAP } from "./text-demo-content.ts";
 
 function PointerClickLog(props: { onHit: (label: string) => void }) {
   const rt = useSceneRuntime();
@@ -38,6 +43,62 @@ function ThroughClickLog(props: { onHit: (label: string) => void }) {
     };
   }, [rt, props.onHit]);
   return null;
+}
+
+function TextDemoScene(props: {
+  W: number;
+  H: number;
+  wrapWidth: number;
+  onBodyClick?: () => void;
+}) {
+  const { W, H, wrapWidth, onBodyClick } = props;
+  return (
+    <View
+      id="text-root"
+      style={{
+        width: W,
+        height: H,
+        flexDirection: "column",
+        backgroundColor: "#f8fafc",
+        padding: 16,
+      }}
+    >
+      <Text
+        id="text-caption"
+        style={{
+          width: wrapWidth,
+          fontSize: 12,
+          color: "#64748b",
+          backgroundColor: "#eef2f6",
+          lineHeight: 1.38,
+        }}
+      >
+        {TEXT_DEMO_CAPTION}
+      </Text>
+      <Text
+        id="text-body"
+        style={{
+          width: wrapWidth,
+          fontSize: 15,
+          color: "#0f172a",
+          backgroundColor: "#e2e8f0",
+          lineHeight: 1.82,
+        }}
+        onClick={onBodyClick}
+      >
+        M3：外层 15px 字色继承；整段 lineHeight≈1.82。嵌套{" "}
+        <Text style={{ color: "#b91c1c", fontWeight: "bold" }}>粗体红</Text>
+        {" 与 "}
+        <Text style={{ fontSize: 18, color: "#0369a1" }}>18px 蓝</Text>
+        <Text style={{ lineHeight: 2.45, color: "#7c3aed" }}> 与 局部行距↑2.45</Text>
+        。自动换行段：
+        {"\n"}
+        {TEXT_DEMO_LONG_WRAP}
+        {"\n"}
+        ── 硬换行收尾：拖窄灰条主段应自动增高。
+      </Text>
+    </View>
+  );
 }
 
 function FlexDemoScene({ W, H }: { W: number; H: number }) {
@@ -347,9 +408,15 @@ function ModalDemoRoot() {
   return (
     <>
       <CanvasProvider>
-        {({ isReady }) =>
-          isReady && (
-            <Canvas width={W} height={H}>
+        {({ isReady, runtime }) =>
+          isReady &&
+          runtime && (
+            <Canvas
+              width={W}
+              height={H}
+              paragraphFontProvider={runtime.paragraphFontProvider}
+              defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
+            >
               <View
                 id="modal-page"
                 style={{
@@ -368,12 +435,27 @@ function ModalDemoRoot() {
                     width: 140,
                     height: 44,
                     backgroundColor: "#3b82f6",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
                   onClick={() => {
                     setOpen(true);
                     setLog("已打开 Modal");
                   }}
-                />
+                >
+                  <Text
+                    id="modal-open-btn-label"
+                    style={{
+                      fontSize: 15,
+                      fontWeight: "bold",
+                      color: "#ffffff",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {MODAL_OPEN_BTN_LABEL}
+                  </Text>
+                </View>
                 <View
                   id="modal-main-block"
                   style={{
@@ -389,6 +471,7 @@ function ModalDemoRoot() {
               </View>
               <Modal
                 visible={open}
+                backdropId="modal-backdrop"
                 onRequestClose={() => {
                   setOpen(false);
                   setLog("onRequestClose（点背板关闭）");
@@ -416,7 +499,37 @@ function ModalDemoRoot() {
                       backgroundColor: "#86efac",
                     }}
                     onClick={() => setLog("弹窗内绿条（不关闭 Modal）")}
-                  />
+                  >
+                    <Text
+                      id="modal-strip-label"
+                      style={{
+                        position: "absolute",
+                        left: 10,
+                        top: 8,
+                        width: 200,
+                        fontSize: 13,
+                        fontWeight: "bold",
+                        color: "#14532d",
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {MODAL_STRIP_LABEL}
+                    </Text>
+                  </View>
+                  <Text
+                    id="modal-card-help"
+                    style={{
+                      position: "absolute",
+                      left: 12,
+                      top: 52,
+                      width: 236,
+                      fontSize: 13,
+                      color: "#334155",
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    {MODAL_CARD_HELP}
+                  </Text>
                 </View>
               </Modal>
             </Canvas>
@@ -433,10 +546,19 @@ function ModalDemoRoot() {
 /** `CanvasProvider` → `Canvas` + `View`，与 {@link CoreSmoke} 场景对齐。 */
 export function ReactSmoke({ demo }: ReactSmokeProps) {
   const [lastClickTarget, setLastClickTarget] = useState<string | null>(null);
+  const [textWrapWidth, setTextWrapWidth] = useState(TEXT_DEMO_WRAP_MAX);
+  const [textDemoClickLog, setTextDemoClickLog] = useState<string | null>(null);
   const onPointerHit = useCallback((label: string) => setLastClickTarget(label), []);
+  const onTextBodyClick = useCallback(() => {
+    setTextDemoClickLog(`text-body click · ${new Date().toLocaleTimeString()}`);
+  }, []);
 
   useEffect(() => {
     if (demo !== "pointer" && demo !== "through") setLastClickTarget(null);
+  }, [demo]);
+
+  useEffect(() => {
+    if (demo !== "text") setTextDemoClickLog(null);
   }, [demo]);
 
   const W =
@@ -450,7 +572,9 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
             ? DEMO_CURSOR.w
             : demo === "modal"
               ? DEMO_MODAL.w
-              : DEMO_HOVER.w;
+              : demo === "text"
+                ? DEMO_TEXT.w
+                : DEMO_HOVER.w;
   const H =
     demo === "layout"
       ? DEMO_LAYOUT.h
@@ -462,13 +586,16 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
             ? DEMO_CURSOR.h
             : demo === "modal"
               ? DEMO_MODAL.h
-              : DEMO_HOVER.h;
+              : demo === "text"
+                ? DEMO_TEXT.h
+                : DEMO_HOVER.h;
 
   const blurb =
     demo === "modal" ? (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
-        <code>Modal</code> 挂在 <code>scene-modal</code>{" "}
-        槽；打开后全屏背板在上层。请先点蓝块打开，再点红块区域：应走 <code>onRequestClose</code>
+        <code>Modal</code> 挂在 <code>scene-modal</code> 槽；蓝条内「打开弹窗」、绿条内短文案均为{" "}
+        <code>Text</code>（与 Core 同文案）。请先点蓝块打开，再点红块区域：应走{" "}
+        <code>onRequestClose</code>
         （背板），主界面红块不应收到 click。点弹窗内绿条仅记日志，不关闭。
       </p>
     ) : demo === "layout" ? (
@@ -483,6 +610,12 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
         与 Core 相同：<code>through-front</code> 为 <code>pointerEvents: &quot;none&quot;</code>
         ，点击橙区应记为背后绿块。
+      </p>
+    ) : demo === "text" ? (
+      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
+        <strong>两段</strong>：Caption / 主段均设 <code>lineHeight</code>；主段内嵌套{" "}
+        <code>Text</code> 提高局部行距（字重、异色字号、<code>\n</code> 硬换行 + 长段自动换行）。
+        <strong>M2</strong>：拖滑块改宽；主段 <code>onClick</code>。与 Core 树、run 扁平化语义对齐。
       </p>
     ) : demo === "cursor" ? (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
@@ -510,15 +643,57 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
     );
   }
 
+  const textWidthSlider =
+    demo === "text" ? (
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          margin: "0 0 0.5rem",
+          fontSize: 14,
+          color: "var(--text)",
+          maxWidth: Math.max(DEMO_TEXT.w, 480),
+        }}
+      >
+        <span style={{ whiteSpace: "nowrap" }}>文字区宽度</span>
+        <input
+          type="range"
+          min={TEXT_DEMO_WRAP_MIN}
+          max={TEXT_DEMO_WRAP_MAX}
+          value={textWrapWidth}
+          onChange={(e) => setTextWrapWidth(Number(e.target.value))}
+          style={{ flex: 1, minWidth: 120 }}
+        />
+        <span style={{ fontVariantNumeric: "tabular-nums", minWidth: "3.5rem" }}>
+          {textWrapWidth}px
+        </span>
+      </label>
+    ) : null;
+
   return (
     <div>
       {blurb}
+      {textWidthSlider}
       <CanvasProvider>
-        {({ isReady }) =>
-          isReady && (
-            <Canvas width={W} height={H}>
+        {({ isReady, runtime }) =>
+          isReady &&
+          runtime && (
+            <Canvas
+              width={W}
+              height={H}
+              paragraphFontProvider={runtime.paragraphFontProvider}
+              defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
+            >
               {demo === "layout" ? (
                 <FlexDemoScene W={W} H={H} />
+              ) : demo === "text" ? (
+                <TextDemoScene
+                  W={W}
+                  H={H}
+                  wrapWidth={textWrapWidth}
+                  onBodyClick={onTextBodyClick}
+                />
               ) : demo === "pointer" ? (
                 <>
                   <PointerDemoScene W={W} H={H} />
@@ -541,6 +716,11 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
       {demo === "pointer" || demo === "through" ? (
         <p style={{ margin: "0.5rem 0 0", fontSize: 14, color: "var(--text-h)" }}>
           上次 click 监听来自：<strong>{lastClickTarget ?? "（尚未点击）"}</strong>
+        </p>
+      ) : null}
+      {demo === "text" ? (
+        <p style={{ margin: "0.5rem 0 0", fontSize: 13, color: "var(--text-h)" }}>
+          主段落点击：<strong>{textDemoClickLog ?? "（点击主灰条 text-body 内文）"}</strong>
         </p>
       ) : null}
     </div>

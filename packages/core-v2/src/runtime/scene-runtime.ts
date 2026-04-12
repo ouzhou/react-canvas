@@ -10,8 +10,12 @@ import { hitTestAt } from "../hit/hit-test.ts";
 import { resolveCursorFromHitLeaf } from "../input/resolve-cursor.ts";
 import { absoluteBoundsFor, calculateAndSyncLayout } from "../layout/layout-sync.ts";
 import { applyStylesToYoga, clearYogaLayoutStyle, type ViewStyle } from "../layout/style-map.ts";
+import { bindTextNodeMeasure } from "../layout/text-yoga-measure.ts";
 import { loadYoga } from "../layout/yoga.ts";
-import type { SceneNode } from "../scene/scene-node.ts";
+import type { Yoga } from "yoga-layout/load";
+import type { SceneNode, SceneNodeKind } from "../scene/scene-node.ts";
+import type { TextFlatRun } from "../text/text-flat-run.ts";
+import { joinTextFlatRuns } from "../text/text-flat-run.ts";
 import { createNodeStore, type NodeStore } from "./node-store.ts";
 
 const cursorTargetByRuntime = new WeakMap<object, HTMLCanvasElement | null>();
@@ -52,6 +56,12 @@ export type LayoutSnapshot = Record<
     absLeft: number;
     absTop: number;
     backgroundColor?: string;
+    nodeKind?: SceneNodeKind;
+    textContent?: string;
+    textFontSize?: number;
+    /** 文本节点外层 `style` 中的排版相关字段，供多 run 与 `textRuns` 合并绘制。 */
+    textLayoutStyle?: Pick<ViewStyle, "color" | "fontSize" | "fontFamily" | "fontWeight">;
+    textRuns?: TextFlatRun[];
   }
 >;
 
@@ -76,6 +86,16 @@ export type SceneRuntime = {
    */
   notifyPointerLeftStage(x: number, y: number): void;
   insertView(parentId: string, id: string, style: ViewStyle): void;
+  /**
+   * 插入或更新文本叶节点。`content` 为字符串时与 M1/M2 一致；为 run 数组时走 M3 多样式 Paragraph。
+   * 未设置固定 `height`（数字）时由 Yoga `measureFunc` 测量高度。
+   */
+  insertText(
+    parentId: string,
+    id: string,
+    content: string | readonly TextFlatRun[],
+    style: ViewStyle,
+  ): void;
   removeView(id: string): void;
   updateStyle(id: string, style: ViewStyle): void;
   /** 局部合并样式（merge）：仅覆盖传入的字段，未传入字段保持原值。命令式场景（如 hover 切换单属性）使用。 */
@@ -95,11 +115,28 @@ export type SceneRuntime = {
   subscribeAfterLayout(listener: (payload: LayoutCommitPayload) => void): () => void;
 };
 
-function rebuildYogaStyle(node: SceneNode): void {
+function normalizeInsertTextContent(content: string | readonly TextFlatRun[]): {
+  textContent: string;
+  textRuns: TextFlatRun[] | undefined;
+} {
+  if (typeof content === "string") {
+    return { textContent: content, textRuns: undefined };
+  }
+  const arr = [...content];
+  if (arr.length === 0) {
+    return { textContent: "", textRuns: undefined };
+  }
+  return { textContent: joinTextFlatRuns(arr), textRuns: arr };
+}
+
+function rebuildYogaStyle(node: SceneNode, store: NodeStore, yoga: Yoga): void {
   // clearYogaLayoutStyle で全プロパティをデフォルトに戻してから再適用する。
   clearYogaLayoutStyle(node.yogaNode);
   if (node.viewStyle) {
     applyStylesToYoga(node.yogaNode, node.viewStyle);
+  }
+  if ((node.kind ?? "view") === "text") {
+    bindTextNodeMeasure(store, yoga, node.id);
   }
 }
 
@@ -165,6 +202,25 @@ export async function createSceneRuntime(
       };
       const bg = n.viewStyle?.backgroundColor;
       if (bg !== undefined) entry.backgroundColor = bg;
+      const nk = n.kind ?? "view";
+      entry.nodeKind = nk;
+      if (nk === "text" && n.textContent !== undefined) {
+        entry.textContent = n.textContent;
+        const fs = n.viewStyle?.fontSize;
+        if (typeof fs === "number") entry.textFontSize = fs;
+        const vs = n.viewStyle;
+        if (vs) {
+          const tls: NonNullable<(typeof entry)["textLayoutStyle"]> = {};
+          if (vs.color !== undefined) tls.color = vs.color;
+          if (vs.fontSize !== undefined) tls.fontSize = vs.fontSize;
+          if (vs.fontFamily !== undefined) tls.fontFamily = vs.fontFamily;
+          if (vs.fontWeight !== undefined) tls.fontWeight = vs.fontWeight;
+          if (Object.keys(tls).length > 0) entry.textLayoutStyle = tls;
+        }
+        if (n.textRuns !== undefined && n.textRuns.length > 0) {
+          entry.textRuns = [...n.textRuns];
+        }
+      }
       out[id] = entry;
     }
     return out;
@@ -296,7 +352,7 @@ export async function createSceneRuntime(
       const existing = store.get(id);
       if (existing) {
         existing.viewStyle = { ...existing.viewStyle, ...style };
-        rebuildYogaStyle(existing);
+        rebuildYogaStyle(existing, store, yoga);
         runLayout();
         applyResolvedCursor();
         return;
@@ -304,6 +360,32 @@ export async function createSceneRuntime(
       const n = store.createChildAt(parentId, id);
       n.viewStyle = { ...style };
       applyStylesToYoga(n.yogaNode, n.viewStyle);
+      runLayout();
+      applyResolvedCursor();
+    },
+
+    insertText(parentId, id, content, style) {
+      layoutDirty = true;
+      const { textContent, textRuns } = normalizeInsertTextContent(content);
+      const existing = store.get(id);
+      if (existing) {
+        if (existing.kind !== "text") {
+          throw new Error(`insertText: node "${id}" exists but is not a text node`);
+        }
+        existing.textContent = textContent;
+        existing.textRuns = textRuns;
+        existing.viewStyle = { ...existing.viewStyle, ...style };
+        rebuildYogaStyle(existing, store, yoga);
+        runLayout();
+        applyResolvedCursor();
+        return;
+      }
+      const n = store.createChildAt(parentId, id);
+      n.kind = "text";
+      n.textContent = textContent;
+      n.textRuns = textRuns;
+      n.viewStyle = { ...style };
+      rebuildYogaStyle(n, store, yoga);
       runLayout();
       applyResolvedCursor();
     },
@@ -326,7 +408,7 @@ export async function createSceneRuntime(
       if (!n) return;
       layoutDirty = true;
       n.viewStyle = { ...style };
-      rebuildYogaStyle(n);
+      rebuildYogaStyle(n, store, yoga);
       runLayout();
       applyResolvedCursor();
     },
@@ -336,7 +418,7 @@ export async function createSceneRuntime(
       if (!n) return;
       layoutDirty = true;
       n.viewStyle = { ...n.viewStyle, ...patch };
-      rebuildYogaStyle(n);
+      rebuildYogaStyle(n, store, yoga);
       runLayout();
       applyResolvedCursor();
     },
