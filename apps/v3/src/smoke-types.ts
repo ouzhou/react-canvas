@@ -7,7 +7,8 @@ export type SmokeDemoId =
   | "cursor"
   | "modal"
   | "text"
-  | "style";
+  | "style"
+  | "border";
 
 export function readDemoSearch(): { demo: SmokeDemoId } {
   const p = new URLSearchParams(window.location.search);
@@ -27,17 +28,8 @@ export function readDemoSearch(): { demo: SmokeDemoId } {
                 ? "text"
                 : raw === "style"
                   ? "style"
-                  : "layout";
+                  : raw === "border"
+                    ? "border"
+                    : "layout";
   return { demo };
 }
-
-export const SMOKE_DEMO_LIST: ReadonlyArray<{ id: SmokeDemoId; label: string }> = [
-  { id: "layout", label: "布局测试" },
-  { id: "pointer", label: "pointer 事件测试" },
-  { id: "through", label: "穿透命中（pointer-events: none）" },
-  { id: "hover", label: "hover 测试" },
-  { id: "cursor", label: "cursor（多场景 + hover）" },
-  { id: "modal", label: "Modal（scene-modal + 背板）" },
-  { id: "text", label: "文字（Paragraph M1）" },
-  { id: "style", label: "样式（Yoga 扩展）" },
-];

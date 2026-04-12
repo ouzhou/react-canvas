@@ -154,6 +154,13 @@ export type ViewStyle = {
    * 不传 Yoga；仅布局快照与 Skia 使用。
    */
   borderRadius?: number | `${number}%`;
+  /**
+   * 四边相同边框宽度（px），传给 Yoga `setBorder`，参与布局（挤压子节点内容区）。
+   * 非有限或负数按 `0` 处理；`0` 表示无边框。
+   */
+  borderWidth?: number;
+  /** 边框颜色；与 {@link ViewStyle.backgroundColor} 相同，支持 `rgba()` 等 CSS 串。仅绘制用，不传 Yoga。 */
+  borderColor?: string;
   /** 宽高比（`width` / `height`）；未设置时由 Yoga 默认。 */
   aspectRatio?: number;
 };
@@ -413,6 +420,10 @@ export function clearYogaLayoutStyle(node: YogaNode): void {
   node.setHeightAuto();
   node.setFlex(0);
   node.setPadding(Edge.All, 0);
+  node.setBorder(Edge.Left, undefined);
+  node.setBorder(Edge.Top, undefined);
+  node.setBorder(Edge.Right, undefined);
+  node.setBorder(Edge.Bottom, undefined);
   node.setMargin(Edge.Left, 0);
   node.setMargin(Edge.Top, 0);
   node.setMargin(Edge.Right, 0);
@@ -480,6 +491,15 @@ export function applyStylesToYoga(node: YogaNode, style: ViewStyle): void {
 
   applyPaddingEdges(node, style);
   applyMarginEdges(node, style);
+
+  if (style.borderWidth !== undefined) {
+    const raw = style.borderWidth;
+    const w = typeof raw === "number" && Number.isFinite(raw) && raw > 0 ? raw : undefined;
+    node.setBorder(Edge.Top, w);
+    node.setBorder(Edge.Right, w);
+    node.setBorder(Edge.Bottom, w);
+    node.setBorder(Edge.Left, w);
+  }
 
   if (style.minWidth !== undefined) setMinWidthSmart(node, style.minWidth);
   if (style.maxWidth !== undefined) setMaxWidthSmart(node, style.maxWidth);

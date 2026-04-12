@@ -34,11 +34,11 @@
 
 ## 2. 方案对比与决议（与 Step 9 草案一致）
 
-| 方案 | 说明 | 结论 |
-|------|------|------|
-| **A. 专用滚动容器节点** | `SceneNode` 扩展 `kind: "scrollView"`（或等价），`scrollY` 存节点上；paint / hit-test 分支 | **采用** |
-| B. 堆在普通 `View` 上 | `View` + 魔法 style | 职责膨胀 |
-| C. 双 `View` + 仅 transform | 偏移不进统一场景语义 | 命中/滚轮边界易错 |
+| 方案                        | 说明                                                                                       | 结论              |
+| --------------------------- | ------------------------------------------------------------------------------------------ | ----------------- |
+| **A. 专用滚动容器节点**     | `SceneNode` 扩展 `kind: "scrollView"`（或等价），`scrollY` 存节点上；paint / hit-test 分支 | **采用**          |
+| B. 堆在普通 `View` 上       | `View` + 魔法 style                                                                        | 职责膨胀          |
+| C. 双 `View` + 仅 transform | 偏移不进统一场景语义                                                                       | 命中/滚轮边界易错 |
 
 ---
 
@@ -84,9 +84,7 @@
 
 ```tsx
 <ScrollView style={{ flex: 1, minHeight: 0 }} overflow="hidden">
-  <View style={{ flexDirection: "column" }}>
-    {/* 可变高内容 */}
-  </View>
+  <View style={{ flexDirection: "column" }}>{/* 可变高内容 */}</View>
 </ScrollView>
 ```
 
@@ -128,6 +126,6 @@
 
 ## 10. 实现门禁
 
-1. **审阅**：维护者确认 §3–§7 无歧义。  
-2. **writing-plans**：通过后为 `core-v2` → `react-v2` → `apps/v3` 分 PR 或单 PR 顺序写计划。  
+1. **审阅**：维护者确认 §3–§7 无歧义。
+2. **writing-plans**：通过后为 `core-v2` → `react-v2` → `apps/v3` 分 PR 或单 PR 顺序写计划。
 3. **禁止**：在规格未获「可开始实现」确认前，合并 ScrollView 实现代码（与 brainstorming HARD-GATE 一致）。

@@ -1,0 +1,511 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-04-12 20:01+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid " 与 "
+msgstr " and "
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid " 与 局部行距↑2.45"
+msgstr " and local lineHeight ↑2.45"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "。自动换行段："
+msgstr ". Auto-wrap paragraph:"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "【Caption】小号灰条 lineHeight≈1.38；与主段同宽随滑块变宽。主段外层≈1.82，并含嵌套 run 更高行距。覆盖 M3、硬换行与自动换行。"
+msgstr "【Caption】Small gray bar lineHeight≈1.38; same width as main paragraph, expands with slider. Main outer≈1.82, contains nested runs with higher lineHeight. Covers M3, hard wrap and auto-wrap."
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "【Skia 文本样式】textAlign · textDecoration（含 decorationColor）· letterSpacing / wordSpacing · fontStyle · rgba() · fontFamily 逗号回退"
+msgstr "【Skia Text Styles】textAlign · textDecoration (including decorationColor) · letterSpacing / wordSpacing · fontStyle · rgba() · fontFamily comma fallback"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "── 硬换行收尾：拖窄灰条主段应自动增高。"
+msgstr "── Hard wrap ending: Dragging the gray bar narrower should automatically increase main paragraph height."
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "18px 蓝"
+msgstr "18px blue"
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "1px 灰"
+msgstr "1px gray"
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "2px rgba 蓝边"
+msgstr "2px rgba blue border"
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "3px 橙"
+msgstr "3px orange"
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "aspectRatio + overflow"
+msgstr "aspectRatio + overflow"
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "borderWidth 12 与 padding 8 同时挤占内区；内层 flex:1 展示剩余空间。"
+msgstr "borderWidth 12 and padding 8 both occupy inner area; inner flex:1 shows remaining space."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "borderWidth 经 Yoga 参与占位；borderColor 在 Skia 描边，可与 borderRadius、padding 叠加。舞台内分三段子示例：粗边+圆角+padding、细边 rgba 描边、1px/3px/无边线宽对比，用于核对布局盒与视觉一致。"
+msgstr "borderWidth participates in spacing via Yoga; borderColor strokes in Skia, can combine with borderRadius and padding. Three sections in stage: thick border+corner+padding, thin rgba border, 1px/3px/no border width comparison, for verifying layout box matches visual."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "CanvasKit Paragraph：行高、对齐、装饰线、字距、斜体与 rgba、字体族回退等。可通过控件调节主段换行宽度。"
+msgstr "CanvasKit Paragraph: lineHeight, alignment, decoration, letterSpacing, italic and rgba, fontFamily fallback, etc. Main paragraph wrap width adjustable via controls."
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "Caption + 主灰条（可点）+ 长文换行；用顶栏控件调节主段宽度。"
+msgstr "Caption + main gray bar (clickable) + long text wrap; adjust main paragraph width with top controls."
+
+#: src/react-smoke.tsx
+msgid "click: （尚未点击）"
+msgstr "click: (not yet clicked)"
+
+#: src/react-smoke.tsx
+msgid "click: {lastClickTarget}"
+msgstr "click: {lastClickTarget}"
+
+#: src/react-smoke.tsx
+msgid "English"
+msgstr "English"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "Flex 布局"
+msgstr "Flex Layout"
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "flexDirection: row-reverse，子项沿主轴从末端开始排。"
+msgstr "flexDirection: row-reverse, items排 along main axis from end."
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "flexGrow / Shrink / Basis"
+msgstr "flexGrow / Shrink / Basis"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "fontFamily: \"__NoSuchFont__\", {defaultParagraphFontFamily}（应正常显示）"
+msgstr "fontFamily: \"__NoSuchFont__\", {defaultParagraphFontFamily} (should display normally)"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "fontStyle: italic；color: rgba(14,116,144,0.78)"
+msgstr "fontStyle: italic; color: rgba(14,116,144,0.78)"
+
+#: src/smoke/scenes/pointer-click-log.tsx
+msgid "hit-lg（绿，后插入）"
+msgstr "hit-lg (green, inserted later)"
+
+#: src/smoke/scenes/pointer-click-log.tsx
+msgid "hit-sm（红，先插入）"
+msgstr "hit-sm (red, inserted first)"
+
+#: src/smoke/scenes/pointer-click-log.tsx
+msgid "hit-sm2-back（紫，先插入）"
+msgstr "hit-sm2-back (purple, inserted first)"
+
+#: src/smoke/scenes/pointer-click-log.tsx
+msgid "hit-sm2-front（蓝，后插入）"
+msgstr "hit-sm2-front (blue, inserted later)"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "letterSpacing:2px，wordSpacing:10px → alpha·beta·gamma·delta（看点距与词距）"
+msgstr "letterSpacing:2px, wordSpacing:10px → alpha·beta·gamma·delta (observe letter and word spacing)"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "M3：外层 15px 字色继承；整段 lineHeight≈1.82。嵌套 "
+msgstr "M3: outer 15px inherits color; whole paragraph lineHeight≈1.82. Nested "
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "margin + gap"
+msgstr "margin + gap"
+
+#: src/react-smoke.tsx
+msgid "modal: （尚未点击）"
+msgstr "modal: (not yet clicked)"
+
+#: src/react-smoke.tsx
+msgid "modal: {modalLog}"
+msgstr "modal: {modalLog}"
+
+#: src/smoke/scenes/modal-demo-scene.tsx
+msgid "onRequestClose（点遮罩关闭）"
+msgstr "onRequestClose (click overlay to close)"
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "opacity 组透明"
+msgstr "opacity group transparency"
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "padding + wrap"
+msgstr "padding + wrap"
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "paddingTop 覆盖四边 padding；flexWrap 换行。"
+msgstr "paddingTop overrides all-side padding; flexWrap wraps."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "pointer-events 穿透"
+msgstr "pointer-events pass"
+
+#: src/react-smoke.tsx
+msgid "react-canvas · 场景演示"
+msgstr "react-canvas · Scene Demo"
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "row-reverse"
+msgstr "row-reverse"
+
+#. placeholder {0}: new Date().toLocaleTimeString()
+#: src/react-smoke.tsx
+msgid "text-body · {0}"
+msgstr "text-body · {0}"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "textAlign: center — 拖窄灰条仍可看出居中"
+msgstr "textAlign: center — dragging gray bar narrower still shows centering"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "textAlign: justify。多行时观察左右对齐；宽度随上方滑块变化。第二句用于撑满行长以便看 justify 效果。"
+msgstr "textAlign: justify. Observe left-right alignment in multi-line; width changes with slider above. Second sentence fills line to show justify effect."
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "textAlign: right"
+msgstr "textAlign: right"
+
+#: src/smoke/scenes/through-click-log.tsx
+msgid "through-back（绿，背后层）"
+msgstr "through-back (green, back layer)"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "underline + line-through；装饰线深红、字色深灰（textDecorationColor 与 color 分离）。"
+msgstr "underline + line-through; decoration dark red, text dark gray (textDecorationColor separate from color)."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "Yoga 扩展：margin、gap、padding 与换行、flex 分项、方向翻转、透明度与裁剪、圆角与 hover 等。请用下方标签切换子示例。"
+msgstr "Yoga extensions: margin, gap, padding and wrap, flex items, direction flip, opacity and clip, borderRadius and hover, etc. Use tabs below to switch sub-examples."
+
+#: src/smoke/scenes/cursor-demo-scene.tsx
+msgid "三列分别为 pointer / text / crosshair。"
+msgstr "Three columns: pointer / text / crosshair."
+
+#: src/smoke/scenes/hover-demo-scene.tsx
+msgid "两例互不依赖，用于确认多个节点可同时维护各自 hovered 态。"
+msgstr "Two examples independent, confirming multiple nodes can maintain their own hovered state."
+
+#: src/react-smoke.tsx
+msgid "中文"
+msgstr "Chinese"
+
+#: src/smoke/scenes/modal-demo-scene.tsx
+msgid "主内容区收到点击（仅 Modal 关闭时）"
+msgstr "Main content receives click (only when Modal closes)"
+
+#: src/react-smoke.tsx
+msgid "主段: （点主灰条）"
+msgstr "Main: (click main gray bar)"
+
+#: src/react-smoke.tsx
+msgid "主段: {textDemoClickLog}"
+msgstr "Main: {textDemoClickLog}"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "你好 react-canvas · Hello paragraph demo。重复中文与 English mixed content，用于自动折行与测量。"
+msgstr "Hello react-canvas · Hello paragraph demo. Repeated Chinese and English mixed content, for auto-wrap and measurement."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "光标"
+msgstr "Cursor"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "光标样式"
+msgstr "Cursor Style"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "全屏半透明遮罩、点击遮罩关闭、内容在视口居中。用于验证 scene-modal 槽与弹窗打开/关闭流程。"
+msgstr "Full-screen semi-transparent overlay, click overlay to close, content centered in viewport. Validates scene-modal slot and popup open/close flow."
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "内区（flex:1）"
+msgstr "Inner area (flex:1)"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "前景层使用 pointer-events: none 时，事件应穿过该层命中背后节点。用于验证穿透语义与命中链。"
+msgstr "When foreground layer uses pointer-events: none, events should pass through and hit nodes behind. Validates穿透 semantics and hit chain."
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "半透明描边与实色底叠加，用于肉眼核对 Skia 颜色解析。"
+msgstr "Semi-transparent stroke叠加 with solid color background, for visual verification of Skia color parsing."
+
+#: src/smoke/scenes/layout-demo-scene.tsx
+msgid "同一行 flex:1 三等分，用于对照「无换行」时的均分宽度。"
+msgstr "Same row flex:1 divided into three equal parts, for comparison with 'no wrap' equal width."
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "固定宽 + aspectRatio 推导高；子项宽于父；overflow hidden + borderRadius 15%（Skia 裁剪/圆角）。"
+msgstr "Fixed width + aspectRatio derives height; child wider than parent; overflow hidden + borderRadius 15% (Skia clip/corner)."
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "圆角按钮 + hover"
+msgstr "Rounded button + hover"
+
+#: src/smoke/scenes/cursor-drag-strip.tsx
+msgid "在粉区内按下拖动为抓取；移出粉区后光标随当前命中节点变化（粉区为 grab / grabbing）。"
+msgstr "Press and drag in pink area to grab; cursor changes with current hit node after leaving pink area (pink area is grab/grabbing)."
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "多行短条展示 textAlign / textDecoration / letterSpacing / rgba / fontFamily 回退。"
+msgstr "Multi-line short bars show textAlign / textDecoration / letterSpacing / rgba / fontFamily fallback."
+
+#: src/smoke/scenes/cursor-demo-scene.tsx
+msgid "左：子块继承父 progress；右：子块 zoom-in 覆盖父 alias。"
+msgstr "Left: child block inherits parent progress; right: child block zoom-in overrides parent alias."
+
+#: src/smoke/scenes/modal-demo-scene.tsx
+msgid "已打开 Modal"
+msgstr "Modal opened"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "布局"
+msgstr "Layout"
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "常规圆角矩形按钮 + 圆形按钮（48×48，borderRadius 24）；白字；hover 背景变浅、pointer（React 函数式 style；Core patchStyle）。"
+msgstr "Regular rounded rectangle button + circular button (48×48, borderRadius 24); white text; hover background lighter, pointer (React functional style; Core patchStyle)."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "弹窗"
+msgstr "Popup"
+
+#: src/smoke/scenes/modal-demo-scene.tsx
+msgid "弹窗内绿条（不关闭 Modal）"
+msgstr "Green bar inside popup (doesn't close Modal)"
+
+#. placeholder {0}: c.label
+#. placeholder {1}: c.hint
+#: src/react-smoke.tsx
+msgid "当前子示例：{0}。{1}"
+msgstr "Current sub-example: {0}. {1}"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "悬停"
+msgstr "Hover"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "悬停样式"
+msgstr "Hover Style"
+
+#: src/smoke/scenes/modal-demo-scene.tsx
+msgid "打开弹窗"
+msgstr "Open Popup"
+
+#: src/smoke/scenes/layout-demo-scene.tsx
+msgid "提示：点击命中与「绘制顺序」无关；本页仅展示布局结果。"
+msgstr "Note: Click hit is unrelated to 'draw order'; this page only shows layout results."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "文本"
+msgstr "Text"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "文本与段落"
+msgstr "Text & Paragraph"
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "无 flex 数字，仅用 grow+shrink+basis 占满剩余宽。"
+msgstr "No flex number, only use grow+shrink+basis to fill remaining width."
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "无边"
+msgstr "No border"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "样式"
+msgstr "Style"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "模态框"
+msgstr "Modal"
+
+#: src/smoke/scenes/through-demo-scene.tsx
+msgid "橙层不接收事件，点击应落在绿色底层。"
+msgstr "Orange layer doesn't receive events, click should land on green bottom layer."
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "滑块调左半透明块与下行父容器 α；右为不透明参照；子块仍带自身 opacity。"
+msgstr "Slider adjusts left semi-transparent block and next row parent container α; right is opaque reference; child blocks still carry their own opacity."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "点击与层级"
+msgstr "Click & Layer"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "点击命中顺序"
+msgstr "Click Hit Order"
+
+#: src/smoke/scenes/modal-demo-scene.tsx
+msgid "点我 · 不关窗"
+msgstr "Click me · Don't close"
+
+#: src/smoke/scenes/style-demo-scene.tsx
+msgid "确认"
+msgstr "Confirm"
+
+#: src/smoke/scenes/modal-demo-scene.tsx
+msgid "确认操作"
+msgstr "Confirm Action"
+
+#: src/smoke/scenes/through-demo-scene.tsx
+msgid "示例一：前景 pointer-events: none"
+msgstr "Example 1: Foreground pointer-events: none"
+
+#: src/smoke/scenes/layout-demo-scene.tsx
+msgid "示例一：多行 flex 比例"
+msgstr "Example 1: Multi-row flex ratio"
+
+#: src/smoke/scenes/hover-demo-scene.tsx
+msgid "示例一：左上单色块"
+msgstr "Example 1: Top-left solid color block"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "示例一：段落、嵌套 run 与主段点击"
+msgstr "Example 1: Paragraph, nested run and main paragraph click"
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "示例一：粗边框 + 圆角 + padding"
+msgstr "Example 1: Thick border + corner + padding"
+
+#: src/smoke/scenes/pointer-demo-scene.tsx
+msgid "示例一：红先绿后，重叠区点后绘者"
+msgstr "Example 1: Red first, green later, overlap area hits later-drawn"
+
+#: src/smoke/scenes/cursor-demo-scene.tsx
+msgid "示例一：静态 cursor"
+msgstr "Example 1: Static cursor"
+
+#: src/smoke/scenes/cursor-demo-scene.tsx
+msgid "示例三：hover 切换 cursor"
+msgstr "Example 3: Hover switch cursor"
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "示例三：线宽对比"
+msgstr "Example 3: Line width comparison"
+
+#: src/smoke/scenes/through-demo-scene.tsx
+msgid "示例二：与「点击与层级」对照——此处橙层不参与命中；彼处后绘色块参与命中。"
+msgstr "Example 2: Compared with 'Click & Layer' — here orange layer doesn't participate in hit; there later-drawn color block participates in hit."
+
+#: src/smoke/scenes/layout-demo-scene.tsx
+msgid "示例二：单行三等分"
+msgstr "Example 2: Single row three equal parts"
+
+#: src/smoke/scenes/hover-demo-scene.tsx
+msgid "示例二：右侧块（独立 hover）"
+msgstr "Example 2: Right block (independent hover)"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "示例二：对齐、装饰、间距与字体"
+msgstr "Example 2: Alignment, decoration, spacing and font"
+
+#: src/smoke/scenes/pointer-demo-scene.tsx
+msgid "示例二：小范围叠放（右下）"
+msgstr "Example 2: Small overlap (bottom-right)"
+
+#: src/smoke/scenes/border-demo-scene.tsx
+msgid "示例二：细边框与 rgba 描边"
+msgstr "Example 2: Thin border and rgba stroke"
+
+#: src/smoke/scenes/cursor-demo-scene.tsx
+msgid "示例二：继承与覆盖"
+msgstr "Example 2: Inheritance and override"
+
+#: src/smoke/scenes/cursor-drag-strip.tsx
+msgid "示例五：按下抓取"
+msgstr "Example 5: Press to grab"
+
+#: src/smoke/scenes/cursor-demo-scene.tsx
+msgid "示例四：穿透命中光标"
+msgstr "Example 4: Through-hit cursor"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "视图布局样式"
+msgstr "View Layout Styles"
+
+#: src/smoke/scenes/hover-demo-scene.tsx
+msgid "移入变浅绿，移出恢复深绿。"
+msgstr "Enter turns light green, leave restores dark green."
+
+#: src/smoke/scenes/hover-demo-scene.tsx
+msgid "移入变红，移出恢复蓝。"
+msgstr "Enter turns red, leave restores blue."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "穿透"
+msgstr "Through"
+
+#: src/smoke/scenes/text-demo-scene.tsx
+msgid "粗体红"
+msgstr "Bold red"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "红、绿矩形部分重叠且后绘制的块在上层。用于验证同坐标点击是否命中「后插入」的节点，而非底层先绘制的块。"
+msgstr "Red and green rectangles partially overlap, later-drawn block is on top. Verifies same coordinate click hits 'later inserted' node, not bottom first-drawn block."
+
+#: src/smoke/scenes/layout-demo-scene.tsx
+msgid "纵向三等分；每行内再 flex：顶行 3 等分、中行 2 等分、底行 4 等分。"
+msgstr "Vertical three equal parts; each row uses flex: top row 3 equal parts, middle row 2 equal parts, bottom row 4 equal parts."
+
+#: src/smoke/scenes/pointer-demo-scene.tsx
+msgid "绿块后插入、面积更大；重叠处点击应记录绿块。"
+msgstr "Green block inserted later, larger area; overlap click should record green block."
+
+#: src/react-smoke.tsx
+msgid "能力示例"
+msgstr "Capability Examples"
+
+#: src/smoke/scenes/pointer-demo-scene.tsx
+msgid "蓝在上、紫在下；重叠处应命中蓝块。"
+msgstr "Blue on top, purple below; overlap should hit blue block."
+
+#: src/smoke/hooks/use-style-demo-cases.tsx
+msgid "行向 gap；首块 marginTop、次块左右 margin。"
+msgstr "Row gap; first block marginTop, second block left-right margin."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "覆盖静态 cursor、父子继承与覆盖、hover 时变更、穿透层对光标的影响，以及 grab / grabbing 与画布外松手恢复。"
+msgstr "Covers static cursor, parent-child inheritance and override, hover change,穿透 layer's effect on cursor, and grab/grabbing with release outside canvas recovery."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "边框"
+msgstr "Border"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "边框与圆角"
+msgstr "Border & Corner"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "通过函数式 style 根据 hovered 切换背景色。用于验证 pointerenter / pointerleave 与 hover 态样式更新。"
+msgstr "Switch background color via functional style based on hovered. Validates pointerenter/pointerleave and hover state style updates."
+
+#: src/smoke/scenes/modal-demo-scene.tsx
+msgid ""
+"遮罩覆盖整块画布（含侧栏），贴近业务全屏 Modal。\n"
+"点外侧深色区域关闭；绿条仅消费点击不关窗。"
+msgstr ""
+"Overlay covers entire canvas (including sidebar), business-like full-screen Modal.\n"
+"Click dark outer area to close; green bar only consumes click, doesn't close window."
+
+#: src/smoke/scenes/through-click-log.tsx
+msgid "错误：through-front（橙）不应收到 click"
+msgstr "Error: through-front (orange) should not receive click"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "验证纵向 flex 容器内多行子布局：各行内再使用行向 flex 与 flex 比例，用于对照 Yoga 分行、占比与基础绘制。"
+msgstr "Verify multi-row sub-layout within vertical flex container: each row uses row-direction flex and flex ratio again, for comparing Yoga row splitting, proportion and basic drawing."

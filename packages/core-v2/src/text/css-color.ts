@@ -9,6 +9,7 @@ import { parseCssHexColor } from "./css-hex.ts";
 export function colorStringToCkColor(ck: CanvasKit, s: string): Color {
   const t = s.trim();
   if (t.length === 0) return ck.Color(17, 24, 39, 1);
+  if (/^transparent$/i.test(t)) return ck.Color(0, 0, 0, 0);
   try {
     const parsed = ck.parseColorString(t);
     if (parsed && parsed.length >= 4) return parsed;

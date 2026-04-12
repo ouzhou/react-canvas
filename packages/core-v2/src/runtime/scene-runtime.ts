@@ -70,6 +70,10 @@ export type LayoutSnapshot = Record<
     /** 已收缩的圆角半径（px），供 Skia；无圆角时省略。 */
     borderRadiusRx?: number;
     borderRadiusRy?: number;
+    /** 四边相同边框宽（px），来自 Yoga 参与布局后的 `ViewStyle.borderWidth`；无或 0 时省略。 */
+    borderWidth?: number;
+    /** 边框颜色串；与 {@link ViewStyle.borderColor} 一致，无描边需求时省略。 */
+    borderColor?: string;
     nodeKind?: SceneNodeKind;
     textContent?: string;
     textFontSize?: number;
@@ -227,6 +231,12 @@ export async function createSceneRuntime(
           entry.borderRadiusRx = rx;
           entry.borderRadiusRy = ry;
         }
+      }
+      const bdw = n.viewStyle?.borderWidth;
+      if (typeof bdw === "number" && Number.isFinite(bdw) && bdw > 0) {
+        entry.borderWidth = bdw;
+        const bc = n.viewStyle?.borderColor;
+        if (bc !== undefined) entry.borderColor = bc;
       }
       const nk = n.kind ?? "view";
       entry.nodeKind = nk;

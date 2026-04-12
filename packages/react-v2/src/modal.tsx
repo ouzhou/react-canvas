@@ -76,7 +76,7 @@ export function Modal(props: ModalProps): ReactNode {
           top: 0,
           width: "100%",
           height: "100%",
-          backgroundColor: transparent ? "transparent" : "rgba(0,0,0,0.45)",
+          backgroundColor: transparent ? "transparent" : "rgba(0,0,0,0.58)",
         }}
         onClick={onBackdropClick}
       />

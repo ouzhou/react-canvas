@@ -8,7 +8,7 @@ import type {
   LayoutSnapshot,
   SceneRuntime,
 } from "../runtime/scene-runtime.ts";
-import { parseCssHexColor } from "../text/css-hex.ts";
+import { colorStringToCkColor } from "../text/css-color.ts";
 import { buildAndDrawParagraphRuns } from "../text/paragraph-from-runs.ts";
 import { mapParagraphTextAlign, mergedRunStyleToCkTextStyle } from "../text/skia-text-style.ts";
 import { mergePlainTextStyle } from "../text/text-flat-run.ts";
@@ -24,7 +24,7 @@ export type AttachSceneSkiaOptions = {
 
 /**
  * 将 {@link SceneRuntime} 的布局盒绘制到 `<canvas>`（CanvasKit Skia）。
- * 仅当节点提供可解析的 `backgroundColor` 时绘制填充与描边；随 `subscribeAfterLayout` 刷新。
+ * 仅当节点提供可解析的 `backgroundColor` 时绘制填充（不画默认描边，避免 UI 出现粗线框感）；随 `subscribeAfterLayout` 刷新。
  */
 export async function attachSceneSkiaPresenter(
   runtime: SceneRuntime,
@@ -84,10 +84,9 @@ export async function attachSceneSkiaPresenter(
     paintFill.setAntiAlias(true);
     paintFill.setStyle(ck.PaintStyle.Fill);
 
-    const paintStroke = new ck.Paint();
-    paintStroke.setAntiAlias(true);
-    paintStroke.setStyle(ck.PaintStyle.Stroke);
-    paintStroke.setStrokeWidth(2);
+    const paintBorder = new ck.Paint();
+    paintBorder.setAntiAlias(true);
+    paintBorder.setStyle(ck.PaintStyle.Stroke);
 
     function readOpacity(box: LayoutSnapshot[string] | undefined): number {
       const o = box?.opacity;
@@ -148,38 +147,55 @@ export async function attachSceneSkiaPresenter(
 
     function paintNodeContent(id: string): void {
       const box = commit.layout[id];
-      if (box?.backgroundColor) {
-        const rgb = parseCssHexColor(box.backgroundColor);
-        if (rgb) {
-          const strokeRgb = {
-            r: Math.max(0, Math.min(255, Math.round(rgb.r * 0.5))),
-            g: Math.max(0, Math.min(255, Math.round(rgb.g * 0.5))),
-            b: Math.max(0, Math.min(255, Math.round(rgb.b * 0.5))),
-          };
-          const fillAlpha = Math.floor(0.88 * 255);
-          paintFill.setColor(ck.Color(rgb.r, rgb.g, rgb.b, fillAlpha));
-          paintStroke.setColor(
-            ck.Color(strokeRgb.r, strokeRgb.g, strokeRgb.b, Math.floor(0.9 * 255)),
-          );
-          const rect = ck.LTRBRect(
-            box.absLeft,
-            box.absTop,
-            box.absLeft + box.width,
-            box.absTop + box.height,
-          );
-          const brx = box.borderRadiusRx ?? 0;
-          const bry = box.borderRadiusRy ?? 0;
+      if (!box) return;
+
+      const rect = ck.LTRBRect(
+        box.absLeft,
+        box.absTop,
+        box.absLeft + box.width,
+        box.absTop + box.height,
+      );
+      const brx = box.borderRadiusRx ?? 0;
+      const bry = box.borderRadiusRy ?? 0;
+
+      if (box.backgroundColor) {
+        const fillC = colorStringToCkColor(ck, box.backgroundColor);
+        const a =
+          typeof fillC === "object" &&
+          fillC !== null &&
+          "length" in fillC &&
+          typeof (fillC as Float32Array).length === "number" &&
+          (fillC as Float32Array).length >= 4
+            ? (fillC as Float32Array)[3]
+            : 1;
+        if (typeof a !== "number" || a > 1e-4) {
+          paintFill.setColor(fillC);
           if (brx > 0 || bry > 0) {
-            const rr = ck.RRectXY(rect, brx, bry);
-            skCanvas.drawRRect(rr, paintFill);
-            skCanvas.drawRRect(rr, paintStroke);
+            skCanvas.drawRRect(ck.RRectXY(rect, brx, bry), paintFill);
           } else {
             skCanvas.drawRect(rect, paintFill);
-            skCanvas.drawRect(rect, paintStroke);
           }
         }
       }
-      if (box && box.nodeKind === "text" && paragraphFontProvider && defaultParagraphFontFamily) {
+
+      const bw = box.borderWidth;
+      const bcol = box.borderColor;
+      if (
+        typeof bw === "number" &&
+        Number.isFinite(bw) &&
+        bw > 0 &&
+        bcol !== undefined &&
+        bcol.length > 0
+      ) {
+        paintBorder.setStrokeWidth(bw);
+        paintBorder.setColor(colorStringToCkColor(ck, bcol));
+        if (brx > 0 || bry > 0) {
+          skCanvas.drawRRect(ck.RRectXY(rect, brx, bry), paintBorder);
+        } else {
+          skCanvas.drawRect(rect, paintBorder);
+        }
+      }
+      if (box.nodeKind === "text" && paragraphFontProvider && defaultParagraphFontFamily) {
         const layoutBoxStyle = (box.textLayoutStyle ?? {}) as ViewStyle;
         if (box.textRuns?.length) {
           buildAndDrawParagraphRuns(
@@ -227,7 +243,7 @@ export async function attachSceneSkiaPresenter(
     paintSubtree(commit.rootId);
 
     paintFill.delete();
-    paintStroke.delete();
+    paintBorder.delete();
     skCanvas.restore();
     skSurface.flush();
   }
