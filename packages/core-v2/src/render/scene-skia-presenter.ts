@@ -103,7 +103,8 @@ export async function attachSceneSkiaPresenter(
      * 与 `hit-test` 叠放一致：兄弟中 `children` 靠后者在上。
      * 前序 DFS（先画本节点，再按子节点正序递归）→ 后插入的子节点后绘制、盖住先插入的兄弟。
      *
-     * 若日后增加 `clipRect`：须明确 clip 与组透明 `saveLayer` 的先后（当前无 clip）。
+     * **clip 与 `saveLayer`（组透明）顺序**：有 `overflow: hidden|scroll` 时先 `save` + `clipRect`/`clipRRect`，
+     * 再按需 `saveLayer`；避免半透明渗出裁切区外。
      */
     function paintSubtree(id: string): void {
       const box = commit.layout[id];
@@ -111,6 +112,21 @@ export async function attachSceneSkiaPresenter(
       const bounds =
         box &&
         ck.LTRBRect(box.absLeft, box.absTop, box.absLeft + box.width, box.absTop + box.height);
+
+      const ov = box?.overflow;
+      const clipPushed = Boolean(bounds) && (ov === "hidden" || ov === "scroll");
+      const clipRx = box?.borderRadiusRx ?? 0;
+      const clipRy = box?.borderRadiusRy ?? 0;
+
+      if (clipPushed && bounds) {
+        skCanvas.save();
+        if (clipRx > 0 || clipRy > 0) {
+          skCanvas.clipRRect(ck.RRectXY(bounds, clipRx, clipRy), ck.ClipOp.Intersect, true);
+        } else {
+          skCanvas.clipRect(bounds, ck.ClipOp.Intersect, true);
+        }
+      }
+
       let layerPaint: Paint | null = null;
       if (a < 1 && bounds) {
         layerPaint = new ck.Paint();
@@ -123,6 +139,9 @@ export async function attachSceneSkiaPresenter(
         if (layerPaint) {
           skCanvas.restore();
           layerPaint.delete();
+        }
+        if (clipPushed) {
+          skCanvas.restore();
         }
       }
     }
@@ -148,8 +167,16 @@ export async function attachSceneSkiaPresenter(
             box.absLeft + box.width,
             box.absTop + box.height,
           );
-          skCanvas.drawRect(rect, paintFill);
-          skCanvas.drawRect(rect, paintStroke);
+          const brx = box.borderRadiusRx ?? 0;
+          const bry = box.borderRadiusRy ?? 0;
+          if (brx > 0 || bry > 0) {
+            const rr = ck.RRectXY(rect, brx, bry);
+            skCanvas.drawRRect(rr, paintFill);
+            skCanvas.drawRRect(rr, paintStroke);
+          } else {
+            skCanvas.drawRect(rect, paintFill);
+            skCanvas.drawRect(rect, paintStroke);
+          }
         }
       }
       if (box && box.nodeKind === "text" && paragraphFontProvider && defaultParagraphFontFamily) {

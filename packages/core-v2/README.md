@@ -30,6 +30,7 @@
 ## 绘制顺序（无 zIndex）
 
 - **Skia**：与 `hitTestAt` 一致——**前序 DFS**：先画当前节点（若有 `backgroundColor`），再按 `children` **正序（0→n−1）**递归子树；同一父下 **后插入的兄弟后绘制**，叠在上层。
+- **`overflow: hidden|scroll`**：子树绘制经 **`clipRect` / `clipRRect`** 裁在父布局盒内；**`borderRadius`**（快照内为 `borderRadiusRx`/`Ry`）同时作用于背景圆角与裁剪形状。命中仍按轴对齐盒，与视觉圆角/裁剪可不一致。
 - **半透明**父背景仍会叠在子之下；需不透明底或分层设计，勿用面积等启发式改绘制序。
 
 ---

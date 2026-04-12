@@ -10,7 +10,8 @@ export type StyleDemoCase =
   | "flex-longhands"
   | "flex-reverse"
   | "opacity"
-  | "aspect-overflow";
+  | "aspect-overflow"
+  | "style-button";
 
 export const STYLE_DEMO_CASES: ReadonlyArray<{
   id: StyleDemoCase;
@@ -45,6 +46,11 @@ export const STYLE_DEMO_CASES: ReadonlyArray<{
   {
     id: "aspect-overflow",
     label: "aspectRatio + overflow",
-    hint: "固定宽 + aspectRatio 推导高；子项宽于父且 overflow: hidden。",
+    hint: "固定宽 + aspectRatio 推导高；子项宽于父；overflow hidden + borderRadius 15%（Skia 裁剪/圆角）。",
+  },
+  {
+    id: "style-button",
+    label: "圆角按钮 + hover",
+    hint: "常规按钮：圆角、白字居中；hover 时 cursor 为 pointer、背景变浅（React 用 style 函数；Core 用 patchStyle）。",
   },
 ];

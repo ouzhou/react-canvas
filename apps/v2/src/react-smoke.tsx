@@ -406,6 +406,53 @@ function StyleDemoScene({
       </View>
     );
   }
+  if (scene === "style-button") {
+    return (
+      <View
+        key={scene}
+        id="style-root"
+        style={{
+          width: W,
+          height: H,
+          flexDirection: "column",
+          backgroundColor: "#f1f5f9",
+          padding: 12,
+        }}
+      >
+        <View
+          id="btn-row"
+          style={{
+            flex: 1,
+            minHeight: 100,
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            marginTop: 16,
+          }}
+        >
+          <View
+            id="style-btn"
+            style={({ hovered }) => ({
+              width: 152,
+              height: 48,
+              borderRadius: 12,
+              backgroundColor: hovered ? "#3b82f6" : "#1d4ed8",
+              cursor: "pointer",
+              justifyContent: "center",
+              alignItems: "center",
+            })}
+          >
+            <Text
+              id="style-btn-label"
+              style={{ fontSize: 16, color: "#ffffff", textAlign: "center" }}
+            >
+              确认
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
   if (scene === "opacity") {
     const playO = opacityDemoPercent / 100;
     return (
@@ -495,6 +542,7 @@ function StyleDemoScene({
             width: Math.min(W - 48, 200),
             height: 52,
             overflow: "hidden",
+            borderRadius: "15%",
             backgroundColor: "#cbd5e1",
           }}
         >
@@ -1049,8 +1097,10 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
         与 Core 同树：<code>margin</code> / <code>gap</code>、<code>padding</code> 单边覆盖、
         <code>flexWrap</code>、<code>minHeight</code>、<code>flexGrow</code> /{" "}
         <code>flexShrink</code> / <code>flexBasis</code>、<code>row-reverse</code>、
-        <code>aspectRatio</code>、<code>overflow</code>。工具栏切换子场景；<code>opacity</code>{" "}
-        子场景有滑块联动。
+        <code>aspectRatio</code>、<code>overflow</code>、<code>borderRadius</code>
+        （%）。工具栏切换子场景；<code>opacity</code> 子场景有滑块联动；
+        <code>圆角按钮 + hover</code> 为函数式 <code>style</code> 与 Core <code>patchStyle</code>{" "}
+        对照。
       </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>

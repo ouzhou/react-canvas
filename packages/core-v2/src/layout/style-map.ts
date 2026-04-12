@@ -149,6 +149,11 @@ export type ViewStyle = {
    * 与 CSS `overflow` 一致；传给 Yoga（绘制层裁剪另 spec）。
    */
   overflow?: "visible" | "hidden" | "scroll";
+  /**
+   * 圆角半径：px 数字，或相对本节点布局盒的百分比（如 `"50%"`）。
+   * 不传 Yoga；仅布局快照与 Skia 使用。
+   */
+  borderRadius?: number | `${number}%`;
   /** 宽高比（`width` / `height`）；未设置时由 Yoga 默认。 */
   aspectRatio?: number;
 };

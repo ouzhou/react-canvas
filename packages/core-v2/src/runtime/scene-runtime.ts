@@ -8,6 +8,7 @@ import type { ScenePointerEvent } from "../events/scene-event.ts";
 import type { PointerEventType } from "../events/scene-event.ts";
 import { hitTestAt } from "../hit/hit-test.ts";
 import { resolveCursorFromHitLeaf } from "../input/resolve-cursor.ts";
+import { resolveBorderRadiusRxRy } from "../layout/border-radius-resolve.ts";
 import { absoluteBoundsFor, calculateAndSyncLayout } from "../layout/layout-sync.ts";
 import {
   applyStylesToYoga,
@@ -64,6 +65,11 @@ export type LayoutSnapshot = Record<
     backgroundColor?: string;
     /** 组透明；省略时视为 `1`。 */
     opacity?: number;
+    /** 与 `ViewStyle.overflow` 一致；省略时绘制侧视为 `visible`。 */
+    overflow?: "visible" | "hidden" | "scroll";
+    /** 已收缩的圆角半径（px），供 Skia；无圆角时省略。 */
+    borderRadiusRx?: number;
+    borderRadiusRy?: number;
     nodeKind?: SceneNodeKind;
     textContent?: string;
     textFontSize?: number;
@@ -212,6 +218,16 @@ export async function createSceneRuntime(
       if (bg !== undefined) entry.backgroundColor = bg;
       const o = clampOpacityForSnapshot(n.viewStyle?.opacity);
       if (o !== undefined) entry.opacity = o;
+      const ov = n.viewStyle?.overflow;
+      if (ov !== undefined) entry.overflow = ov;
+      const br = n.viewStyle?.borderRadius;
+      if (br !== undefined) {
+        const { rx, ry } = resolveBorderRadiusRxRy(br, l.width, l.height);
+        if (rx > 0 || ry > 0) {
+          entry.borderRadiusRx = rx;
+          entry.borderRadiusRy = ry;
+        }
+      }
       const nk = n.kind ?? "view";
       entry.nodeKind = nk;
       if (nk === "text" && n.textContent !== undefined) {

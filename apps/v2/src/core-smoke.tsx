@@ -279,6 +279,32 @@ function buildStyleDemo(
     return;
   }
 
+  if (c === "style-button") {
+    r.insertView("style-root", "btn-row", {
+      flex: 1,
+      minHeight: 100,
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      marginTop: 16,
+    });
+    r.insertView("btn-row", "style-btn", {
+      width: 152,
+      height: 48,
+      borderRadius: 12,
+      backgroundColor: "#1d4ed8",
+      cursor: "pointer",
+      justifyContent: "center",
+      alignItems: "center",
+    });
+    r.insertText("style-btn", "style-btn-label", "确认", {
+      fontSize: 16,
+      color: "#ffffff",
+      textAlign: "center",
+    });
+    return;
+  }
+
   if (c === "opacity") {
     const opPlay = STYLE_OPACITY_SLIDER_DEFAULT / 100;
     r.insertView("style-root", "op-stack", {
@@ -343,6 +369,7 @@ function buildStyleDemo(
     width: Math.min(W - 48, 200),
     height: 52,
     overflow: "hidden",
+    borderRadius: "15%",
     backgroundColor: "#cbd5e1",
   });
   r.insertView("ov-shell", "ov-wide", {
@@ -777,6 +804,20 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
           );
         } else if (demo === "style") {
           buildStyleDemo(r, contentRoot, dim.w, dim.h, styleCase);
+          if (styleCase === "style-button") {
+            const btnBg = "#1d4ed8";
+            const btnBgHover = "#3b82f6";
+            listenerOffs.push(
+              r.addListener("style-btn", "pointerenter", () => {
+                r.patchStyle("style-btn", { backgroundColor: btnBgHover });
+              }),
+            );
+            listenerOffs.push(
+              r.addListener("style-btn", "pointerleave", () => {
+                r.patchStyle("style-btn", { backgroundColor: btnBg });
+              }),
+            );
+          }
         } else {
           buildHoverDemo(r, contentRoot, dim.w, dim.h);
           listenerOffs.push(
@@ -828,13 +869,13 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
 
     void (async () => {
       const skiaOpts: AttachSceneSkiaOptions = { dpr };
-      if (demo === "text" || demo === "modal") {
+      if (demo === "text" || demo === "modal" || demo === "style") {
         try {
           const mod = await initRuntime();
           skiaOpts.paragraphFontProvider = mod.paragraphFontProvider;
           skiaOpts.defaultParagraphFontFamily = mod.defaultParagraphFontFamily;
         } catch (e: unknown) {
-          console.error("[core-smoke] initRuntime（含 Text 的 demo 需要默认字体）:", e);
+          console.error("[core-smoke] initRuntime（Text / style 画布等需要默认字体）:", e);
         }
       }
       try {
@@ -923,8 +964,10 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
         <code>padding</code> + 单边覆盖、<code>flexWrap</code>、<code>minHeight</code>、
         <code>flexGrow</code> / <code>flexShrink</code> / <code>flexBasis</code>、
         <code>flexDirection</code>（含 <code>row-reverse</code>）、<code>aspectRatio</code>、
-        <code>overflow</code>（Skia 裁剪另议）。与 Core 命令式树 id 对齐；下方工具栏切换子场景。
-        <code>opacity</code> 子场景带滑块实时 <code>patchStyle</code>。
+        <code>overflow</code>（Skia <code>clipRRect</code>）与 <code>borderRadius</code>。与 Core
+        命令式树 id 对齐；下方工具栏切换子场景。
+        <code>opacity</code> 子场景带滑块实时 <code>patchStyle</code>；<code>圆角按钮 + hover</code>{" "}
+        子场景为 Core <code>patchStyle</code> 换背景与 React 函数式 <code>style</code> 对照。
       </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>
