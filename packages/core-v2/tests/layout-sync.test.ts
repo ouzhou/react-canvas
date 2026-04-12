@@ -147,3 +147,35 @@ test("flex number wins over flexGrow when both set", () => {
   const flexOnly = run({ flex: 1 });
   expect(withBoth).toBe(flexOnly);
 });
+
+test("row-reverse: first child in tree order is laid out toward main-end", () => {
+  const store = createNodeStore(yoga);
+  const root = store.createRootNode(220, 80);
+  const row = store.createNode("row");
+  const a = store.createNode("a");
+  const b = store.createNode("b");
+  applyStylesToYoga(row.yogaNode, {
+    width: 220,
+    height: 60,
+    flexDirection: "row-reverse",
+  });
+  applyStylesToYoga(a.yogaNode, { width: 70, height: 40 });
+  applyStylesToYoga(b.yogaNode, { width: 70, height: 40 });
+  store.appendChild(root.id, row.id);
+  store.appendChild(row.id, a.id);
+  store.appendChild(row.id, b.id);
+  calculateAndSyncLayout(store, root.id, 220, 80);
+  expect(store.get(a.id)!.layout!.left).toBeGreaterThan(store.get(b.id)!.layout!.left);
+});
+
+test("aspectRatio with fixed width derives height", () => {
+  const store = createNodeStore(yoga);
+  const root = store.createRootNode(200, 200);
+  const box = store.createNode("box");
+  applyStylesToYoga(box.yogaNode, { width: 120, aspectRatio: 1.5 });
+  store.appendChild(root.id, box.id);
+  calculateAndSyncLayout(store, root.id, 200, 200);
+  const h = store.get(box.id)!.layout!.height;
+  expect(h).toBeGreaterThan(0);
+  expect(Math.abs(h - 80)).toBeLessThan(1.5);
+});

@@ -217,28 +217,71 @@ function buildStyleDemo(
     return;
   }
 
-  r.insertView("style-root", "fl-row", {
-    width: W - 24,
-    height: 80,
-    flexDirection: "row",
-    alignItems: "center",
+  if (c === "flex-longhands") {
+    r.insertView("style-root", "fl-row", {
+      width: W - 24,
+      height: 80,
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 8,
+      backgroundColor: "#e2e8f0",
+      padding: 10,
+    });
+    r.insertView("fl-row", "fl-fix", {
+      width: 76,
+      height: 52,
+      backgroundColor: "#2563eb",
+    });
+    r.insertView("fl-row", "fl-grow", {
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 40,
+      minWidth: 0,
+      height: 52,
+      marginLeft: 10,
+      backgroundColor: "#22d3ee",
+    });
+    return;
+  }
+
+  if (c === "flex-reverse") {
+    r.insertView("style-root", "rev-row", {
+      width: W - 24,
+      height: 76,
+      flexDirection: "row-reverse",
+      gap: 12,
+      alignItems: "center",
+      padding: 10,
+      marginTop: 8,
+      backgroundColor: "#e2e8f0",
+    });
+    r.insertView("rev-row", "rv-first", { width: 72, height: 48, backgroundColor: "#e11d48" });
+    r.insertView("rev-row", "rv-second", { width: 72, height: 48, backgroundColor: "#0d9488" });
+    return;
+  }
+
+  r.insertView("style-root", "ar-stack", {
+    flex: 1,
+    minHeight: 140,
+    flexDirection: "column",
+    gap: 10,
     marginTop: 8,
-    backgroundColor: "#e2e8f0",
-    padding: 10,
   });
-  r.insertView("fl-row", "fl-fix", {
-    width: 76,
-    height: 52,
-    backgroundColor: "#2563eb",
+  r.insertView("ar-stack", "ar-ratio", {
+    width: 120,
+    aspectRatio: 1.5,
+    backgroundColor: "#9333ea",
   });
-  r.insertView("fl-row", "fl-grow", {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 40,
-    minWidth: 0,
+  r.insertView("ar-stack", "ov-shell", {
+    width: Math.min(W - 48, 200),
     height: 52,
-    marginLeft: 10,
-    backgroundColor: "#22d3ee",
+    overflow: "hidden",
+    backgroundColor: "#cbd5e1",
+  });
+  r.insertView("ov-shell", "ov-wide", {
+    width: 280,
+    height: 36,
+    backgroundColor: "#f59e0b",
   });
 }
 
@@ -725,8 +768,9 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
         <code>ViewStyle</code> 扩展：<code>margin</code> / 单边、<code>gap</code>、
         <code>padding</code> + 单边覆盖、<code>flexWrap</code>、<code>minHeight</code>、
-        <code>flexGrow</code> / <code>flexShrink</code> / <code>flexBasis</code>（与 Core 命令式树
-        id 对齐）。下方工具栏切换子场景。
+        <code>flexGrow</code> / <code>flexShrink</code> / <code>flexBasis</code>、
+        <code>flexDirection</code>（含 <code>row-reverse</code>）、<code>aspectRatio</code>、
+        <code>overflow</code>（Skia 裁剪另议）。与 Core 命令式树 id 对齐；下方工具栏切换子场景。
       </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>

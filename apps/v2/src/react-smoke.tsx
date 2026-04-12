@@ -189,6 +189,80 @@ function StyleDemoScene({ W, H, scene }: { W: number; H: number; scene: StyleDem
       </View>
     );
   }
+  if (scene === "flex-longhands") {
+    return (
+      <View
+        key={scene}
+        id="style-root"
+        style={{
+          width: W,
+          height: H,
+          flexDirection: "column",
+          backgroundColor: "#f1f5f9",
+          padding: 12,
+        }}
+      >
+        <View
+          id="fl-row"
+          style={{
+            width: W - 24,
+            height: 80,
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: 8,
+            backgroundColor: "#e2e8f0",
+            padding: 10,
+          }}
+        >
+          <View id="fl-fix" style={{ width: 76, height: 52, backgroundColor: "#2563eb" }} />
+          <View
+            id="fl-grow"
+            style={{
+              flexGrow: 1,
+              flexShrink: 1,
+              flexBasis: 40,
+              minWidth: 0,
+              height: 52,
+              marginLeft: 10,
+              backgroundColor: "#22d3ee",
+            }}
+          />
+        </View>
+      </View>
+    );
+  }
+  if (scene === "flex-reverse") {
+    return (
+      <View
+        key={scene}
+        id="style-root"
+        style={{
+          width: W,
+          height: H,
+          flexDirection: "column",
+          backgroundColor: "#f1f5f9",
+          padding: 12,
+        }}
+      >
+        <View
+          id="rev-row"
+          style={{
+            width: W - 24,
+            height: 76,
+            flexDirection: "row-reverse",
+            gap: 12,
+            alignItems: "center",
+            padding: 10,
+            marginTop: 8,
+            backgroundColor: "#e2e8f0",
+          }}
+        >
+          <View id="rv-first" style={{ width: 72, height: 48, backgroundColor: "#e11d48" }} />
+          <View id="rv-second" style={{ width: 72, height: 48, backgroundColor: "#0d9488" }} />
+        </View>
+      </View>
+    );
+  }
   return (
     <View
       key={scene}
@@ -202,30 +276,27 @@ function StyleDemoScene({ W, H, scene }: { W: number; H: number; scene: StyleDem
       }}
     >
       <View
-        id="fl-row"
+        id="ar-stack"
         style={{
-          width: W - 24,
-          height: 80,
-          flexDirection: "row",
-          alignItems: "center",
+          flex: 1,
+          minHeight: 140,
+          flexDirection: "column",
+          gap: 10,
           marginTop: 8,
-          backgroundColor: "#e2e8f0",
-          padding: 10,
         }}
       >
-        <View id="fl-fix" style={{ width: 76, height: 52, backgroundColor: "#2563eb" }} />
+        <View id="ar-ratio" style={{ width: 120, aspectRatio: 1.5, backgroundColor: "#9333ea" }} />
         <View
-          id="fl-grow"
+          id="ov-shell"
           style={{
-            flexGrow: 1,
-            flexShrink: 1,
-            flexBasis: 40,
-            minWidth: 0,
+            width: Math.min(W - 48, 200),
             height: 52,
-            marginLeft: 10,
-            backgroundColor: "#22d3ee",
+            overflow: "hidden",
+            backgroundColor: "#cbd5e1",
           }}
-        />
+        >
+          <View id="ov-wide" style={{ width: 280, height: 36, backgroundColor: "#f59e0b" }} />
+        </View>
       </View>
     </View>
   );
@@ -769,8 +840,9 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
     ) : demo === "style" ? (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
         与 Core 同树：<code>margin</code> / <code>gap</code>、<code>padding</code> 单边覆盖、
-        <code>flexWrap</code> + <code>minHeight</code>、<code>flexGrow</code> /{" "}
-        <code>flexShrink</code> / <code>flexBasis</code>。工具栏切换子场景。
+        <code>flexWrap</code>、<code>minHeight</code>、<code>flexGrow</code> /{" "}
+        <code>flexShrink</code> / <code>flexBasis</code>、<code>row-reverse</code>、
+        <code>aspectRatio</code>、<code>overflow</code>。工具栏切换子场景。
       </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>

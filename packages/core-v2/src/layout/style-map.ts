@@ -1,5 +1,14 @@
 import type { Node as YogaNode } from "yoga-layout/load";
-import { Align, Edge, FlexDirection, Gutter, Justify, PositionType, Wrap } from "yoga-layout/load";
+import {
+  Align,
+  Edge,
+  FlexDirection,
+  Gutter,
+  Justify,
+  Overflow,
+  PositionType,
+  Wrap,
+} from "yoga-layout/load";
 
 /** 与 `width`/`height` 一致：px 或百分比字符串，供 Yoga 映射字段复用。 */
 export type YogaLength = number | `${number}%`;
@@ -9,7 +18,7 @@ export type ViewStyle = {
   width?: number | `${number}%`;
   height?: number | `${number}%`;
   flex?: number;
-  flexDirection?: "row" | "column";
+  flexDirection?: "row" | "column" | "row-reverse" | "column-reverse";
   /**
    * 主轴对齐（传给 Yoga `justifyContent`）。未设置时由 Yoga 默认（等价 flex-start）。
    */
@@ -84,12 +93,26 @@ export type ViewStyle = {
   flexGrow?: number;
   flexShrink?: number;
   flexBasis?: number | `${number}%` | "auto";
+  /**
+   * 与 CSS `overflow` 一致；传给 Yoga（绘制层裁剪另 spec）。
+   */
+  overflow?: "visible" | "hidden" | "scroll";
+  /** 宽高比（`width` / `height`）；未设置时由 Yoga 默认。 */
+  aspectRatio?: number;
 };
 
 const flexDirectionMap = {
   row: FlexDirection.Row,
   column: FlexDirection.Column,
-} as const;
+  "row-reverse": FlexDirection.RowReverse,
+  "column-reverse": FlexDirection.ColumnReverse,
+} as const satisfies Record<NonNullable<ViewStyle["flexDirection"]>, FlexDirection>;
+
+const overflowMap = {
+  visible: Overflow.Visible,
+  hidden: Overflow.Hidden,
+  scroll: Overflow.Scroll,
+} as const satisfies Record<NonNullable<ViewStyle["overflow"]>, Overflow>;
 
 const justifyContentMap = {
   "flex-start": Justify.FlexStart,
@@ -332,6 +355,8 @@ export function clearYogaLayoutStyle(node: YogaNode): void {
   node.setGap(Gutter.Column, undefined);
   node.setFlexGrow(0);
   node.setFlexBasis(undefined);
+  node.setOverflow(Overflow.Visible);
+  node.setAspectRatio(undefined);
 }
 
 /** 将 `ViewStyle` 应用到 Yoga 节点（增量：仅设置出现的字段）。 */
@@ -387,6 +412,13 @@ export function applyStylesToYoga(node: YogaNode, style: ViewStyle): void {
   if (style.gap !== undefined || style.rowGap !== undefined || style.columnGap !== undefined) {
     setGapAxis(node, Gutter.Row, rowGap, columnGap);
     setGapAxis(node, Gutter.Column, rowGap, columnGap);
+  }
+
+  if (style.overflow !== undefined) {
+    node.setOverflow(overflowMap[style.overflow]);
+  }
+  if (style.aspectRatio !== undefined) {
+    node.setAspectRatio(style.aspectRatio);
   }
 
   if (style.position !== undefined) {
