@@ -193,6 +193,8 @@ export type SceneRuntime = {
   insertScrollView(parentId: string, id: string, style: ViewStyle): void;
   /** 增加纵向滚动偏移（px），钳制后 **不重跑 Yoga**，仅 `emitLayoutCommit`。 */
   addScrollY(id: string, deltaY: number): void;
+  /** 设置纵向滚动绝对位置（px），钳制到 `[0, maxScrollY]`；不重跑 Yoga。 */
+  setScrollY(id: string, y: number): void;
   /**
    * 插入或更新文本叶节点。`content` 为字符串时与 M1/M2 一致；为 run 数组时走 M3 多样式 Paragraph。
    * 未设置固定 `height`（数字）时由 Yoga `measureFunc` 测量高度。
@@ -290,6 +292,20 @@ export async function createSceneRuntime(
     emitLayoutCommit();
   }
 
+  function setScrollYPosition(scrollId: string, y: number): void {
+    const n = store.get(scrollId);
+    if (!n || (n.kind ?? "view") !== "scrollView") return;
+    if (scrollDrag.kind !== "idle" && scrollDrag.scrollId === scrollId) {
+      scrollDrag = { kind: "idle" };
+    }
+    const maxY = maxScrollYForNode(store, scrollId);
+    const cur = typeof n.scrollY === "number" && Number.isFinite(n.scrollY) ? n.scrollY : 0;
+    const next = Math.min(maxY, Math.max(0, y));
+    if (next === cur) return;
+    n.scrollY = next;
+    emitLayoutCommit();
+  }
+
   function applyResolvedCursor(): void {
     const canvas = cursorTargetByRuntime.get(apiRef as object) ?? null;
     if (!canvas) {
@@ -355,8 +371,7 @@ export async function createSceneRuntime(
       const nk = n.kind ?? "view";
       entry.nodeKind = nk;
       if (nk === "scrollView") {
-        entry.scrollY =
-          typeof n.scrollY === "number" && Number.isFinite(n.scrollY) ? n.scrollY : 0;
+        entry.scrollY = typeof n.scrollY === "number" && Number.isFinite(n.scrollY) ? n.scrollY : 0;
       }
       if (nk === "text" && n.textContent !== undefined) {
         entry.textContent = n.textContent;
@@ -613,6 +628,14 @@ export async function createSceneRuntime(
         runLayout();
       }
       applyScrollDelta(id, deltaY);
+      applyResolvedCursor();
+    },
+
+    setScrollY(id, y) {
+      if (layoutDirty) {
+        runLayout();
+      }
+      setScrollYPosition(id, y);
       applyResolvedCursor();
     },
 

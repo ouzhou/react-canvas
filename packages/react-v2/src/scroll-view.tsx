@@ -7,6 +7,10 @@ import { useSceneRuntime } from "./hooks.ts";
 export type ScrollViewProps = {
   id?: string;
   style?: ViewStyle | ((state: { hovered: boolean }) => ViewStyle);
+  /**
+   * 变化时将纵向滚动位置重置为 `0`（同 id 的 ScrollView 在切换页面 / tab 时仍保留节点，需显式重置）。
+   */
+  scrollResetKey?: string | number;
   children?: ReactNode;
 };
 
@@ -15,7 +19,7 @@ export type ScrollViewProps = {
  * 默认视口 `overflow: "hidden"`（与 core-v2 ScrollView 规格一致）。
  */
 export function ScrollView(props: ScrollViewProps): ReactNode {
-  const { style, children, id: idProp } = props;
+  const { style, children, id: idProp, scrollResetKey } = props;
   const rt = useSceneRuntime();
   const parentId = useContext(ParentSceneIdContext);
   const generated = useId().replace(/:/g, "");
@@ -69,6 +73,12 @@ export function ScrollView(props: ScrollViewProps): ReactNode {
       rt.removeView(scrollId);
     };
   }, [rt, parentId, scrollId, contentId]);
+
+  useLayoutEffect(() => {
+    if (scrollResetKey === undefined) return;
+    if (!rt.hasSceneNode(scrollId)) return;
+    rt.setScrollY(scrollId, 0);
+  }, [rt, scrollId, scrollResetKey]);
 
   useLayoutEffect(() => {
     rt.updateStyle(scrollId, { overflow: "hidden", ...parsedStyle });

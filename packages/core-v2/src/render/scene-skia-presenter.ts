@@ -98,6 +98,53 @@ export async function attachSceneSkiaPresenter(
       return 1;
     }
 
+    /** 纵向滚动条：轨道 + 滑块长度与位置反映 `scrollY / maxScrollY`。 */
+    function paintScrollViewIndicator(
+      scrollBox: NonNullable<LayoutSnapshot[string]>,
+      sceneNode: LayoutCommitPayload["scene"]["nodes"][string],
+    ): void {
+      const innerId = sceneNode.children[0];
+      if (!innerId) return;
+      const inner = commit.layout[innerId];
+      const vpH = scrollBox.height;
+      const contentH = inner?.height ?? 0;
+      const maxScroll = Math.max(0, contentH - vpH);
+      if (maxScroll <= 0) return;
+
+      const railPad = 2;
+      const railW = Math.max(4, Math.round(6 * 1.2));
+      const minThumb = 22;
+      const trackLeft = scrollBox.absLeft + scrollBox.width - railW - railPad;
+      const trackTop = scrollBox.absTop + railPad;
+      const trackH = Math.max(0, scrollBox.height - 2 * railPad);
+      if (trackH < 4) return;
+
+      const syRaw = scrollBox.scrollY ?? 0;
+      const sy =
+        typeof syRaw === "number" && Number.isFinite(syRaw)
+          ? Math.min(Math.max(0, syRaw), maxScroll)
+          : 0;
+
+      const thumbHIdeal = (vpH / contentH) * trackH;
+      const thumbH = Math.min(trackH, Math.max(minThumb, thumbHIdeal));
+      const thumbTravel = Math.max(0, trackH - thumbH);
+      const thumbTop = trackTop + (maxScroll > 0 ? (sy / maxScroll) * thumbTravel : 0);
+
+      const rx = railW / 2;
+      const lighten = (n: number, t: number) => Math.min(255, Math.round(n + (255 - n) * t));
+      /** 基准灰 + 向白浅 20%；不透明度再降 20%，整体更淡。 */
+      const thumbRect = ck.LTRBRect(trackLeft, thumbTop, trackLeft + railW, thumbTop + thumbH);
+      paintFill.setColor(
+        ck.Color(
+          lighten(70, 0.2),
+          lighten(75, 0.2),
+          lighten(88, 0.2),
+          Math.max(0, Math.round(140 * 0.8)),
+        ),
+      );
+      skCanvas.drawRRect(ck.RRectXY(thumbRect, rx, rx), paintFill);
+    }
+
     /**
      * 与 `hit-test` 叠放一致：兄弟中 `children` 靠后者在上。
      * 前序 DFS（先画本节点，再按子节点正序递归）→ 后插入的子节点后绘制、盖住先插入的兄弟。
@@ -235,8 +282,9 @@ export async function attachSceneSkiaPresenter(
       }
       const sceneNode = commit.scene.nodes[id];
       if (!sceneNode) return;
-      if (box.nodeKind === "scrollView" && (box.scrollY ?? 0) !== 0) {
-        const sy = box.scrollY ?? 0;
+      if (box.nodeKind === "scrollView") {
+        const syRaw = box.scrollY ?? 0;
+        const sy = typeof syRaw === "number" && Number.isFinite(syRaw) ? syRaw : 0;
         skCanvas.save();
         skCanvas.translate(0, -sy);
         try {
@@ -246,6 +294,7 @@ export async function attachSceneSkiaPresenter(
         } finally {
           skCanvas.restore();
         }
+        paintScrollViewIndicator(box, sceneNode);
         return;
       }
       for (const childId of sceneNode.children) {

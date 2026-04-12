@@ -20,3 +20,18 @@ test("addScrollY clamps at max scroll", async () => {
   rt.addScrollY("sv", 50);
   expect(rt.getLayoutSnapshot().sv?.scrollY).toBe(y1);
 });
+
+test("setScrollY sets absolute offset and clamps", async () => {
+  const rt = await createSceneRuntime({ width: 200, height: 200 });
+  const root = rt.getContentRootId();
+  rt.insertScrollView(root, "sv", { width: 200, height: 80, overflow: "hidden" });
+  rt.insertView("sv", "inner", { height: 200 });
+  rt.addScrollY("sv", 40);
+  expect(rt.getLayoutSnapshot().sv?.scrollY).toBe(40);
+  rt.setScrollY("sv", 10);
+  expect(rt.getLayoutSnapshot().sv?.scrollY).toBe(10);
+  rt.setScrollY("sv", -999);
+  expect(rt.getLayoutSnapshot().sv?.scrollY).toBe(0);
+  rt.setScrollY("sv", 99999);
+  expect(rt.getLayoutSnapshot().sv?.scrollY).toBe(120);
+});
