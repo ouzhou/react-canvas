@@ -8,7 +8,8 @@ export type SmokeDemoId =
   | "modal"
   | "text"
   | "style"
-  | "border";
+  | "border"
+  | "media";
 
 export function readDemoSearch(): { demo: SmokeDemoId } {
   const p = new URLSearchParams(window.location.search);
@@ -30,6 +31,8 @@ export function readDemoSearch(): { demo: SmokeDemoId } {
                   ? "style"
                   : raw === "border"
                     ? "border"
-                    : "layout";
+                    : raw === "media"
+                      ? "media"
+                      : "layout";
   return { demo };
 }

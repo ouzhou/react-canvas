@@ -68,6 +68,12 @@ export function useDemoCatalog() {
         title: t`边框与圆角`,
         description: t`borderWidth 经 Yoga 参与占位；borderColor 在 Skia 描边，可与 borderRadius、padding 叠加。舞台内分三段子示例：粗边+圆角+padding、细边 rgba 描边、1px/3px/无边线宽对比，用于核对布局盒与视觉一致。`,
       },
+      {
+        id: "media",
+        navLabel: t`图片与矢量`,
+        title: t`Image 与 SvgPath`,
+        description: t`位图：data URL 与 object-fit（contain / cover / fill）。矢量：@lucide/icons 的 camera 图标 node 合并为单条 path d，默认 viewBox 0 0 24 24。`,
+      },
     ];
 
     const smokeDemoList = DEMO_PAGES.map((p) => ({ id: p.id, label: p.navLabel }));

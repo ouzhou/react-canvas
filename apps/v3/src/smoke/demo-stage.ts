@@ -3,6 +3,7 @@ import {
   DEMO_CURSOR,
   DEMO_HOVER,
   DEMO_LAYOUT,
+  DEMO_MEDIA,
   DEMO_MODAL,
   DEMO_POINTER,
   DEMO_STYLE,
@@ -29,7 +30,9 @@ export function demoStageSize(demo: SmokeDemoId): { dw: number; dh: number } {
                   ? DEMO_STYLE.w
                   : demo === "border"
                     ? DEMO_BORDER.w
-                    : DEMO_HOVER.w;
+                    : demo === "media"
+                      ? DEMO_MEDIA.w
+                      : DEMO_HOVER.w;
   const dh =
     demo === "layout"
       ? DEMO_LAYOUT.h
@@ -47,6 +50,8 @@ export function demoStageSize(demo: SmokeDemoId): { dw: number; dh: number } {
                   ? DEMO_STYLE.h
                   : demo === "border"
                     ? DEMO_BORDER.h
-                    : DEMO_HOVER.h;
+                    : demo === "media"
+                      ? DEMO_MEDIA.h
+                      : DEMO_HOVER.h;
   return { dw, dh };
 }

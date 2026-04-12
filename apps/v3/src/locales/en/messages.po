@@ -6,6 +6,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
 
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid " 与 "
@@ -115,6 +121,10 @@ msgstr "hit-sm2-back (purple, inserted first)"
 msgid "hit-sm2-front（蓝，后插入）"
 msgstr "hit-sm2-front (blue, inserted later)"
 
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "Image 与 SvgPath"
+msgstr "Image & SvgPath"
+
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "letterSpacing:2px，wordSpacing:10px → alpha·beta·gamma·delta（看点距与词距）"
 msgstr "letterSpacing:2px, wordSpacing:10px → alpha·beta·gamma·delta (observe letter and word spacing)"
@@ -216,6 +226,10 @@ msgstr "Main: (click main gray bar)"
 msgid "主段: {textDemoClickLog}"
 msgstr "Main: {textDemoClickLog}"
 
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "位图：data URL 与 object-fit（contain / cover / fill）。矢量：@lucide/icons 的 camera 图标 node 合并为单条 path d，默认 viewBox 0 0 24 24。"
+msgstr "Bitmap: data URL with object-fit (contain / cover / fill). Vector: Lucide camera icon nodes merged into one path d, default viewBox 0 0 24 24."
+
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "你好 react-canvas · Hello paragraph demo。重复中文与 English mixed content，用于自动折行与测量。"
 msgstr "Hello react-canvas · Hello paragraph demo. Repeated Chinese and English mixed content, for auto-wrap and measurement."
@@ -251,6 +265,10 @@ msgstr "Same row flex:1 divided into three equal parts, for comparison with 'no 
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "固定宽 + aspectRatio 推导高；子项宽于父；overflow hidden + borderRadius 15%（Skia 裁剪/圆角）。"
 msgstr "Fixed width + aspectRatio derives height; child wider than parent; overflow hidden + borderRadius 15% (Skia clip/corner)."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "图片与矢量"
+msgstr "Image & vector"
 
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "圆角按钮 + hover"

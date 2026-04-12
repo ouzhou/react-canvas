@@ -13,5 +13,7 @@ export const DEMO_TEXT = { w: 420, h: 700 } as const;
 export const DEMO_STYLE = { w: 420, h: 340 } as const;
 /** borderWidth / borderColor + borderRadius 与内区挤压示意 */
 export const DEMO_BORDER = { w: 400, h: 420 } as const;
+/** Image + SvgPath（Lucide） */
+export const DEMO_MEDIA = { w: 440, h: 420 } as const;
 export const TEXT_DEMO_WRAP_MIN = 80;
 export const TEXT_DEMO_WRAP_MAX = DEMO_TEXT.w - 32;

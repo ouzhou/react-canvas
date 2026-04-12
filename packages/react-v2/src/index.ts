@@ -1,4 +1,5 @@
 export type {
+  ImageObjectFit,
   LayoutCommitPayload,
   PointerEventType,
   Runtime,
@@ -34,8 +35,12 @@ export { Modal } from "./modal.tsx";
 export type { ModalProps } from "./modal.tsx";
 export { SceneSkiaCanvas } from "./scene-skia-canvas.tsx";
 export type { SceneSkiaCanvasProps } from "./scene-skia-canvas.tsx";
+export { Image } from "./image.tsx";
+export type { ImageProps } from "./image.tsx";
 export { Text } from "./text.tsx";
 export type { TextProps } from "./text.tsx";
+export { SvgPath } from "./svg-path.tsx";
+export type { SvgPathProps } from "./svg-path.tsx";
 export { View } from "./view.tsx";
 export type { ViewProps } from "./view.tsx";
 export { ScrollView } from "./scroll-view.tsx";

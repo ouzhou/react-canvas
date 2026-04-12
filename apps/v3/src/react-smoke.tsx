@@ -26,6 +26,7 @@ import { BorderDemoScene } from "./smoke/scenes/border-demo-scene.tsx";
 import { CursorDemoScene } from "./smoke/scenes/cursor-demo-scene.tsx";
 import { HoverDemoScene } from "./smoke/scenes/hover-demo-scene.tsx";
 import { LayoutDemoScene } from "./smoke/scenes/layout-demo-scene.tsx";
+import { MediaDemoScene } from "./smoke/scenes/media-demo-scene.tsx";
 import { ModalDemoInCanvas } from "./smoke/scenes/modal-demo-scene.tsx";
 import { PointerClickLog, PointerClickLogB } from "./smoke/scenes/pointer-click-log.tsx";
 import { PointerDemoScene } from "./smoke/scenes/pointer-demo-scene.tsx";
@@ -551,6 +552,8 @@ export function SmokeCanvasApp() {
                           />
                         ) : demo === "border" ? (
                           <BorderDemoScene W={dw} H={dh} />
+                        ) : demo === "media" ? (
+                          <MediaDemoScene W={dw} H={dh} />
                         ) : (
                           <HoverDemoScene />
                         )}
