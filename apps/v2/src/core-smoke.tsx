@@ -2,12 +2,25 @@ import {
   attachCanvasStagePointer,
   attachSceneSkiaPresenter,
   createSceneRuntime,
+  DEFAULT_PARAGRAPH_FONT_FAMILY,
   initRuntime,
   type AttachSceneSkiaOptions,
   type SceneRuntime,
 } from "@react-canvas/core-v2";
 import { MODAL_CARD_HELP, MODAL_OPEN_BTN_LABEL, MODAL_STRIP_LABEL } from "./modal-demo-content.ts";
-import { textDemoBodyFlatRuns, textDemoCaptionFlatRuns } from "./text-demo-content.ts";
+import {
+  textDemoBodyFlatRuns,
+  textDemoCaptionFlatRuns,
+  TEXT_DEMO_WRAP_NODE_IDS,
+  TEXT_VIZ_CENTER,
+  TEXT_VIZ_DECO,
+  TEXT_VIZ_FONT_FALLBACK,
+  TEXT_VIZ_INTRO,
+  TEXT_VIZ_ITALIC_RGBA,
+  TEXT_VIZ_JUSTIFY,
+  TEXT_VIZ_RIGHT,
+  TEXT_VIZ_SPACING,
+} from "./text-demo-content.ts";
 import { useEffect, useRef, useState } from "react";
 import {
   DEMO_CURSOR,
@@ -627,6 +640,81 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
             backgroundColor: "#e2e8f0",
             lineHeight: 1.82,
           });
+          r.insertText("text-root", "text-viz-intro", TEXT_VIZ_INTRO, {
+            width: TEXT_DEMO_WRAP_MAX,
+            marginTop: 12,
+            fontSize: 12,
+            color: "#475569",
+            backgroundColor: "#f1f5f9",
+            lineHeight: 1.45,
+          });
+          r.insertText("text-root", "text-viz-center", TEXT_VIZ_CENTER, {
+            width: TEXT_DEMO_WRAP_MAX,
+            marginTop: 6,
+            fontSize: 14,
+            textAlign: "center",
+            color: "#0f172a",
+            backgroundColor: "#dbeafe",
+            lineHeight: 1.35,
+          });
+          r.insertText("text-root", "text-viz-right", TEXT_VIZ_RIGHT, {
+            width: TEXT_DEMO_WRAP_MAX,
+            marginTop: 4,
+            fontSize: 14,
+            textAlign: "right",
+            color: "#0f172a",
+            backgroundColor: "#e0e7ff",
+            lineHeight: 1.35,
+          });
+          r.insertText("text-root", "text-viz-justify", TEXT_VIZ_JUSTIFY, {
+            width: TEXT_DEMO_WRAP_MAX,
+            marginTop: 4,
+            fontSize: 13,
+            textAlign: "justify",
+            color: "#1c1917",
+            backgroundColor: "#fef3c7",
+            lineHeight: 1.42,
+          });
+          r.insertText("text-root", "text-viz-deco", TEXT_VIZ_DECO, {
+            width: TEXT_DEMO_WRAP_MAX,
+            marginTop: 4,
+            fontSize: 14,
+            color: "#1e293b",
+            backgroundColor: "#fce7f3",
+            lineHeight: 1.4,
+            textDecorationLine: ["underline", "line-through"],
+            textDecorationColor: "#b91c1c",
+            textDecorationStyle: "solid",
+            textDecorationThickness: 1.25,
+          });
+          r.insertText("text-root", "text-viz-spacing", TEXT_VIZ_SPACING, {
+            width: TEXT_DEMO_WRAP_MAX,
+            marginTop: 4,
+            fontSize: 13,
+            color: "#134e4a",
+            backgroundColor: "#ccfbf1",
+            lineHeight: 1.4,
+            letterSpacing: 2,
+            wordSpacing: 10,
+          });
+          r.insertText("text-root", "text-viz-italic", TEXT_VIZ_ITALIC_RGBA, {
+            width: TEXT_DEMO_WRAP_MAX,
+            marginTop: 4,
+            fontSize: 15,
+            fontStyle: "italic",
+            color: "rgba(14,116,144,0.78)",
+            backgroundColor: "#ecfeff",
+            lineHeight: 1.4,
+          });
+          r.insertText("text-root", "text-viz-fontfb", TEXT_VIZ_FONT_FALLBACK, {
+            width: TEXT_DEMO_WRAP_MAX,
+            marginTop: 4,
+            fontSize: 13,
+            color: "#14532d",
+            backgroundColor: "#dcfce7",
+            lineHeight: 1.4,
+            fontFamily: `__NoSuchFont__, ${DEFAULT_PARAGRAPH_FONT_FAMILY}`,
+          });
           listenerOffs.push(
             r.addListener("text-body", "click", () => {
               setTextDemoClickLog(`text-body click · ${new Date().toLocaleTimeString()}`);
@@ -713,8 +801,9 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
 
   useEffect(() => {
     if (!rt || demo !== "text") return;
-    rt.patchStyle("text-caption", { width: textWrapWidth });
-    rt.patchStyle("text-body", { width: textWrapWidth });
+    for (const id of TEXT_DEMO_WRAP_NODE_IDS) {
+      if (rt.hasSceneNode(id)) rt.patchStyle(id, { width: textWrapWidth });
+    }
   }, [rt, demo, textWrapWidth]);
 
   if (error) {
@@ -759,10 +848,12 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
       </p>
     ) : demo === "text" ? (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
-        与 React 对齐：<strong>两段</strong>（Caption + 主段）、<code>lineHeight</code>（整段 + 嵌套
-        run 更高倍率）、主段 <code>insertText</code> 多 run、硬换行 + 长段换行；
-        <code>await initRuntime()</code> 后首帧测量；滑块 <code>patchStyle</code>{" "}
-        双节点宽度。点击主灰条 <code>addListener(text-body)</code>。
+        与 React 对齐：<strong>两段</strong>（Caption + 主段）+ <strong>样式可视化</strong>（
+        <code>textAlign</code>、<code>textDecoration</code>、<code>letterSpacing</code>/
+        <code>wordSpacing</code>、<code>fontStyle</code>、<code>rgba()</code>、
+        <code>fontFamily</code> 逗号回退）。<code>lineHeight</code>、主段多 run、硬换行 + 长段换行；
+        <code>await initRuntime()</code> 后首帧测量；滑块批量 <code>patchStyle</code>{" "}
+        宽度。点击主灰条 <code>text-body</code> 记日志。
       </p>
     ) : demo === "style" ? (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>

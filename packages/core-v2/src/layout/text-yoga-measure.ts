@@ -1,50 +1,34 @@
 import type { MeasureFunction } from "yoga-layout/load";
 import { MeasureMode } from "yoga-layout/load";
 import type { Yoga } from "yoga-layout/load";
-import type { TextStyle } from "canvaskit-wasm";
 
 import type { NodeStore } from "../runtime/node-store.ts";
 import type { ViewStyle } from "./style-map.ts";
 import { getParagraphMeasureContext } from "./paragraph-measure-context.ts";
 import { approximateParagraphSize } from "../text/approximate-paragraph-size.ts";
 import { measureParagraphFromRuns } from "../text/paragraph-from-runs.ts";
-import { clampLineHeightMultiplier } from "../text/text-flat-run.ts";
+import { mapParagraphTextAlign, mergedRunStyleToCkTextStyle } from "../text/skia-text-style.ts";
+import { clampLineHeightMultiplier, mergePlainTextStyle } from "../text/text-flat-run.ts";
 
 export { approximateParagraphSize } from "../text/approximate-paragraph-size.ts";
-
-const DEFAULT_FONT_SIZE = 16;
 
 function measureWithCanvasKit(
   text: string,
   layoutWidth: number,
-  fontSize: number,
-  lineHeight?: number,
+  style: ViewStyle | undefined,
+  defaultFontFamily: string,
 ): { width: number; height: number } {
   const c = getParagraphMeasureContext();
   if (!c || layoutWidth <= 0) {
-    const mult = clampLineHeightMultiplier(lineHeight);
-    return approximateParagraphSize(text, layoutWidth, fontSize, mult);
+    const mult = clampLineHeightMultiplier(style?.lineHeight);
+    const fs = typeof style?.fontSize === "number" && style.fontSize > 0 ? style.fontSize : 16;
+    return approximateParagraphSize(text, layoutWidth, fs, mult);
   }
-  const { ck, fontFamily, fontProvider } = c;
-  const textStyle: TextStyle = {
-    color: ck.BLACK,
-    decoration: ck.NoDecoration,
-    decorationStyle: ck.DecorationStyle.Solid,
-    decorationThickness: 1,
-    fontSize,
-    fontFamilies: [fontFamily],
-    fontStyle: {
-      weight: ck.FontWeight.Normal,
-      width: ck.FontWidth.Normal,
-      slant: ck.FontSlant.Upright,
-    },
-    heightMultiplier: clampLineHeightMultiplier(lineHeight),
-    halfLeading: false,
-    letterSpacing: 0,
-    wordSpacing: 0,
-  };
+  const { ck, fontProvider } = c;
+  const m = mergePlainTextStyle(style, defaultFontFamily);
+  const textStyle = mergedRunStyleToCkTextStyle(ck, m);
   const paraStyle = new ck.ParagraphStyle({
-    textAlign: ck.TextAlign.Left,
+    textAlign: mapParagraphTextAlign(ck, style?.textAlign),
     textStyle,
   });
   const builder = ck.ParagraphBuilder.MakeFromFontProvider(paraStyle, fontProvider);
@@ -58,12 +42,7 @@ function measureWithCanvasKit(
   builder.delete();
   const usedW = Math.min(layoutWidth, Math.max(0, longest));
   const outW = layoutWidth > 0 ? Math.min(layoutWidth, Math.ceil(usedW || layoutWidth)) : 0;
-  return { width: outW, height: Math.max(fontSize, h) };
-}
-
-function fontSizeFromStyle(style: ViewStyle | undefined): number {
-  const n = style?.fontSize;
-  return typeof n === "number" && n > 0 ? n : DEFAULT_FONT_SIZE;
+  return { width: outW, height: Math.max(m.fontSize, h) };
 }
 
 function resolveLayoutWidth(width: number, widthMode: MeasureMode): number {
@@ -114,15 +93,12 @@ export function bindTextNodeMeasure(store: NodeStore, _yoga: Yoga, nodeId: strin
     }
     const layoutW = resolveLayoutWidth(width, widthMode);
     const runs = n.textRuns;
+    const ctx = getParagraphMeasureContext();
+    const defaultFf = ctx?.fontFamily ?? "sans-serif";
     const { width: innerW, height: innerH } =
       runs && runs.length > 0
         ? measureParagraphFromRuns(runs, n.viewStyle, layoutW)
-        : measureWithCanvasKit(
-            n.textContent,
-            layoutW,
-            fontSizeFromStyle(n.viewStyle),
-            n.viewStyle?.lineHeight,
-          );
+        : measureWithCanvasKit(n.textContent, layoutW, n.viewStyle, defaultFf);
     const outW = resolveMeasuredWidth(width, widthMode, innerW);
     const outH = resolveMeasuredHeight(height, heightMode, innerH);
     return { width: outW, height: outH };

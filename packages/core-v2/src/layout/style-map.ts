@@ -13,6 +13,21 @@ import {
 /** 与 `width`/`height` 一致：px 或百分比字符串，供 Yoga 映射字段复用。 */
 export type YogaLength = number | `${number}%`;
 
+/** 文本装饰线关键词（与 Skia / CSS 对齐）。 */
+export type TextDecorationLineKeyword = "underline" | "overline" | "line-through";
+
+export type TextDecorationLineStyle =
+  | "none"
+  | TextDecorationLineKeyword
+  | readonly TextDecorationLineKeyword[];
+
+export type TextDecorationStyleCss = "solid" | "double" | "dotted" | "dashed" | "wavy";
+
+export type TextAlignStyle = "left" | "right" | "center" | "justify" | "start" | "end";
+
+/** 与 CSS `font-style` 一致；`oblique` 映射为 Skia Italic。 */
+export type FontStyleCss = "normal" | "italic" | "oblique";
+
 /** react-v2 `<View style>` 首版子集（可逐步扩展）。 */
 export type ViewStyle = {
   width?: number | `${number}%`;
@@ -66,7 +81,10 @@ export type ViewStyle = {
   cursor?: string;
   /** 文本节点（`kind: "text"`）段落字号；不传 Yoga，供测量与 Skia 绘制。 */
   fontSize?: number;
-  /** 文本颜色（`#rrggbb`）；不传 Yoga，M3 与 `TextFlatRun.color` 合并。 */
+  /**
+   * 文本颜色；不传 Yoga。支持 `CanvasKit.parseColorString` 能识别的 CSS 串（含 `rgba()` 等），
+   * 并兼容 `#rgb` / `#rrggbb`。
+   */
   color?: string;
   /** 默认字体族名；不传 Yoga。 */
   fontFamily?: string;
@@ -77,6 +95,35 @@ export type ViewStyle = {
    * 默认 `1`；例如 `1.75` 行更疏。不传 Yoga，仅段落测量与绘制使用。
    */
   lineHeight?: number;
+  /**
+   * 段落水平对齐；不传 Yoga，对应 Skia `ParagraphStyle.textAlign`。
+   * `start`/`end` 使用 Skia `Start`/`End`。
+   */
+  textAlign?: TextAlignStyle;
+  /**
+   * 文本装饰线；`none` 或省略表示无。数组表示多条线同时生效（类似 CSS 多值）。
+   */
+  textDecorationLine?: TextDecorationLineStyle;
+  /** 与 CSS `text-decoration-style` 一致。 */
+  textDecorationStyle?: TextDecorationStyleCss;
+  /** 装饰线粗细（px）；默认 `1`。 */
+  textDecorationThickness?: number;
+  /**
+   * 装饰线颜色；默认与 {@link ViewStyle.color} 相同。
+   * 解析规则与 `color` 一致。
+   */
+  textDecorationColor?: string;
+  /** 字距增量（px），对应 Skia `letterSpacing`。 */
+  letterSpacing?: number;
+  /** 词距增量（px），对应 Skia `wordSpacing`。 */
+  wordSpacing?: number;
+  /** 与 CSS `font-style` 一致。 */
+  fontStyle?: FontStyleCss;
+  /**
+   * 显式字体回退顺序；不传 Yoga。
+   * 未设置时由 `fontFamily` 按逗号拆分（支持简单引号包裹，见 `splitCssFontFamilyList`）。
+   */
+  fontFamilies?: readonly string[];
   gap?: YogaLength;
   rowGap?: YogaLength;
   columnGap?: YogaLength;
@@ -100,6 +147,28 @@ export type ViewStyle = {
   /** 宽高比（`width` / `height`）；未设置时由 Yoga 默认。 */
   aspectRatio?: number;
 };
+
+/** 布局快照中透传的文本排版字段（供绘制与调试）。 */
+export type TextLayoutStyleSnapshot = Pick<
+  ViewStyle,
+  | "color"
+  | "fontSize"
+  | "fontFamily"
+  | "fontWeight"
+  | "lineHeight"
+  | "fontFamilies"
+  | "textAlign"
+  | "textDecorationLine"
+  | "textDecorationStyle"
+  | "textDecorationThickness"
+  | "textDecorationColor"
+  | "letterSpacing"
+  | "wordSpacing"
+  | "fontStyle"
+>;
+
+/** `TextFlatRun` 可覆盖的文本样式字段（不含段落级 `textAlign`）。 */
+export type TextRunStylePatch = Omit<TextLayoutStyleSnapshot, "textAlign">;
 
 const flexDirectionMap = {
   row: FlexDirection.Row,

@@ -48,8 +48,18 @@ function pickRunFields(from: ViewStyle): Partial<TextFlatRun> {
   if (from.color !== undefined) r.color = from.color;
   if (from.fontSize !== undefined) r.fontSize = from.fontSize;
   if (from.fontFamily !== undefined) r.fontFamily = from.fontFamily;
+  if (from.fontFamilies !== undefined) r.fontFamilies = from.fontFamilies;
   if (from.fontWeight !== undefined) r.fontWeight = from.fontWeight;
   if (from.lineHeight !== undefined) r.lineHeight = from.lineHeight;
+  if (from.textDecorationLine !== undefined) r.textDecorationLine = from.textDecorationLine;
+  if (from.textDecorationStyle !== undefined) r.textDecorationStyle = from.textDecorationStyle;
+  if (from.textDecorationThickness !== undefined) {
+    r.textDecorationThickness = from.textDecorationThickness;
+  }
+  if (from.textDecorationColor !== undefined) r.textDecorationColor = from.textDecorationColor;
+  if (from.letterSpacing !== undefined) r.letterSpacing = from.letterSpacing;
+  if (from.wordSpacing !== undefined) r.wordSpacing = from.wordSpacing;
+  if (from.fontStyle !== undefined) r.fontStyle = from.fontStyle;
   return r;
 }
 

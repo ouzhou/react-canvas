@@ -1,4 +1,4 @@
-import type { TextFlatRun } from "@react-canvas/core-v2";
+import { DEFAULT_PARAGRAPH_FONT_FAMILY, type TextFlatRun } from "@react-canvas/core-v2";
 
 /** 与 React / Core 两侧主段落换行段一致（中长混合文）。 */
 export const TEXT_DEMO_LONG_WRAP =
@@ -32,3 +32,38 @@ export function textDemoBodyFlatRuns(): TextFlatRun[] {
     { text: tail, lineHeight: BODY_LH },
   ];
 }
+
+/** 与滑块 `width` 联动的文本节点 id（Core `patchStyle` / React 对照）。 */
+export const TEXT_DEMO_WRAP_NODE_IDS = [
+  "text-caption",
+  "text-body",
+  "text-viz-intro",
+  "text-viz-center",
+  "text-viz-right",
+  "text-viz-justify",
+  "text-viz-deco",
+  "text-viz-spacing",
+  "text-viz-italic",
+  "text-viz-fontfb",
+] as const;
+
+export const TEXT_VIZ_INTRO =
+  "【Skia 文本样式】textAlign · textDecoration（含 decorationColor）· letterSpacing / wordSpacing · fontStyle · rgba() · fontFamily 逗号回退";
+
+export const TEXT_VIZ_CENTER = "textAlign: center — 拖窄灰条仍可看出居中";
+
+export const TEXT_VIZ_RIGHT = "textAlign: right";
+
+export const TEXT_VIZ_JUSTIFY =
+  "textAlign: justify。多行时观察左右对齐；宽度随上方滑块变化。第二句用于撑满行长以便看 justify 效果。";
+
+export const TEXT_VIZ_DECO =
+  "underline + line-through；装饰线深红、字色深灰（textDecorationColor 与 color 分离）。";
+
+export const TEXT_VIZ_SPACING =
+  "letterSpacing:2px，wordSpacing:10px → alpha·beta·gamma·delta（看点距与词距）";
+
+export const TEXT_VIZ_ITALIC_RGBA = "fontStyle: italic；color: rgba(14,116,144,0.78)";
+
+/** 故意首族不存在，验证逗号列表回退到已注册段落字体。 */
+export const TEXT_VIZ_FONT_FALLBACK = `fontFamily: "__NoSuchFont__", ${DEFAULT_PARAGRAPH_FONT_FAMILY}（应正常显示）`;

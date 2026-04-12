@@ -9,7 +9,12 @@ import type { PointerEventType } from "../events/scene-event.ts";
 import { hitTestAt } from "../hit/hit-test.ts";
 import { resolveCursorFromHitLeaf } from "../input/resolve-cursor.ts";
 import { absoluteBoundsFor, calculateAndSyncLayout } from "../layout/layout-sync.ts";
-import { applyStylesToYoga, clearYogaLayoutStyle, type ViewStyle } from "../layout/style-map.ts";
+import {
+  applyStylesToYoga,
+  clearYogaLayoutStyle,
+  type TextLayoutStyleSnapshot,
+  type ViewStyle,
+} from "../layout/style-map.ts";
 import { bindTextNodeMeasure } from "../layout/text-yoga-measure.ts";
 import { loadYoga } from "../layout/yoga.ts";
 import type { Yoga } from "yoga-layout/load";
@@ -60,7 +65,7 @@ export type LayoutSnapshot = Record<
     textContent?: string;
     textFontSize?: number;
     /** 文本节点外层 `style` 中的排版相关字段，供多 run 与 `textRuns` 合并绘制。 */
-    textLayoutStyle?: Pick<ViewStyle, "color" | "fontSize" | "fontFamily" | "fontWeight">;
+    textLayoutStyle?: TextLayoutStyleSnapshot;
     textRuns?: TextFlatRun[];
   }
 >;
@@ -210,12 +215,26 @@ export async function createSceneRuntime(
         if (typeof fs === "number") entry.textFontSize = fs;
         const vs = n.viewStyle;
         if (vs) {
-          const tls: NonNullable<(typeof entry)["textLayoutStyle"]> = {};
+          const tls: Partial<TextLayoutStyleSnapshot> = {};
           if (vs.color !== undefined) tls.color = vs.color;
           if (vs.fontSize !== undefined) tls.fontSize = vs.fontSize;
           if (vs.fontFamily !== undefined) tls.fontFamily = vs.fontFamily;
           if (vs.fontWeight !== undefined) tls.fontWeight = vs.fontWeight;
-          if (Object.keys(tls).length > 0) entry.textLayoutStyle = tls;
+          if (vs.lineHeight !== undefined) tls.lineHeight = vs.lineHeight;
+          if (vs.fontFamilies !== undefined) tls.fontFamilies = vs.fontFamilies;
+          if (vs.textAlign !== undefined) tls.textAlign = vs.textAlign;
+          if (vs.textDecorationLine !== undefined) tls.textDecorationLine = vs.textDecorationLine;
+          if (vs.textDecorationStyle !== undefined)
+            tls.textDecorationStyle = vs.textDecorationStyle;
+          if (vs.textDecorationThickness !== undefined) {
+            tls.textDecorationThickness = vs.textDecorationThickness;
+          }
+          if (vs.textDecorationColor !== undefined)
+            tls.textDecorationColor = vs.textDecorationColor;
+          if (vs.letterSpacing !== undefined) tls.letterSpacing = vs.letterSpacing;
+          if (vs.wordSpacing !== undefined) tls.wordSpacing = vs.wordSpacing;
+          if (vs.fontStyle !== undefined) tls.fontStyle = vs.fontStyle;
+          if (Object.keys(tls).length > 0) entry.textLayoutStyle = tls as TextLayoutStyleSnapshot;
         }
         if (n.textRuns !== undefined && n.textRuns.length > 0) {
           entry.textRuns = [...n.textRuns];

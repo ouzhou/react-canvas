@@ -84,3 +84,25 @@ test("measureParagraphFromRuns does not throw when runs include color (Paragraph
     measureParagraphFromRuns([{ text: "ab", color: "#112233" }], { fontSize: 14 }, 80),
   ).not.toThrow();
 });
+
+test("measureParagraphFromRuns supports underline + letterSpacing from box style", () => {
+  const ck = sharedCk!;
+  const provider = ck.TypefaceFontProvider.Make();
+  setParagraphMeasureContext({
+    ck,
+    fontFamily: "Helvetica",
+    fontProvider: provider,
+  });
+  expect(() =>
+    measureParagraphFromRuns(
+      [{ text: "ab" }],
+      {
+        fontSize: 14,
+        textDecorationLine: "underline",
+        letterSpacing: 0.5,
+        textAlign: "center",
+      },
+      80,
+    ),
+  ).not.toThrow();
+});

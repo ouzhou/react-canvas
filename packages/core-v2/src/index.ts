@@ -7,7 +7,17 @@ export {
   attachSceneSkiaPresenter,
   type AttachSceneSkiaOptions,
 } from "./render/scene-skia-presenter.ts";
-export type { ViewStyle, YogaLength } from "./layout/style-map.ts";
+export type {
+  FontStyleCss,
+  TextAlignStyle,
+  TextDecorationLineKeyword,
+  TextDecorationLineStyle,
+  TextDecorationStyleCss,
+  TextLayoutStyleSnapshot,
+  TextRunStylePatch,
+  ViewStyle,
+  YogaLength,
+} from "./layout/style-map.ts";
 export type { TextFlatRun } from "./text/text-flat-run.ts";
 export { applyStylesToYoga } from "./layout/style-map.ts";
 export { hitTestAt } from "./hit/hit-test.ts";

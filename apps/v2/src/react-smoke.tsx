@@ -1,3 +1,4 @@
+import { DEFAULT_PARAGRAPH_FONT_FAMILY } from "@react-canvas/core-v2";
 import { Canvas, CanvasProvider, Modal, Text, useSceneRuntime, View } from "@react-canvas/react-v2";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
@@ -15,7 +16,18 @@ import {
 import type { SmokeDemoId } from "./smoke-types.ts";
 import { STYLE_DEMO_CASES, type StyleDemoCase } from "./style-demo-content.ts";
 import { MODAL_CARD_HELP, MODAL_OPEN_BTN_LABEL, MODAL_STRIP_LABEL } from "./modal-demo-content.ts";
-import { TEXT_DEMO_CAPTION, TEXT_DEMO_LONG_WRAP } from "./text-demo-content.ts";
+import {
+  TEXT_DEMO_CAPTION,
+  TEXT_DEMO_LONG_WRAP,
+  TEXT_VIZ_CENTER,
+  TEXT_VIZ_DECO,
+  TEXT_VIZ_FONT_FALLBACK,
+  TEXT_VIZ_INTRO,
+  TEXT_VIZ_ITALIC_RGBA,
+  TEXT_VIZ_JUSTIFY,
+  TEXT_VIZ_RIGHT,
+  TEXT_VIZ_SPACING,
+} from "./text-demo-content.ts";
 
 function PointerClickLog(props: { onHit: (label: string) => void }) {
   const rt = useSceneRuntime();
@@ -98,6 +110,121 @@ function TextDemoScene(props: {
         {TEXT_DEMO_LONG_WRAP}
         {"\n"}
         ── 硬换行收尾：拖窄灰条主段应自动增高。
+      </Text>
+      <Text
+        id="text-viz-intro"
+        style={{
+          width: wrapWidth,
+          marginTop: 12,
+          fontSize: 12,
+          color: "#475569",
+          backgroundColor: "#f1f5f9",
+          lineHeight: 1.45,
+        }}
+      >
+        {TEXT_VIZ_INTRO}
+      </Text>
+      <Text
+        id="text-viz-center"
+        style={{
+          width: wrapWidth,
+          marginTop: 6,
+          fontSize: 14,
+          textAlign: "center",
+          color: "#0f172a",
+          backgroundColor: "#dbeafe",
+          lineHeight: 1.35,
+        }}
+      >
+        {TEXT_VIZ_CENTER}
+      </Text>
+      <Text
+        id="text-viz-right"
+        style={{
+          width: wrapWidth,
+          marginTop: 4,
+          fontSize: 14,
+          textAlign: "right",
+          color: "#0f172a",
+          backgroundColor: "#e0e7ff",
+          lineHeight: 1.35,
+        }}
+      >
+        {TEXT_VIZ_RIGHT}
+      </Text>
+      <Text
+        id="text-viz-justify"
+        style={{
+          width: wrapWidth,
+          marginTop: 4,
+          fontSize: 13,
+          textAlign: "justify",
+          color: "#1c1917",
+          backgroundColor: "#fef3c7",
+          lineHeight: 1.42,
+        }}
+      >
+        {TEXT_VIZ_JUSTIFY}
+      </Text>
+      <Text
+        id="text-viz-deco"
+        style={{
+          width: wrapWidth,
+          marginTop: 4,
+          fontSize: 14,
+          color: "#1e293b",
+          backgroundColor: "#fce7f3",
+          lineHeight: 1.4,
+          textDecorationLine: ["underline", "line-through"],
+          textDecorationColor: "#b91c1c",
+          textDecorationStyle: "solid",
+          textDecorationThickness: 1.25,
+        }}
+      >
+        {TEXT_VIZ_DECO}
+      </Text>
+      <Text
+        id="text-viz-spacing"
+        style={{
+          width: wrapWidth,
+          marginTop: 4,
+          fontSize: 13,
+          color: "#134e4a",
+          backgroundColor: "#ccfbf1",
+          lineHeight: 1.4,
+          letterSpacing: 2,
+          wordSpacing: 10,
+        }}
+      >
+        {TEXT_VIZ_SPACING}
+      </Text>
+      <Text
+        id="text-viz-italic"
+        style={{
+          width: wrapWidth,
+          marginTop: 4,
+          fontSize: 15,
+          fontStyle: "italic",
+          color: "rgba(14,116,144,0.78)",
+          backgroundColor: "#ecfeff",
+          lineHeight: 1.4,
+        }}
+      >
+        {TEXT_VIZ_ITALIC_RGBA}
+      </Text>
+      <Text
+        id="text-viz-fontfb"
+        style={{
+          width: wrapWidth,
+          marginTop: 4,
+          fontSize: 13,
+          color: "#14532d",
+          backgroundColor: "#dcfce7",
+          lineHeight: 1.4,
+          fontFamily: `__NoSuchFont__, ${DEFAULT_PARAGRAPH_FONT_FAMILY}`,
+        }}
+      >
+        {TEXT_VIZ_FONT_FALLBACK}
       </Text>
     </View>
   );
@@ -823,9 +950,12 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
       </p>
     ) : demo === "text" ? (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
-        <strong>两段</strong>：Caption / 主段均设 <code>lineHeight</code>；主段内嵌套{" "}
-        <code>Text</code> 提高局部行距（字重、异色字号、<code>\n</code> 硬换行 + 长段自动换行）。
-        <strong>M2</strong>：拖滑块改宽；主段 <code>onClick</code>。与 Core 树、run 扁平化语义对齐。
+        <strong>两段</strong>（Caption / 主段）+ <strong>样式条</strong>：<code>textAlign</code>
+        （center / right / justify）、<code>textDecorationLine</code> 数组、
+        <code>textDecorationColor</code>、<code>letterSpacing</code>/<code>wordSpacing</code>、
+        <code>fontStyle: italic</code>、<code>rgba()</code>、<code>fontFamily</code> 逗号回退。 主段{" "}
+        <code>lineHeight</code> 与嵌套 <code>Text</code>、硬换行 + 长段换行；拖滑块改宽；主段{" "}
+        <code>onClick</code>。与 Core 命令式树 id 对齐。
       </p>
     ) : demo === "cursor" ? (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 640 }}>
