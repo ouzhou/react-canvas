@@ -15,12 +15,14 @@ import {
   DEMO_LAYOUT,
   DEMO_MODAL,
   DEMO_POINTER,
+  DEMO_STYLE,
   DEMO_TEXT,
   DEMO_THROUGH,
   TEXT_DEMO_WRAP_MAX,
   TEXT_DEMO_WRAP_MIN,
 } from "./demo-dimensions.ts";
 import type { SmokeDemoId } from "./smoke-types.ts";
+import { STYLE_DEMO_CASES, type StyleDemoCase } from "./style-demo-content.ts";
 
 function buildLayoutDemo(r: SceneRuntime, root: string, W: number, H: number): void {
   r.insertView(root, "flex-root", {
@@ -145,6 +147,98 @@ function buildHoverDemo(r: SceneRuntime, root: string, W: number, H: number): vo
     left: 0,
     top: 0,
     backgroundColor: "#0000ff",
+  });
+}
+
+/** 与 {@link ReactSmoke} 中 <code>StyleDemoScene</code> 同 id / 样式语义。 */
+function buildStyleDemo(
+  r: SceneRuntime,
+  root: string,
+  W: number,
+  H: number,
+  c: StyleDemoCase,
+): void {
+  r.insertView(root, "style-root", {
+    width: W,
+    height: H,
+    flexDirection: "column",
+    backgroundColor: "#f1f5f9",
+    padding: 12,
+  });
+
+  if (c === "margin-gap") {
+    r.insertView("style-root", "mg-row", {
+      flex: 1,
+      minHeight: 120,
+      flexDirection: "row",
+      gap: 14,
+      alignItems: "flex-start",
+      padding: 14,
+      marginTop: 8,
+      backgroundColor: "#e2e8f0",
+    });
+    r.insertView("mg-row", "mg-a", {
+      width: 44,
+      height: 40,
+      marginTop: 16,
+      backgroundColor: "#fb923c",
+    });
+    r.insertView("mg-row", "mg-b", {
+      width: 44,
+      height: 40,
+      marginLeft: 8,
+      marginRight: 12,
+      backgroundColor: "#fb7185",
+    });
+    r.insertView("mg-row", "mg-c", { width: 44, height: 40, backgroundColor: "#4ade80" });
+    return;
+  }
+
+  if (c === "padding-wrap") {
+    const innerW = Math.min(W - 48, 308);
+    r.insertView("style-root", "pw-inner", {
+      width: innerW,
+      height: H - 48,
+      flexDirection: "row",
+      flexWrap: "wrap",
+      padding: 10,
+      paddingTop: 28,
+      gap: 10,
+      backgroundColor: "#cbd5e1",
+    });
+    const colors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#a855f7"] as const;
+    for (let i = 0; i < colors.length; i++) {
+      r.insertView("pw-inner", `pw-chip-${i}`, {
+        width: 88,
+        height: 36,
+        backgroundColor: colors[i],
+      });
+    }
+    return;
+  }
+
+  r.insertView("style-root", "fl-row", {
+    width: W - 24,
+    height: 80,
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    backgroundColor: "#e2e8f0",
+    padding: 10,
+  });
+  r.insertView("fl-row", "fl-fix", {
+    width: 76,
+    height: 52,
+    backgroundColor: "#2563eb",
+  });
+  r.insertView("fl-row", "fl-grow", {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 40,
+    minWidth: 0,
+    height: 52,
+    marginLeft: 10,
+    backgroundColor: "#22d3ee",
   });
 }
 
@@ -274,6 +368,8 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
   const [textDemoClickLog, setTextDemoClickLog] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  const [styleCase, setStyleCase] = useState<StyleDemoCase>("margin-gap");
+
   const dim =
     demo === "layout"
       ? DEMO_LAYOUT
@@ -287,7 +383,13 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
               ? DEMO_MODAL
               : demo === "text"
                 ? DEMO_TEXT
-                : DEMO_HOVER;
+                : demo === "style"
+                  ? DEMO_STYLE
+                  : DEMO_HOVER;
+
+  useEffect(() => {
+    if (demo !== "style") setStyleCase("margin-gap");
+  }, [demo]);
 
   useEffect(() => {
     let cancelled = false;
@@ -487,6 +589,8 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
               setTextDemoClickLog(`text-body click · ${new Date().toLocaleTimeString()}`);
             }),
           );
+        } else if (demo === "style") {
+          buildStyleDemo(r, contentRoot, dim.w, dim.h, styleCase);
         } else {
           buildHoverDemo(r, contentRoot, dim.w, dim.h);
           listenerOffs.push(
@@ -519,7 +623,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
         off();
       }
     };
-  }, [demo, dim.w, dim.h]);
+  }, [demo, dim.w, dim.h, demo === "style" ? styleCase : "_"]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -617,12 +721,56 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
         <code>await initRuntime()</code> 后首帧测量；滑块 <code>patchStyle</code>{" "}
         双节点宽度。点击主灰条 <code>addListener(text-body)</code>。
       </p>
+    ) : demo === "style" ? (
+      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
+        <code>ViewStyle</code> 扩展：<code>margin</code> / 单边、<code>gap</code>、
+        <code>padding</code> + 单边覆盖、<code>flexWrap</code>、<code>minHeight</code>、
+        <code>flexGrow</code> / <code>flexShrink</code> / <code>flexBasis</code>（与 Core 命令式树
+        id 对齐）。下方工具栏切换子场景。
+      </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 560 }}>
         移入左上角方块应变红（<code>#ff0000</code>），移出变蓝（<code>#0000ff</code>），与 React
         函数式 style 一致。
       </p>
     );
+
+  const styleDemoToolbar =
+    demo === "style" ? (
+      <div
+        role="toolbar"
+        aria-label="样式子场景"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 8,
+          margin: "0 0 0.5rem",
+          maxWidth: Math.max(DEMO_STYLE.w, 480),
+        }}
+      >
+        {STYLE_DEMO_CASES.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setStyleCase(c.id)}
+            style={{
+              padding: "6px 12px",
+              fontSize: 13,
+              borderRadius: 6,
+              border: `1px solid ${styleCase === c.id ? "var(--accent, #3b82f6)" : "var(--border)"}`,
+              background: styleCase === c.id ? "rgba(59,130,246,0.12)" : "var(--surface, #fff)",
+              cursor: "pointer",
+            }}
+          >
+            {c.label}
+          </button>
+        ))}
+        <span style={{ flex: "1 1 220px", fontSize: 13, color: "var(--text-h)" }}>
+          {STYLE_DEMO_CASES.find((x) => x.id === styleCase)?.hint}
+        </span>
+      </div>
+    ) : null;
 
   const textWidthSlider =
     demo === "text" ? (
@@ -655,6 +803,7 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
   return (
     <div>
       {blurb}
+      {styleDemoToolbar}
       {textWidthSlider}
       <canvas
         ref={canvasRef}

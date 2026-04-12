@@ -6,12 +6,14 @@ import {
   DEMO_LAYOUT,
   DEMO_MODAL,
   DEMO_POINTER,
+  DEMO_STYLE,
   DEMO_TEXT,
   DEMO_THROUGH,
   TEXT_DEMO_WRAP_MAX,
   TEXT_DEMO_WRAP_MIN,
 } from "./demo-dimensions.ts";
 import type { SmokeDemoId } from "./smoke-types.ts";
+import { STYLE_DEMO_CASES, type StyleDemoCase } from "./style-demo-content.ts";
 import { MODAL_CARD_HELP, MODAL_OPEN_BTN_LABEL, MODAL_STRIP_LABEL } from "./modal-demo-content.ts";
 import { TEXT_DEMO_CAPTION, TEXT_DEMO_LONG_WRAP } from "./text-demo-content.ts";
 
@@ -97,6 +99,134 @@ function TextDemoScene(props: {
         {"\n"}
         ── 硬换行收尾：拖窄灰条主段应自动增高。
       </Text>
+    </View>
+  );
+}
+
+/** 与 {@link buildStyleDemo}（core-smoke）同 id，便于对照 Yoga 扩展字段。 */
+function StyleDemoScene({ W, H, scene }: { W: number; H: number; scene: StyleDemoCase }) {
+  const innerW = Math.min(W - 48, 308);
+  if (scene === "margin-gap") {
+    return (
+      <View
+        key={scene}
+        id="style-root"
+        style={{
+          width: W,
+          height: H,
+          flexDirection: "column",
+          backgroundColor: "#f1f5f9",
+          padding: 12,
+        }}
+      >
+        <View
+          id="mg-row"
+          style={{
+            flex: 1,
+            minHeight: 120,
+            flexDirection: "row",
+            gap: 14,
+            alignItems: "flex-start",
+            padding: 14,
+            marginTop: 8,
+            backgroundColor: "#e2e8f0",
+          }}
+        >
+          <View
+            id="mg-a"
+            style={{ width: 44, height: 40, marginTop: 16, backgroundColor: "#fb923c" }}
+          />
+          <View
+            id="mg-b"
+            style={{
+              width: 44,
+              height: 40,
+              marginLeft: 8,
+              marginRight: 12,
+              backgroundColor: "#fb7185",
+            }}
+          />
+          <View id="mg-c" style={{ width: 44, height: 40, backgroundColor: "#4ade80" }} />
+        </View>
+      </View>
+    );
+  }
+  if (scene === "padding-wrap") {
+    const chipColors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#a855f7"] as const;
+    return (
+      <View
+        key={scene}
+        id="style-root"
+        style={{
+          width: W,
+          height: H,
+          flexDirection: "column",
+          backgroundColor: "#f1f5f9",
+          padding: 12,
+        }}
+      >
+        <View
+          id="pw-inner"
+          style={{
+            width: innerW,
+            height: H - 48,
+            flexDirection: "row",
+            flexWrap: "wrap",
+            padding: 10,
+            paddingTop: 28,
+            gap: 10,
+            backgroundColor: "#cbd5e1",
+          }}
+        >
+          {chipColors.map((bg, i) => (
+            <View
+              key={`pw-chip-${i}`}
+              id={`pw-chip-${i}`}
+              style={{ width: 88, height: 36, backgroundColor: bg }}
+            />
+          ))}
+        </View>
+      </View>
+    );
+  }
+  return (
+    <View
+      key={scene}
+      id="style-root"
+      style={{
+        width: W,
+        height: H,
+        flexDirection: "column",
+        backgroundColor: "#f1f5f9",
+        padding: 12,
+      }}
+    >
+      <View
+        id="fl-row"
+        style={{
+          width: W - 24,
+          height: 80,
+          flexDirection: "row",
+          alignItems: "center",
+          marginTop: 8,
+          backgroundColor: "#e2e8f0",
+          padding: 10,
+        }}
+      >
+        <View id="fl-fix" style={{ width: 76, height: 52, backgroundColor: "#2563eb" }} />
+        <View
+          id="fl-grow"
+          style={{
+            flexGrow: 1,
+            flexShrink: 1,
+            flexBasis: 40,
+            minWidth: 0,
+            height: 52,
+            marginLeft: 10,
+            backgroundColor: "#22d3ee",
+          }}
+        />
+      </View>
     </View>
   );
 }
@@ -548,6 +678,7 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
   const [lastClickTarget, setLastClickTarget] = useState<string | null>(null);
   const [textWrapWidth, setTextWrapWidth] = useState(TEXT_DEMO_WRAP_MAX);
   const [textDemoClickLog, setTextDemoClickLog] = useState<string | null>(null);
+  const [styleCase, setStyleCase] = useState<StyleDemoCase>("margin-gap");
   const onPointerHit = useCallback((label: string) => setLastClickTarget(label), []);
   const onTextBodyClick = useCallback(() => {
     setTextDemoClickLog(`text-body click · ${new Date().toLocaleTimeString()}`);
@@ -559,6 +690,10 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
 
   useEffect(() => {
     if (demo !== "text") setTextDemoClickLog(null);
+  }, [demo]);
+
+  useEffect(() => {
+    if (demo !== "style") setStyleCase("margin-gap");
   }, [demo]);
 
   const W =
@@ -574,7 +709,9 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
               ? DEMO_MODAL.w
               : demo === "text"
                 ? DEMO_TEXT.w
-                : DEMO_HOVER.w;
+                : demo === "style"
+                  ? DEMO_STYLE.w
+                  : DEMO_HOVER.w;
   const H =
     demo === "layout"
       ? DEMO_LAYOUT.h
@@ -588,7 +725,9 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
               ? DEMO_MODAL.h
               : demo === "text"
                 ? DEMO_TEXT.h
-                : DEMO_HOVER.h;
+                : demo === "style"
+                  ? DEMO_STYLE.h
+                  : DEMO_HOVER.h;
 
   const blurb =
     demo === "modal" ? (
@@ -627,6 +766,12 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
         。<strong>⑤</strong> 拖拽条：常态 <code>grab</code>，按下 <code>grabbing</code>
         ，松手（含画布外）恢复。
       </p>
+    ) : demo === "style" ? (
+      <p style={{ margin: "0 0 0.5rem", color: "var(--text)", maxWidth: 680 }}>
+        与 Core 同树：<code>margin</code> / <code>gap</code>、<code>padding</code> 单边覆盖、
+        <code>flexWrap</code> + <code>minHeight</code>、<code>flexGrow</code> /{" "}
+        <code>flexShrink</code> / <code>flexBasis</code>。工具栏切换子场景。
+      </p>
     ) : (
       <p style={{ margin: "0 0 0.5rem", color: "var(--text)" }}>
         函数式 <code>style</code> 依赖 <code>pointerenter</code> / <code>pointerleave</code>{" "}
@@ -642,6 +787,43 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
       </div>
     );
   }
+
+  const styleDemoToolbar =
+    demo === "style" ? (
+      <div
+        role="toolbar"
+        aria-label="样式子场景"
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          gap: 8,
+          margin: "0 0 0.5rem",
+          maxWidth: Math.max(DEMO_STYLE.w, 480),
+        }}
+      >
+        {STYLE_DEMO_CASES.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setStyleCase(c.id)}
+            style={{
+              padding: "6px 12px",
+              fontSize: 13,
+              borderRadius: 6,
+              border: `1px solid ${styleCase === c.id ? "var(--accent, #3b82f6)" : "var(--border)"}`,
+              background: styleCase === c.id ? "rgba(59,130,246,0.12)" : "var(--surface, #fff)",
+              cursor: "pointer",
+            }}
+          >
+            {c.label}
+          </button>
+        ))}
+        <span style={{ flex: "1 1 220px", fontSize: 13, color: "var(--text-h)" }}>
+          {STYLE_DEMO_CASES.find((x) => x.id === styleCase)?.hint}
+        </span>
+      </div>
+    ) : null;
 
   const textWidthSlider =
     demo === "text" ? (
@@ -674,6 +856,7 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
   return (
     <div>
       {blurb}
+      {styleDemoToolbar}
       {textWidthSlider}
       <CanvasProvider>
         {({ isReady, runtime }) =>
@@ -706,6 +889,8 @@ export function ReactSmoke({ demo }: ReactSmokeProps) {
                 </>
               ) : demo === "cursor" ? (
                 <CursorDemoScene W={W} H={H} />
+              ) : demo === "style" ? (
+                <StyleDemoScene W={W} H={H} scene={styleCase} />
               ) : (
                 <HoverDemoScene />
               )}

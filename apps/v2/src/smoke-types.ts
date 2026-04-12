@@ -1,7 +1,15 @@
 export type SmokeTab = "core" | "react";
 
 /** 与 URL `demo=` 同步的示例 id */
-export type SmokeDemoId = "layout" | "pointer" | "through" | "hover" | "cursor" | "modal" | "text";
+export type SmokeDemoId =
+  | "layout"
+  | "pointer"
+  | "through"
+  | "hover"
+  | "cursor"
+  | "modal"
+  | "text"
+  | "style";
 
 export function readSmokeSearch(): { tab: SmokeTab; demo: SmokeDemoId } {
   const p = new URLSearchParams(window.location.search);
@@ -20,7 +28,9 @@ export function readSmokeSearch(): { tab: SmokeTab; demo: SmokeDemoId } {
               ? "modal"
               : raw === "text"
                 ? "text"
-                : "layout";
+                : raw === "style"
+                  ? "style"
+                  : "layout";
   return { tab, demo };
 }
 
@@ -32,4 +42,5 @@ export const SMOKE_DEMO_LIST: ReadonlyArray<{ id: SmokeDemoId; label: string }> 
   { id: "cursor", label: "cursor（多场景 + hover）" },
   { id: "modal", label: "Modal（scene-modal + 背板）" },
   { id: "text", label: "文字（Paragraph M1）" },
+  { id: "style", label: "样式（Yoga 扩展）" },
 ];

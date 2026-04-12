@@ -8,5 +8,7 @@ export const DEMO_CURSOR = { w: 400, h: 418 } as const;
 export const DEMO_MODAL = { w: 400, h: 300 } as const;
 /** CanvasKit Paragraph：双段文字 + 多 run；灰条最大宽 = 画布宽 − 左右 padding */
 export const DEMO_TEXT = { w: 420, h: 400 } as const;
+/** ViewStyle 扩展：margin / gap / padding 单边 / wrap / flex 分项 */
+export const DEMO_STYLE = { w: 420, h: 340 } as const;
 export const TEXT_DEMO_WRAP_MIN = 80;
 export const TEXT_DEMO_WRAP_MAX = DEMO_TEXT.w - 32;
