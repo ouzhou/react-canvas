@@ -51,6 +51,6 @@ export const STYLE_DEMO_CASES: ReadonlyArray<{
   {
     id: "style-button",
     label: "圆角按钮 + hover",
-    hint: "常规按钮：圆角、白字居中；hover 时 cursor 为 pointer、背景变浅（React 用 style 函数；Core 用 patchStyle）。",
+    hint: "常规圆角矩形按钮 + 圆形按钮（48×48，borderRadius 24）；白字；hover 背景变浅、pointer（React 函数式 style；Core patchStyle）。",
   },
 ];

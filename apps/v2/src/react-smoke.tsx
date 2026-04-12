@@ -425,6 +425,7 @@ function StyleDemoScene({
             flex: 1,
             minHeight: 100,
             flexDirection: "row",
+            gap: 20,
             justifyContent: "center",
             alignItems: "center",
             marginTop: 16,
@@ -447,6 +448,25 @@ function StyleDemoScene({
               style={{ fontSize: 16, color: "#ffffff", textAlign: "center" }}
             >
               确认
+            </Text>
+          </View>
+          <View
+            id="style-btn-round"
+            style={({ hovered }) => ({
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: hovered ? "#14b8a6" : "#0f766e",
+              cursor: "pointer",
+              justifyContent: "center",
+              alignItems: "center",
+            })}
+          >
+            <Text
+              id="style-btn-round-label"
+              style={{ fontSize: 22, color: "#ffffff", textAlign: "center" }}
+            >
+              +
             </Text>
           </View>
         </View>

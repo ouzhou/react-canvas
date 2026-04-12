@@ -284,6 +284,7 @@ function buildStyleDemo(
       flex: 1,
       minHeight: 100,
       flexDirection: "row",
+      gap: 20,
       justifyContent: "center",
       alignItems: "center",
       marginTop: 16,
@@ -299,6 +300,20 @@ function buildStyleDemo(
     });
     r.insertText("style-btn", "style-btn-label", "确认", {
       fontSize: 16,
+      color: "#ffffff",
+      textAlign: "center",
+    });
+    r.insertView("btn-row", "style-btn-round", {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: "#0f766e",
+      cursor: "pointer",
+      justifyContent: "center",
+      alignItems: "center",
+    });
+    r.insertText("style-btn-round", "style-btn-round-label", "+", {
+      fontSize: 22,
       color: "#ffffff",
       textAlign: "center",
     });
@@ -815,6 +830,18 @@ export function CoreSmoke({ demo }: CoreSmokeProps) {
             listenerOffs.push(
               r.addListener("style-btn", "pointerleave", () => {
                 r.patchStyle("style-btn", { backgroundColor: btnBg });
+              }),
+            );
+            const roundBg = "#0f766e";
+            const roundBgHover = "#14b8a6";
+            listenerOffs.push(
+              r.addListener("style-btn-round", "pointerenter", () => {
+                r.patchStyle("style-btn-round", { backgroundColor: roundBgHover });
+              }),
+            );
+            listenerOffs.push(
+              r.addListener("style-btn-round", "pointerleave", () => {
+                r.patchStyle("style-btn-round", { backgroundColor: roundBg });
               }),
             );
           }
