@@ -43,6 +43,7 @@ export {
 export {
   bindSceneRuntimeCursorTarget,
   createSceneRuntime,
+  maxScrollYForNode,
   SCENE_CONTENT_ID,
   SCENE_MODAL_ID,
   type CreateSceneRuntimeOptions,

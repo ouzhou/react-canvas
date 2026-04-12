@@ -1,4 +1,4 @@
-import { Canvas, CanvasProvider, Text, View } from "@react-canvas/react-v2";
+import { Canvas, CanvasProvider, ScrollView, Text, View } from "@react-canvas/react-v2";
 import { useCallback, useEffect, useState } from "react";
 import { TEXT_DEMO_WRAP_MAX, TEXT_DEMO_WRAP_MIN } from "./demo-dimensions.ts";
 import { readDemoSearch, type SmokeDemoId } from "./smoke-types.ts";
@@ -289,6 +289,12 @@ export function SmokeCanvasApp() {
                     id="smoke-main-header-rule"
                     style={{ width: innerW, height: 1, backgroundColor: AD_SPLIT }}
                   />
+                </View>
+                <ScrollView
+                  id="smoke-main-scroll"
+                  style={{ flex: 1, minHeight: 0, width: innerW }}
+                >
+                  <View style={{ flexDirection: "column" }}>
                   <View
                     id="smoke-doc-block"
                     style={{
@@ -340,7 +346,6 @@ export function SmokeCanvasApp() {
                       </Text>
                     ) : null}
                   </View>
-                </View>
 
                 {demo === "style" ? (
                   <View
@@ -573,6 +578,8 @@ export function SmokeCanvasApp() {
                     </View>
                   </View>
                 ) : null}
+                  </View>
+                </ScrollView>
               </View>
             </View>
           </Canvas>

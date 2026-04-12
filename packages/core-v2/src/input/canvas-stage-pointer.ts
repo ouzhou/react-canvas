@@ -22,43 +22,44 @@ export function attachCanvasStagePointer(
     el: HTMLCanvasElement,
     clientX: number,
     clientY: number,
+    buttons?: number,
   ): void => {
     const { x, y } = toStage(el, clientX, clientY);
     lastStageX = x;
     lastStageY = y;
-    runtime.dispatchPointerLike({ type, x, y });
+    runtime.dispatchPointerLike({ type, x, y, buttons });
   };
 
   let rafId: number | null = null;
-  let pending: { x: number; y: number } | null = null;
+  let pending: { x: number; y: number; buttons: number } | null = null;
 
   const flushMove = (): void => {
     rafId = null;
     if (pending === null) return;
-    const { x, y } = pending;
+    const { x, y, buttons } = pending;
     pending = null;
     lastStageX = x;
     lastStageY = y;
-    runtime.dispatchPointerLike({ type: "pointermove", x, y });
+    runtime.dispatchPointerLike({ type: "pointermove", x, y, buttons });
   };
 
-  const schedulePointerMove = (x: number, y: number): void => {
-    pending = { x, y };
+  const schedulePointerMove = (x: number, y: number, buttons: number): void => {
+    pending = { x, y, buttons };
     if (rafId !== null) return;
     rafId = requestAnimationFrame(flushMove);
   };
 
   const onPointerDown = (e: PointerEvent): void => {
-    dispatch("pointerdown", canvas, e.clientX, e.clientY);
+    dispatch("pointerdown", canvas, e.clientX, e.clientY, e.buttons);
     if (typeof canvas.setPointerCapture === "function") {
       canvas.setPointerCapture(e.pointerId);
     }
   };
 
   const onPointerUp = (e: PointerEvent): void => {
-    dispatch("pointerup", canvas, e.clientX, e.clientY);
+    dispatch("pointerup", canvas, e.clientX, e.clientY, e.buttons);
     if (e.button === 0) {
-      dispatch("click", canvas, e.clientX, e.clientY);
+      dispatch("click", canvas, e.clientX, e.clientY, e.buttons);
     }
     if (
       typeof canvas.hasPointerCapture === "function" &&
@@ -73,17 +74,23 @@ export function attachCanvasStagePointer(
     const { x, y } = toStage(canvas, e.clientX, e.clientY);
     lastStageX = x;
     lastStageY = y;
-    schedulePointerMove(x, y);
+    schedulePointerMove(x, y, e.buttons);
   };
 
   const onPointerLeave = (): void => {
     runtime.notifyPointerLeftStage(lastStageX, lastStageY);
   };
 
+  const onWheel = (e: WheelEvent): void => {
+    const { x, y } = toStage(canvas, e.clientX, e.clientY);
+    runtime.dispatchWheel({ x, y, deltaY: e.deltaY });
+  };
+
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointerup", onPointerUp);
   canvas.addEventListener("pointermove", onPointerMove, { passive: true });
   canvas.addEventListener("pointerleave", onPointerLeave);
+  canvas.addEventListener("wheel", onWheel, { passive: true });
   canvas.style.touchAction = "none";
   canvas.style.userSelect = "none";
 
@@ -99,6 +106,7 @@ export function attachCanvasStagePointer(
     canvas.removeEventListener("pointerup", onPointerUp);
     canvas.removeEventListener("pointermove", onPointerMove);
     canvas.removeEventListener("pointerleave", onPointerLeave);
+    canvas.removeEventListener("wheel", onWheel);
     bindSceneRuntimeCursorTarget(runtime, null);
   };
 }

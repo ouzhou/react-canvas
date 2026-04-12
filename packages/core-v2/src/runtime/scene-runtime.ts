@@ -25,6 +25,81 @@ import type { TextFlatRun } from "../text/text-flat-run.ts";
 import { joinTextFlatRuns } from "../text/text-flat-run.ts";
 import { createNodeStore, type NodeStore } from "./node-store.ts";
 
+const SCROLL_DRAG_THRESHOLD_PX = 5;
+
+function stageBoundsContain(
+  x: number,
+  y: number,
+  b: { left: number; top: number; width: number; height: number },
+): boolean {
+  return x >= b.left && x < b.left + b.width && y >= b.top && y < b.top + b.height;
+}
+
+/** 可滚动距离：首子内容高度减视口高度（Yoga 布局盒）。 */
+export function maxScrollYForNode(store: NodeStore, scrollId: string): number {
+  const sv = store.get(scrollId);
+  if (!sv || (sv.kind ?? "view") !== "scrollView" || sv.children.length < 1) return 0;
+  const inner = store.get(sv.children[0]!);
+  if (!inner?.layout || !sv.layout) return 0;
+  return Math.max(0, inner.layout.height - sv.layout.height);
+}
+
+function nodeDepthFromRoot(store: NodeStore, id: string, rootId: string): number {
+  let d = 0;
+  let cur: string | null = id;
+  while (cur !== null && cur !== rootId) {
+    d += 1;
+    cur = store.get(cur)?.parentId ?? null;
+  }
+  return d;
+}
+
+/** 命中点下、可纵向滚动且 `maxScrollY>0` 的最深 `scrollView`（V1 无嵌套时唯一）。 */
+function findDeepestScrollViewAtPoint(
+  store: NodeStore,
+  rootId: string,
+  x: number,
+  y: number,
+): string | null {
+  let best: string | null = null;
+  let bestDepth = -1;
+  for (const id of store.getIds()) {
+    const n = store.get(id);
+    if (!n || (n.kind ?? "view") !== "scrollView") continue;
+    if (maxScrollYForNode(store, id) <= 0) continue;
+    const b = absoluteBoundsFor(id, store);
+    if (!b) continue;
+    if (!stageBoundsContain(x, y, b)) continue;
+    const depth = nodeDepthFromRoot(store, id, rootId);
+    if (depth > bestDepth) {
+      bestDepth = depth;
+      best = id;
+    }
+  }
+  return best;
+}
+
+/** 自叶向根，第一个可滚的 `scrollView` 祖先（最深包裹）；叶本身为可滚 `scrollView` 时返回其 id。 */
+function deepestScrollAncestorOfLeaf(store: NodeStore, leafId: string | null): string | null {
+  if (leafId === null) return null;
+  const leaf = store.get(leafId);
+  if (leaf && (leaf.kind ?? "view") === "scrollView" && maxScrollYForNode(store, leafId) > 0) {
+    return leafId;
+  }
+  let id: string | null = leafId;
+  while (id !== null) {
+    const n = store.get(id);
+    const pid = n?.parentId ?? null;
+    if (pid === null) break;
+    const p = store.get(pid);
+    if (p && (p.kind ?? "view") === "scrollView" && maxScrollYForNode(store, pid) > 0) {
+      return pid;
+    }
+    id = pid;
+  }
+  return null;
+}
+
 const cursorTargetByRuntime = new WeakMap<object, HTMLCanvasElement | null>();
 
 /** 主界面 reconciler 默认挂载点（`root` 的第一子节点）。 */
@@ -80,6 +155,8 @@ export type LayoutSnapshot = Record<
     /** 文本节点外层 `style` 中的排版相关字段，供多 run 与 `textRuns` 合并绘制。 */
     textLayoutStyle?: TextLayoutStyleSnapshot;
     textRuns?: TextFlatRun[];
+    /** 仅 `scrollView`；纵向滚动偏移（px）。 */
+    scrollY?: number;
   }
 >;
 
@@ -98,12 +175,24 @@ export type SceneRuntime = {
   /** 弹窗槽位 id，与 {@link SCENE_MODAL_ID} 相同。 */
   getModalRootId(): string;
   getViewport(): { width: number; height: number };
-  dispatchPointerLike(ev: { type: PointerEventType; x: number; y: number }): void;
+  dispatchPointerLike(ev: {
+    type: PointerEventType;
+    x: number;
+    y: number;
+    /** `pointermove` / `pointerdown` 等由 DOM 传入的 `buttons`（主键为 `1`）。 */
+    buttons?: number;
+  }): void;
+  /** 滚轮（策略 B：`passive` 监听，不 `preventDefault`）。 */
+  dispatchWheel(ev: { x: number; y: number; deltaY: number }): void;
   /**
    * 指针离开 `<canvas>` 命中区时由 input 层调用：对上一命中叶派发 `pointerleave` 并清空内部 hover 状态。
    */
   notifyPointerLeftStage(x: number, y: number): void;
   insertView(parentId: string, id: string, style: ViewStyle): void;
+  /** 插入纵向滚动容器；`scrollY` 初值为 `0`，默认 `overflow: "hidden"` 与传入 `style` 合并。 */
+  insertScrollView(parentId: string, id: string, style: ViewStyle): void;
+  /** 增加纵向滚动偏移（px），钳制后 **不重跑 Yoga**，仅 `emitLayoutCommit`。 */
+  addScrollY(id: string, deltaY: number): void;
   /**
    * 插入或更新文本叶节点。`content` 为字符串时与 M1/M2 一致；为 run 数组时走 M3 多样式 Paragraph。
    * 未设置固定 `height`（数字）时由 Yoga `measureFunc` 测量高度。
@@ -174,7 +263,32 @@ export async function createSceneRuntime(
   /** 上一帧命中叶（内部 hover；不对外暴露 getter）。 */
   let lastHitTargetId: string | null = null;
 
+  type ScrollDragState =
+    | { kind: "idle" }
+    | {
+        kind: "track";
+        scrollId: string;
+        startX: number;
+        startY: number;
+        lastY: number;
+      }
+    | { kind: "dragging"; scrollId: string; lastY: number };
+
+  let scrollDrag: ScrollDragState = { kind: "idle" };
+  let suppressNextClick = false;
+
   let apiRef!: SceneRuntime;
+
+  function applyScrollDelta(scrollId: string, deltaY: number): void {
+    const n = store.get(scrollId);
+    if (!n || (n.kind ?? "view") !== "scrollView") return;
+    const maxY = maxScrollYForNode(store, scrollId);
+    const cur = typeof n.scrollY === "number" && Number.isFinite(n.scrollY) ? n.scrollY : 0;
+    const next = Math.min(maxY, Math.max(0, cur + deltaY));
+    if (next === cur) return;
+    n.scrollY = next;
+    emitLayoutCommit();
+  }
 
   function applyResolvedCursor(): void {
     const canvas = cursorTargetByRuntime.get(apiRef as object) ?? null;
@@ -240,6 +354,10 @@ export async function createSceneRuntime(
       }
       const nk = n.kind ?? "view";
       entry.nodeKind = nk;
+      if (nk === "scrollView") {
+        entry.scrollY =
+          typeof n.scrollY === "number" && Number.isFinite(n.scrollY) ? n.scrollY : 0;
+      }
       if (nk === "text" && n.textContent !== undefined) {
         entry.textContent = n.textContent;
         const fs = n.viewStyle?.fontSize;
@@ -308,11 +426,42 @@ export async function createSceneRuntime(
   /**
    * 命中 + 方案 A 合成 enter/leave + 主事件。顺序：leave → enter → 主类型（同一次调用内）。
    */
-  function dispatchPointerPipeline(ev: { type: PointerEventType; x: number; y: number }): void {
+  function dispatchPointerPipeline(ev: {
+    type: PointerEventType;
+    x: number;
+    y: number;
+    buttons?: number;
+  }): void {
     if (layoutDirty) {
       runLayout();
     }
     dropHoverIfTargetMissing();
+
+    const buttons = ev.buttons ?? 0;
+
+    if (ev.type === "click" && suppressNextClick) {
+      suppressNextClick = false;
+      lastTrace = { hit: null, targetId: null, entries: [] };
+      return;
+    }
+
+    if (ev.type === "pointermove" && scrollDrag.kind === "track" && (buttons & 1) === 1) {
+      const d = scrollDrag;
+      const dist = Math.hypot(ev.x - d.startX, ev.y - d.startY);
+      if (dist > SCROLL_DRAG_THRESHOLD_PX) {
+        scrollDrag = { kind: "dragging", scrollId: d.scrollId, lastY: d.lastY };
+      }
+    }
+
+    if (ev.type === "pointermove" && scrollDrag.kind === "dragging") {
+      const d = scrollDrag;
+      applyScrollDelta(d.scrollId, ev.y - d.lastY);
+      scrollDrag = { kind: "dragging", scrollId: d.scrollId, lastY: ev.y };
+      lastHitTargetId = hitTestAt(ev.x, ev.y, rootId, store);
+      applyResolvedCursor();
+      lastTrace = { hit: null, targetId: null, entries: [] };
+      return;
+    }
 
     const nextLeaf = hitTestAt(ev.x, ev.y, rootId, store);
     const prev = lastHitTargetId;
@@ -332,6 +481,28 @@ export async function createSceneRuntime(
 
     applyResolvedCursor();
 
+    if (ev.type === "pointerdown") {
+      const s = deepestScrollAncestorOfLeaf(store, nextLeaf);
+      if (s !== null && nextLeaf !== null) {
+        scrollDrag = {
+          kind: "track",
+          scrollId: s,
+          startX: ev.x,
+          startY: ev.y,
+          lastY: ev.y,
+        };
+      } else {
+        scrollDrag = { kind: "idle" };
+      }
+    }
+
+    if (ev.type === "pointerup") {
+      if (scrollDrag.kind === "dragging") {
+        suppressNextClick = true;
+      }
+      scrollDrag = { kind: "idle" };
+    }
+
     if (ev.type === "pointermove" && nextLeaf === null) {
       lastTrace = { hit: null, targetId: null, entries: merged };
       return;
@@ -348,6 +519,7 @@ export async function createSceneRuntime(
       targetId: nextLeaf,
       entries: mergeEntries(merged, main.entries),
     };
+
     /** 主事件内可能 `patchStyle` / 监听器改 cursor，须在回写 `lastTrace` 后再刷一次 DOM。 */
     applyResolvedCursor();
   }
@@ -411,6 +583,48 @@ export async function createSceneRuntime(
       n.viewStyle = { ...style };
       applyStylesToYoga(n.yogaNode, n.viewStyle);
       runLayout();
+      applyResolvedCursor();
+    },
+
+    insertScrollView(parentId, id, style) {
+      layoutDirty = true;
+      const existing = store.get(id);
+      if (existing) {
+        if ((existing.kind ?? "view") !== "scrollView") {
+          throw new Error(`insertScrollView: node "${id}" exists but is not a scrollView`);
+        }
+        existing.viewStyle = { overflow: "hidden", ...style };
+        rebuildYogaStyle(existing, store, yoga);
+        runLayout();
+        applyResolvedCursor();
+        return;
+      }
+      const n = store.createChildAt(parentId, id);
+      n.kind = "scrollView";
+      n.scrollY = 0;
+      n.viewStyle = { overflow: "hidden", ...style };
+      applyStylesToYoga(n.yogaNode, n.viewStyle);
+      runLayout();
+      applyResolvedCursor();
+    },
+
+    addScrollY(id, deltaY) {
+      if (layoutDirty) {
+        runLayout();
+      }
+      applyScrollDelta(id, deltaY);
+      applyResolvedCursor();
+    },
+
+    dispatchWheel(ev) {
+      if (layoutDirty) {
+        runLayout();
+      }
+      const sid = findDeepestScrollViewAtPoint(store, rootId, ev.x, ev.y);
+      if (sid === null) {
+        return;
+      }
+      applyScrollDelta(sid, ev.deltaY);
       applyResolvedCursor();
     },
 

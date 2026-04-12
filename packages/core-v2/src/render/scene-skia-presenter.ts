@@ -235,6 +235,19 @@ export async function attachSceneSkiaPresenter(
       }
       const sceneNode = commit.scene.nodes[id];
       if (!sceneNode) return;
+      if (box.nodeKind === "scrollView" && (box.scrollY ?? 0) !== 0) {
+        const sy = box.scrollY ?? 0;
+        skCanvas.save();
+        skCanvas.translate(0, -sy);
+        try {
+          for (const childId of sceneNode.children) {
+            paintSubtree(childId);
+          }
+        } finally {
+          skCanvas.restore();
+        }
+        return;
+      }
       for (const childId of sceneNode.children) {
         paintSubtree(childId);
       }

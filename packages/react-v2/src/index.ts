@@ -38,3 +38,5 @@ export { Text } from "./text.tsx";
 export type { TextProps } from "./text.tsx";
 export { View } from "./view.tsx";
 export type { ViewProps } from "./view.tsx";
+export { ScrollView } from "./scroll-view.tsx";
+export type { ScrollViewProps } from "./scroll-view.tsx";
