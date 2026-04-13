@@ -1,4 +1,5 @@
 import { Image, Text, View } from "@react-canvas/react-v2";
+import { useLingui } from "@lingui/react/macro";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import alarmClock from "@lucide/icons/icons/alarm-clock";
@@ -42,6 +43,7 @@ import { LucideIcon } from "../components/lucide-icon.tsx";
 import type { LucideIconData } from "../lib/lucide-icon-to-d.ts";
 
 export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
+  const { t } = useLingui();
   const { W } = props;
   const [sizeOffset, setSizeOffset] = useState(0);
   const [strokeOffset, setStrokeOffset] = useState(0);
@@ -137,18 +139,17 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
       }}
     >
       <Text style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", lineHeight: 1.4 }}>
-        Image（src/assets/hero.png）
+        {t`Image（src/assets/hero.png）`}
       </Text>
       <Text style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
-        Vite 打包后的 URL，运行时 fetch + CanvasKit 解码；contain / cover / fill 三列，盒
-        100×100，灰底对照。
+        {t`Vite 打包后的 URL，运行时 fetch + CanvasKit 解码；contain / cover / fill 三列，盒 100×100，灰底对照。`}
       </Text>
       <View style={{ flexDirection: "row", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
         {(
           [
-            { label: "contain", fit: "contain" as const },
-            { label: "cover", fit: "cover" as const },
-            { label: "fill", fit: "fill" as const },
+            { label: t`contain`, fit: "contain" as const },
+            { label: t`cover`, fit: "cover" as const },
+            { label: t`fill`, fit: "fill" as const },
           ] as const
         ).map(({ label, fit }) => (
           <View
@@ -178,10 +179,10 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
       <View style={{ height: 1, backgroundColor: "#cbd5e1", marginTop: 4, marginBottom: 4 }} />
 
       <Text style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", lineHeight: 1.4 }}>
-        LucideIcon（camera）
+        {t`LucideIcon（camera）`}
       </Text>
       <Text style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
-        直接使用封装后的 LucideIcon 组件，支持 size / color / strokeWidth 配置。
+        {t`直接使用封装后的 LucideIcon 组件，支持 size / color / strokeWidth 配置。`}
       </Text>
       <View style={{ flexDirection: "row", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
         <View
@@ -199,7 +200,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
           {mainCamera ? (
             <LucideIcon icon={mainCamera} size={72} color="#0f172a" strokeWidth={1.5} />
           ) : (
-            <Text style={{ fontSize: 11, color: "#dc2626" }}>camera missing</Text>
+            <Text style={{ fontSize: 11, color: "#dc2626" }}>{t`camera missing`}</Text>
           )}
         </View>
         <View
@@ -217,7 +218,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
           {mainCamera ? (
             <LucideIcon icon={mainCamera} size={56} color="#2563eb" strokeWidth={1.25} />
           ) : (
-            <Text style={{ fontSize: 11, color: "#dc2626" }}>camera missing</Text>
+            <Text style={{ fontSize: 11, color: "#dc2626" }}>{t`camera missing`}</Text>
           )}
         </View>
       </View>
@@ -225,7 +226,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
       <Text
         style={{ fontSize: 13, fontWeight: 600, color: "#0f172a", lineHeight: 1.4, marginTop: 4 }}
       >
-        Icon 组件预览（size / color / strokeWidth）
+        {t`Icon 组件预览（size / color / strokeWidth）`}
       </Text>
       <View
         style={{
@@ -238,7 +239,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
         }}
       >
         <Text style={{ fontSize: 11, color: "#64748b", lineHeight: 1.4 }}>
-          外部控制：点击调整后，下面全部 icon 会实时更新
+          {t`外部控制：点击调整后，下面全部 icon 会实时更新`}
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <View
@@ -257,7 +258,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
           </View>
           <Text
             style={{ fontSize: 11, color: "#334155" }}
-          >{`size ${sizeOffset >= 0 ? "+" : ""}${sizeOffset}`}</Text>
+          >{t`size ${sizeOffset >= 0 ? "+" : ""}${sizeOffset}`}</Text>
           <View
             style={({ hovered }) => ({
               width: 28,
@@ -290,7 +291,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
             <Text style={{ fontSize: 12, color: "#334155" }}>−</Text>
           </View>
           <Text style={{ fontSize: 11, color: "#334155" }}>
-            {`stroke ${strokeOffset >= 0 ? "+" : ""}${strokeOffset.toFixed(2)}`}
+            {t`stroke ${strokeOffset >= 0 ? "+" : ""}${strokeOffset.toFixed(2)}`}
           </Text>
           <View
             style={({ hovered }) => ({
@@ -362,7 +363,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
                 />
               ) : (
                 <Text style={{ fontSize: 11, color: "#dc2626", lineHeight: 1.4 }}>
-                  not supported
+                  {t`not supported`}
                 </Text>
               )}
               <Text style={{ fontSize: 10, color: "#64748b", lineHeight: 1.35 }}>{label}</Text>

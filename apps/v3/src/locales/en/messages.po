@@ -65,6 +65,11 @@ msgstr "borderWidth 12 and padding 8 both occupy inner area; inner flex:1 shows 
 msgid "borderWidth 经 Yoga 参与占位；borderColor 在 Skia 描边，可与 borderRadius、padding 叠加。舞台内分三段子示例：粗边+圆角+padding、细边 rgba 描边、1px/3px/无边线宽对比，用于核对布局盒与视觉一致。"
 msgstr "borderWidth participates in spacing via Yoga; borderColor strokes in Skia, can combine with borderRadius and padding. Three sections in stage: thick border+corner+padding, thin rgba border, 1px/3px/no border width comparison, for verifying layout box matches visual."
 
+#: src/smoke/scenes/media-demo-scene.tsx
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "camera missing"
+msgstr "camera missing"
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "CanvasKit Paragraph：行高、对齐、装饰线、字距、斜体与 rgba、字体族回退等。可通过控件调节主段换行宽度。"
 msgstr "CanvasKit Paragraph: lineHeight, alignment, decoration, letterSpacing, italic and rgba, fontFamily fallback, etc. Main paragraph wrap width adjustable via controls."
@@ -81,9 +86,21 @@ msgstr "click: (not yet clicked)"
 msgid "click: {lastClickTarget}"
 msgstr "click: {lastClickTarget}"
 
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "contain"
+msgstr "contain"
+
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "cover"
+msgstr "cover"
+
 #: src/react-smoke.tsx
 #~ msgid "English"
 #~ msgstr "English"
+
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "fill"
+msgstr "fill"
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "Flex 布局"
@@ -105,6 +122,10 @@ msgstr "fontFamily: \"__NoSuchFont__\", {defaultParagraphFontFamily} (should dis
 msgid "fontStyle: italic；color: rgba(14,116,144,0.78)"
 msgstr "fontStyle: italic; color: rgba(14,116,144,0.78)"
 
+#: src/react-smoke.tsx
+msgid "GitHub 仓库 ↗"
+msgstr "GitHub repository ↗"
+
 #: src/smoke/scenes/pointer-click-log.tsx
 msgid "hit-lg（绿，后插入）"
 msgstr "hit-lg (green, inserted later)"
@@ -121,13 +142,25 @@ msgstr "hit-sm2-back (purple, inserted first)"
 msgid "hit-sm2-front（蓝，后插入）"
 msgstr "hit-sm2-front (blue, inserted later)"
 
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "Icon 组件预览（size / color / strokeWidth）"
+msgstr "Icon preview component (size / color / strokeWidth)"
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "Image 与 SvgPath"
 msgstr "Image & SvgPath"
 
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "Image（src/assets/hero.png）"
+msgstr "Image (src/assets/hero.png)"
+
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "letterSpacing:2px，wordSpacing:10px → alpha·beta·gamma·delta（看点距与词距）"
 msgstr "letterSpacing:2px, wordSpacing:10px → alpha·beta·gamma·delta (observe letter and word spacing)"
+
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "LucideIcon（camera）"
+msgstr "LucideIcon (camera)"
 
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "M3：外层 15px 字色继承；整段 lineHeight≈1.82。嵌套 "
@@ -144,6 +177,10 @@ msgstr "modal: (not yet clicked)"
 #: src/react-smoke.tsx
 msgid "modal: {modalLog}"
 msgstr "modal: {modalLog}"
+
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "not supported"
+msgstr "not supported"
 
 #: src/smoke/scenes/modal-demo-scene.tsx
 msgid "onRequestClose（点遮罩关闭）"
@@ -173,6 +210,17 @@ msgstr "react-canvas · Scene Demo"
 msgid "row-reverse"
 msgstr "row-reverse"
 
+#. placeholder {0}: sizeOffset >= 0 ? "+" : ""
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "size {0}{sizeOffset}"
+msgstr "size {0}{sizeOffset}"
+
+#. placeholder {0}: strokeOffset >= 0 ? "+" : ""
+#. placeholder {1}: strokeOffset.toFixed(2)
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "stroke {0}{1}"
+msgstr "stroke {0}{1}"
+
 #. placeholder {0}: new Date().toLocaleTimeString()
 #: src/react-smoke.tsx
 msgid "text-body · {0}"
@@ -197,6 +245,10 @@ msgstr "through-back (green, back layer)"
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "underline + line-through；装饰线深红、字色深灰（textDecorationColor 与 color 分离）。"
 msgstr "underline + line-through; decoration dark red, text dark gray (textDecorationColor separate from color)."
+
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "Vite 打包后的 URL，运行时 fetch + CanvasKit 解码；contain / cover / fill 三列，盒 100×100，灰底对照。"
+msgstr "Vite-built URL, decoded by runtime fetch + CanvasKit; three columns: contain / cover / fill, 100×100 boxes on gray background for comparison."
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "Yoga 扩展：margin、gap、padding 与换行、flex 分项、方向翻转、透明度与裁剪、圆角与 hover 等。请用下方标签切换子示例。"
@@ -281,6 +333,10 @@ msgstr "Rounded button + hover"
 #: src/smoke/scenes/cursor-drag-strip.tsx
 msgid "在粉区内按下拖动为抓取；移出粉区后光标随当前命中节点变化（粉区为 grab / grabbing）。"
 msgstr "Press and drag in pink area to grab; cursor changes with current hit node after leaving pink area (pink area is grab/grabbing)."
+
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "外部控制：点击调整后，下面全部 icon 会实时更新"
+msgstr "External controls: after click adjustments, all icons below update in real time."
 
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "多行短条展示 textAlign / textDecoration / letterSpacing / rgba / fontFamily 回退。"
@@ -391,6 +447,10 @@ msgstr "Click me · Don't close"
 #: src/react-smoke.tsx
 msgid "画布运行时加载失败"
 msgstr "Canvas runtime failed to load"
+
+#: src/smoke/scenes/media-demo-scene.tsx
+msgid "直接使用封装后的 LucideIcon 组件，支持 size / color / strokeWidth 配置。"
+msgstr "Directly use the wrapped LucideIcon component with configurable size / color / strokeWidth."
 
 #: src/smoke/scenes/style-demo-scene.tsx
 msgid "确认"
