@@ -44,6 +44,7 @@ import localParagraphFontUrl from "./assets/NotoSansSC-Regular.otf?url";
  */
 export function SmokeCanvasApp() {
   const { t } = useLingui();
+  const repoUrl = "https://github.com/ouzhou/react-canvas";
   const { smokeDemoList, getDemoPageMeta } = useDemoCatalog();
   const styleDemoCases = useStyleDemoCases();
   const [{ demo }, setNav] = useState(readDemoSearch);
@@ -77,6 +78,9 @@ export function SmokeCanvasApp() {
     setTextDemoClickLog(t`text-body · ${new Date().toLocaleTimeString()}`);
   }, [t]);
   const onModalLog = useCallback((msg: string) => setModalLog(msg), []);
+  const openRepo = useCallback(() => {
+    window.open(repoUrl, "_blank", "noopener,noreferrer");
+  }, [repoUrl]);
 
   useEffect(() => {
     if (demo !== "pointer" && demo !== "through") setLastClickTarget(null);
@@ -317,6 +321,25 @@ export function SmokeCanvasApp() {
                       })}
                     </View>
                   </ScrollView>
+                  <View
+                    id="smoke-sidebar-repo"
+                    style={({ hovered }) => ({
+                      flexShrink: 0,
+                      marginTop: 8,
+                      paddingLeft: 10,
+                      paddingRight: 10,
+                      paddingTop: 8,
+                      paddingBottom: 8,
+                      borderRadius: 6,
+                      backgroundColor: hovered ? AD_NAV_BG_HOVER : "transparent",
+                      cursor: "pointer",
+                    })}
+                    onClick={openRepo}
+                  >
+                    <Text style={{ fontSize: 12, color: AD_TEXT_TERTIARY, lineHeight: 1.4 }}>
+                      {t`GitHub 仓库 ↗`}
+                    </Text>
+                  </View>
                 </View>
                 <View
                   id="smoke-sidebar-rail"
