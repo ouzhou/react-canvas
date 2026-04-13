@@ -118,7 +118,7 @@ export function SmokeCanvasApp() {
 
   return (
     <CanvasProvider initOptions={{ defaultParagraphFontUrl: localParagraphFontUrl }}>
-      {({ isReady, runtime, initError, isRuntimeInitPending }) => {
+      {({ snapshot, isReady, runtime, initError, isRuntimeInitPending }) => {
         if (initError) {
           return (
             <div
@@ -155,6 +155,8 @@ export function SmokeCanvasApp() {
           );
         }
         if (isRuntimeInitPending || !isReady || !runtime) {
+          const loadingProgressPercent =
+            snapshot.status === "loading" ? snapshot.progress.percent : 0;
           return (
             <div
               className="smoke-runtime-init-shell smoke-runtime-init-shell--loading"
@@ -173,7 +175,38 @@ export function SmokeCanvasApp() {
                 backgroundColor: "#fafafa",
               }}
             >
-              {t`正在加载画布运行时…`}
+              <div
+                style={{
+                  width: "min(420px, calc(100vw - 48px))",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                }}
+              >
+                <div>{t`正在加载画布运行时…`}</div>
+                <div
+                  style={{
+                    width: "100%",
+                    height: 8,
+                    borderRadius: 999,
+                    overflow: "hidden",
+                    backgroundColor: "#e5e7eb",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${loadingProgressPercent}%`,
+                      height: "100%",
+                      borderRadius: 999,
+                      backgroundColor: AD_COLOR_PRIMARY,
+                      transition: "width 140ms linear",
+                    }}
+                  />
+                </div>
+                <div
+                  style={{ fontSize: 12, color: AD_TEXT_TERTIARY }}
+                >{`${loadingProgressPercent}%`}</div>
+              </div>
             </div>
           );
         }
