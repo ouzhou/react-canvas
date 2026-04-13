@@ -1,5 +1,6 @@
 /** 各示例画布尺寸（core / react 共用，保证像素一致） */
-export const DEMO_LAYOUT = { w: 400, h: 440 } as const;
+/** layout：双列「预览 + 只读代码」需更宽舞台 */
+export const DEMO_LAYOUT = { w: 760, h: 520 } as const;
 export const DEMO_POINTER = { w: 400, h: 440 } as const;
 export const DEMO_THROUGH = { w: 400, h: 360 } as const;
 export const DEMO_HOVER = { w: 220, h: 340 } as const;

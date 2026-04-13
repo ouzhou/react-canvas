@@ -30,6 +30,10 @@ export type RuntimeInitSnapshot =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "ready"; runtime: Runtime }
+  /**
+   * 初始化链（Yoga / CanvasKit / 默认段落字体等）任一步失败。
+   * `error.message` 适合展示给用户；`error.stack` 可用于调试。
+   */
   | { status: "error"; error: Error };
 
 let firstOptions: RuntimeOptions | undefined;

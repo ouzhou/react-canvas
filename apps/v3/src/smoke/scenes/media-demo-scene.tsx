@@ -2,11 +2,8 @@ import camera from "@lucide/icons/icons/camera";
 import { Image, SvgPath, Text, View } from "@react-canvas/react-v2";
 import type { ReactNode } from "react";
 import { useMemo } from "react";
+import heroPngUrl from "../../assets/hero.png";
 import { type LucideIconTuple, lucideIconNodesToPathD } from "../lib/lucide-icon-to-d.ts";
-
-/** 2×2 不透明 PNG（base64），离线可解码 */
-const SAMPLE_PNG_DATA_URI =
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0AAAAKElEQVR42mNk+A+EGAEABgABAwA2ZQAAAABJRU5ErkJggg==";
 
 export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
   const { W, H } = props;
@@ -27,10 +24,11 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
       }}
     >
       <Text style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", lineHeight: 1.4 }}>
-        Image（data URL）
+        Image（src/assets/hero.png）
       </Text>
       <Text style={{ fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
-        contain / cover / fill 三列，盒 100×100，灰底对照。
+        Vite 打包后的 URL，运行时 fetch + CanvasKit 解码；contain / cover / fill 三列，盒
+        100×100，灰底对照。
       </Text>
       <View style={{ flexDirection: "row", gap: 14, alignItems: "flex-start", flexWrap: "wrap" }}>
         {(
@@ -58,7 +56,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
                 alignItems: "center",
               }}
             >
-              <Image uri={SAMPLE_PNG_DATA_URI} objectFit={fit} style={{ width: 88, height: 88 }} />
+              <Image uri={heroPngUrl} objectFit={fit} style={{ width: 88, height: 88 }} />
             </View>
           </View>
         ))}

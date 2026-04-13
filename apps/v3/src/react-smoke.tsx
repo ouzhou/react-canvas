@@ -36,6 +36,7 @@ import { ThroughClickLog } from "./smoke/scenes/through-click-log.tsx";
 import { ThroughDemoScene } from "./smoke/scenes/through-demo-scene.tsx";
 import { useLingui } from "@lingui/react/macro";
 import { activateLinguiLocale, linguiI18n } from "./lib/lingui.ts";
+import localParagraphFontUrl from "./assets/NotoSansSC-Regular.otf?url";
 
 /**
  * 整页仅一块 {@link Canvas}（另含库内部的定位容器与 `<canvas />`）。
@@ -116,9 +117,67 @@ export function SmokeCanvasApp() {
   };
 
   return (
-    <CanvasProvider>
-      {({ isReady, runtime }) =>
-        isReady && runtime ? (
+    <CanvasProvider initOptions={{ defaultParagraphFontUrl: localParagraphFontUrl }}>
+      {({ isReady, runtime, initError, isRuntimeInitPending }) => {
+        if (initError) {
+          return (
+            <div
+              className="smoke-runtime-init-shell smoke-runtime-init-shell--error"
+              role="alert"
+              style={{
+                boxSizing: "border-box",
+                minHeight: "100%",
+                padding: 24,
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                justifyContent: "center",
+                fontFamily: "system-ui, sans-serif",
+                color: AD_TEXT,
+                backgroundColor: "#fff5f5",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 600 }}>{t`画布运行时加载失败`}</div>
+              <pre
+                style={{
+                  margin: 0,
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  color: AD_TEXT_SECONDARY,
+                  fontFamily: "ui-monospace, monospace",
+                }}
+              >
+                {initError.message}
+              </pre>
+            </div>
+          );
+        }
+        if (isRuntimeInitPending || !isReady || !runtime) {
+          return (
+            <div
+              className="smoke-runtime-init-shell smoke-runtime-init-shell--loading"
+              role="status"
+              aria-busy="true"
+              style={{
+                boxSizing: "border-box",
+                minHeight: "100%",
+                padding: 24,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontFamily: "system-ui, sans-serif",
+                fontSize: 15,
+                color: AD_TEXT_SECONDARY,
+                backgroundColor: "#fafafa",
+              }}
+            >
+              {t`正在加载画布运行时…`}
+            </div>
+          );
+        }
+        return (
           <Canvas
             width={vw}
             height={vh}
@@ -589,8 +648,8 @@ export function SmokeCanvasApp() {
               </View>
             </View>
           </Canvas>
-        ) : null
-      }
+        );
+      }}
     </CanvasProvider>
   );
 }

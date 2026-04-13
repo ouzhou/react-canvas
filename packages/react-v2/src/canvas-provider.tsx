@@ -16,6 +16,13 @@ export type CanvasProviderRenderProps = {
   isReady: boolean;
   /** `status === "ready"` 时的共享运行时；否则为 `null`。 */
   runtime: Runtime | null;
+  /**
+   * `idle` 或 `loading`：尚未就绪，可展示加载态。
+   * 注意 SSR 水合时客户端首帧可能为 `idle`，随后很快变为 `loading`。
+   */
+  isRuntimeInitPending: boolean;
+  /** `status === "error"` 时的异常，便于 DOM 展示；否则为 `null`。 */
+  initError: Error | null;
 };
 
 export type CanvasProviderProps = {
@@ -41,10 +48,8 @@ export function CanvasProvider(props: CanvasProviderProps): ReactNode {
 
   const isReady = snapshot.status === "ready";
   const runtime = isReady ? snapshot.runtime : null;
+  const initError = snapshot.status === "error" ? snapshot.error : null;
+  const isRuntimeInitPending = snapshot.status === "idle" || snapshot.status === "loading";
 
-  if (snapshot.status === "error") {
-    throw snapshot.error;
-  }
-
-  return <>{children({ snapshot, isReady, runtime })}</>;
+  return <>{children({ snapshot, isReady, runtime, isRuntimeInitPending, initError })}</>;
 }

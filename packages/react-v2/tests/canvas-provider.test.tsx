@@ -52,6 +52,30 @@ test("two CanvasProvider trees share the same module runtime when ready", async 
   root.unmount();
 });
 
+test("CanvasProvider exposes initError and isRuntimeInitPending when ready", async () => {
+  let initError: Error | null | undefined;
+  let seenPending = false;
+  const el = document.createElement("div");
+  const root = createRoot(el);
+  await act(async () => {
+    root.render(
+      <CanvasProvider initOptions={vitestRuntimeInitOptions}>
+        {({ initError: err, isRuntimeInitPending }) => {
+          initError = err;
+          if (isRuntimeInitPending) seenPending = true;
+          return null;
+        }}
+      </CanvasProvider>,
+    );
+  });
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  await vi.waitFor(() => expect(initError).toBeNull(), { timeout: 15_000 });
+  expect(seenPending).toBe(true);
+  root.unmount();
+});
+
 test("second CanvasProvider mounts after first is ready still sees same runtime", async () => {
   let first: Runtime | null = null;
   let second: Runtime | null = null;

@@ -150,7 +150,8 @@ const snap = useSyncExternalStore(
   getRuntimeSnapshot,
   getRuntimeServerSnapshot,
 );
-// snap.status === 'ready' 时将 runtime 注入 Context
+// snap.status === 'ready' 时将 runtime 注入 Context。
+// snap.status === 'error' 时 `snap.error` 含 `message`（及 `stack`），供 DOM 展示；`CanvasProvider` 不向 React 错误边界抛错，由 render props 自行处理。
 ```
 
 ---
