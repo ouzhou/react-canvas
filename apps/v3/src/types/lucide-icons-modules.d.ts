@@ -1,8 +1,8 @@
-declare module "@lucide/icons/icons/camera" {
-  const camera: {
+declare module "@lucide/icons/icons/*" {
+  const icon: {
     readonly name: string;
-    readonly size: number;
-    readonly node: readonly (readonly [string, Record<string, string | number>])[];
+    readonly size?: number;
+    readonly node: readonly (readonly [string, Record<string, string | number | undefined>])[];
   };
-  export default camera;
+  export default icon;
 }

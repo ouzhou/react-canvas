@@ -82,8 +82,8 @@ msgid "click: {lastClickTarget}"
 msgstr "click: {lastClickTarget}"
 
 #: src/react-smoke.tsx
-msgid "English"
-msgstr "English"
+#~ msgid "English"
+#~ msgstr "English"
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "Flex 布局"
@@ -211,8 +211,8 @@ msgid "两例互不依赖，用于确认多个节点可同时维护各自 hovere
 msgstr "两例互不依赖，用于确认多个节点可同时维护各自 hovered 态。"
 
 #: src/react-smoke.tsx
-msgid "中文"
-msgstr "中文"
+#~ msgid "中文"
+#~ msgstr "中文"
 
 #: src/smoke/scenes/modal-demo-scene.tsx
 msgid "主内容区收到点击（仅 Modal 关闭时）"

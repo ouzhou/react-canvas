@@ -580,7 +580,7 @@ export function SmokeCanvasApp() {
                         id="smoke-stage-inner"
                         style={{
                           width: dw,
-                          height: dh,
+                          // ...(demo === "media" ? {} : { height: dh }),
                           position: "relative",
                         }}
                       >
