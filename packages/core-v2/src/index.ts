@@ -23,6 +23,8 @@ export { computeImageDestSrcRects } from "./media/image-object-fit.ts";
 export type { TextFlatRun } from "./text/text-flat-run.ts";
 export { applyStylesToYoga, clampOpacityForSnapshot } from "./layout/style-map.ts";
 export { hitTestAt } from "./hit/hit-test.ts";
+export { PickBuffer } from "./hit/pick-buffer.ts";
+export { PICK_ID_EMPTY, pickIdToRgba, rgbaToPickId } from "./hit/pick-id-codec.ts";
 export { absoluteBoundsFor, calculateAndSyncLayout } from "./layout/layout-sync.ts";
 export type { DispatchTrace, DispatchTraceEntry } from "./events/dispatch.ts";
 export { dispatchPointerLike } from "./events/dispatch.ts";
