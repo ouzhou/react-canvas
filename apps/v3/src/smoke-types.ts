@@ -6,6 +6,7 @@ export type SmokeDemoId =
   | "hover"
   | "cursor"
   | "modal"
+  | "popover"
   | "text"
   | "style"
   | "border"
@@ -29,12 +30,14 @@ export function readDemoSearch(): { demo: SmokeDemoId } {
                 ? "cursor"
                 : raw === "modal"
                   ? "modal"
-                  : raw === "text"
-                    ? "text"
-                    : raw === "style"
-                      ? "style"
-                      : raw === "border"
-                        ? "border"
-                        : "media";
+                  : raw === "popover"
+                    ? "popover"
+                    : raw === "text"
+                      ? "text"
+                      : raw === "style"
+                        ? "style"
+                        : raw === "border"
+                          ? "border"
+                          : "media";
   return { demo };
 }

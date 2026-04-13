@@ -28,6 +28,7 @@ import { HoverDemoScene } from "./smoke/scenes/hover-demo-scene.tsx";
 import { LayoutDemoScene } from "./smoke/scenes/layout-demo-scene.tsx";
 import { MediaDemoScene } from "./smoke/scenes/media-demo-scene.tsx";
 import { ModalDemoInCanvas } from "./smoke/scenes/modal-demo-scene.tsx";
+import { PopoverDemoScene } from "./smoke/scenes/popover-demo-scene.tsx";
 import { PointerClickLog, PointerClickLogB } from "./smoke/scenes/pointer-click-log.tsx";
 import { PointerDemoScene } from "./smoke/scenes/pointer-demo-scene.tsx";
 import { StyleDemoScene } from "./smoke/scenes/style-demo-scene.tsx";
@@ -68,6 +69,7 @@ export function SmokeCanvasApp() {
   const [styleCase, setStyleCase] = useState<StyleDemoCase>("margin-gap");
   const [styleOpacityPercent, setStyleOpacityPercent] = useState(STYLE_OPACITY_SLIDER_DEFAULT);
   const [modalLog, setModalLog] = useState<string | null>(null);
+  const [popoverLog, setPopoverLog] = useState<string | null>(null);
   const [i18nLocale, setI18nLocale] = useState(() => linguiI18n.locale);
   const pickLocale = useCallback((locale: string) => {
     activateLinguiLocale(locale);
@@ -78,6 +80,7 @@ export function SmokeCanvasApp() {
     setTextDemoClickLog(t`text-body · ${new Date().toLocaleTimeString()}`);
   }, [t]);
   const onModalLog = useCallback((msg: string) => setModalLog(msg), []);
+  const onPopoverLog = useCallback((msg: string) => setPopoverLog(msg), []);
   const openRepo = useCallback(() => {
     window.open(repoUrl, "_blank", "noopener,noreferrer");
   }, [repoUrl]);
@@ -98,6 +101,10 @@ export function SmokeCanvasApp() {
     if (demo !== "modal") setModalLog(null);
   }, [demo]);
 
+  useEffect(() => {
+    if (demo !== "popover") setPopoverLog(null);
+  }, [demo]);
+
   const { dw, dh } = demoStageSize(demo);
   const doc = getDemoPageMeta(demo);
 
@@ -108,6 +115,8 @@ export function SmokeCanvasApp() {
     logLine = textDemoClickLog ? t`主段: ${textDemoClickLog}` : t`主段: （点主灰条）`;
   } else if (demo === "modal") {
     logLine = modalLog ? t`modal: ${modalLog}` : t`modal: （尚未点击）`;
+  } else if (demo === "popover") {
+    logLine = popoverLog ? t`popover: ${popoverLog}` : t`popover: （尚未点击）`;
   }
 
   const bumpTextWrap = (delta: number) => {
@@ -677,6 +686,14 @@ export function SmokeCanvasApp() {
                             viewportW={vw}
                             viewportH={vh}
                             onLog={onModalLog}
+                          />
+                        ) : demo === "popover" ? (
+                          <PopoverDemoScene
+                            W={dw}
+                            H={dh}
+                            viewportW={vw}
+                            viewportH={vh}
+                            onLog={onPopoverLog}
                           />
                         ) : demo === "border" ? (
                           <BorderDemoScene W={dw} H={dh} />

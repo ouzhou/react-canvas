@@ -5,6 +5,7 @@ import {
   DEMO_LAYOUT,
   DEMO_MEDIA,
   DEMO_MODAL,
+  DEMO_POPOVER,
   DEMO_POINTER,
   DEMO_STYLE,
   DEMO_TEXT,
@@ -24,15 +25,17 @@ export function demoStageSize(demo: SmokeDemoId): { dw: number; dh: number } {
             ? DEMO_CURSOR.w
             : demo === "modal"
               ? DEMO_MODAL.w
-              : demo === "text"
-                ? DEMO_TEXT.w
-                : demo === "style"
-                  ? DEMO_STYLE.w
-                  : demo === "border"
-                    ? DEMO_BORDER.w
-                    : demo === "media"
-                      ? DEMO_MEDIA.w
-                      : DEMO_HOVER.w;
+              : demo === "popover"
+                ? DEMO_POPOVER.w
+                : demo === "text"
+                  ? DEMO_TEXT.w
+                  : demo === "style"
+                    ? DEMO_STYLE.w
+                    : demo === "border"
+                      ? DEMO_BORDER.w
+                      : demo === "media"
+                        ? DEMO_MEDIA.w
+                        : DEMO_HOVER.w;
   const dh =
     demo === "layout"
       ? DEMO_LAYOUT.h
@@ -44,14 +47,16 @@ export function demoStageSize(demo: SmokeDemoId): { dw: number; dh: number } {
             ? DEMO_CURSOR.h
             : demo === "modal"
               ? DEMO_MODAL.h
-              : demo === "text"
-                ? DEMO_TEXT.h
-                : demo === "style"
-                  ? DEMO_STYLE.h
-                  : demo === "border"
-                    ? DEMO_BORDER.h
-                    : demo === "media"
-                      ? DEMO_MEDIA.h
-                      : DEMO_HOVER.h;
+              : demo === "popover"
+                ? DEMO_POPOVER.h
+                : demo === "text"
+                  ? DEMO_TEXT.h
+                  : demo === "style"
+                    ? DEMO_STYLE.h
+                    : demo === "border"
+                      ? DEMO_BORDER.h
+                      : demo === "media"
+                        ? DEMO_MEDIA.h
+                        : DEMO_HOVER.h;
   return { dw, dh };
 }

@@ -57,6 +57,12 @@ export function useDemoCatalog() {
         description: t`全屏半透明遮罩、点击遮罩关闭、内容在视口居中。用于验证 scene-modal 槽与弹窗打开/关闭流程。`,
       },
       {
+        id: "popover",
+        navLabel: t`浮层`,
+        title: t`Popover`,
+        description: t`基于 Modal 槽位渲染的非模态浮层示例，验证 click-away、四向定位与边界修正。`,
+      },
+      {
         id: "text",
         navLabel: t`文本`,
         title: t`文本与段落`,
