@@ -1,7 +1,10 @@
 import type { CanvasKit, TypefaceFontProvider } from "canvaskit-wasm";
 
 import { BUILTIN_PARAGRAPH_FONT_URL } from "../fonts/builtin.ts";
-import { loadDefaultParagraphFont } from "../fonts/load-default-paragraph-font.ts";
+import {
+  fetchParagraphFontData,
+  registerDefaultParagraphFont,
+} from "../fonts/load-default-paragraph-font.ts";
 import { setParagraphMeasureContext } from "../layout/paragraph-measure-context.ts";
 import { loadYoga, type Yoga } from "../layout/yoga.ts";
 import { initCanvasKit } from "../render/canvaskit.ts";
@@ -75,14 +78,25 @@ export function initRuntime(options?: RuntimeOptions): Promise<Runtime> {
   }
   if (!runtimePromise) {
     setSnapshot({ status: "loading" });
+    const opts = firstOptions;
+    const shouldLoadDefaultParagraphFonts = opts?.loadDefaultParagraphFonts !== false;
+    const defaultParagraphFontUrl = opts?.defaultParagraphFontUrl ?? BUILTIN_PARAGRAPH_FONT_URL;
+    const paragraphFontDataPromise = shouldLoadDefaultParagraphFonts
+      ? fetchParagraphFontData(defaultParagraphFontUrl).then(
+          (fontData) => ({ ok: true as const, fontData }),
+          (error) => ({ ok: false as const, error }),
+        )
+      : null;
     runtimePromise = Promise.all([loadYoga(), initCanvasKit()])
       .then(async ([yoga, canvasKit]) => {
-        const opts = firstOptions;
         let paragraphFontProvider: TypefaceFontProvider | null = null;
         let defaultParagraphFontFamily = "";
-        if (opts?.loadDefaultParagraphFonts !== false) {
-          const url = opts?.defaultParagraphFontUrl ?? BUILTIN_PARAGRAPH_FONT_URL;
-          const loaded = await loadDefaultParagraphFont(canvasKit, url);
+        if (paragraphFontDataPromise) {
+          const fontLoad = await paragraphFontDataPromise;
+          if (!fontLoad.ok) {
+            throw fontLoad.error;
+          }
+          const loaded = registerDefaultParagraphFont(canvasKit, fontLoad.fontData);
           paragraphFontProvider = loaded.provider;
           defaultParagraphFontFamily = loaded.familyName;
         }
