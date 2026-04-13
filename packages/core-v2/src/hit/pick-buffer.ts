@@ -11,6 +11,9 @@ export class PickBuffer {
   private _ck: CanvasKit | null = null;
   private rootScale = 1;
 
+  /** 待重建的 layout 快照；非 null 表示 pick surface 已过期，下次 hitAt 时重建。 */
+  private pendingCommit: LayoutCommitPayload | null = null;
+
   rebuildPickIdMap(commit: LayoutCommitPayload): void {
     this.pickIdMap.clear();
     this.nodeIdMap.clear();
@@ -58,6 +61,24 @@ export class PickBuffer {
     return this.pickIdMap.get(pickId) ?? null;
   }
 
+  /**
+   * 标记 pick surface 需要在下次 `hitAt` 时重建（懒更新）。
+   * 布局频繁提交时不会阻塞主线程；只有实际触发命中检测时才做一次真正的重绘。
+   */
+  markDirty(commit: LayoutCommitPayload, ck: CanvasKit, surface: Surface, rootScale: number): void {
+    this.pickSurface = surface;
+    this._ck = ck;
+    this.rootScale = rootScale;
+    this.pendingCommit = commit;
+  }
+
+  private flushIfDirty(): void {
+    if (!this.pendingCommit || !this.pickSurface || !this._ck) return;
+    const commit = this.pendingCommit;
+    this.pendingCommit = null;
+    this.rebuildSurface(commit, this._ck, this.pickSurface, this.rootScale);
+  }
+
   rebuildSurface(
     commit: LayoutCommitPayload,
     ck: CanvasKit,
@@ -67,6 +88,7 @@ export class PickBuffer {
     this.pickSurface = surface;
     this._ck = ck;
     this.rootScale = rootScale;
+    this.pendingCommit = null;
 
     const skCanvas = surface.getCanvas();
     skCanvas.save();
@@ -146,6 +168,7 @@ export class PickBuffer {
   }
 
   hitAt(stageX: number, stageY: number): string | null {
+    this.flushIfDirty();
     if (!this.pickSurface || !this._ck) return null;
     const ck = this._ck;
     const px = Math.floor(stageX * this.rootScale);

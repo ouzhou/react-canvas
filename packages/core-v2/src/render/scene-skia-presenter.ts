@@ -435,7 +435,7 @@ export async function attachSceneSkiaPresenter(
   const unsubLayout = runtime.subscribeAfterLayout((p) => {
     pickBuffer.rebuildPickIdMap(p);
     if (pickSurface) {
-      pickBuffer.rebuildSurface(p, ck, pickSurface, rootScale);
+      pickBuffer.markDirty(p, ck, pickSurface, rootScale);
     }
     lastPayload = p;
     schedulePaint();

@@ -191,6 +191,8 @@ export type LayoutSnapshot = Record<
     svgStroke?: string;
     svgFill?: string;
     svgStrokeWidth?: number;
+    /** 命中测试穿透；`"none"` 时本节点及子树不参与指针目标，与 `ViewStyle.pointerEvents` 一致。 */
+    pointerEvents?: "auto" | "none";
   }
 >;
 
@@ -493,6 +495,8 @@ export async function createSceneRuntime(
         entry.imageUri = n.imageUri;
         entry.imageObjectFit = n.imageObjectFit ?? "contain";
       }
+      const pe = n.viewStyle?.pointerEvents;
+      if (pe === "none") entry.pointerEvents = "none";
       if (nk === "svgPath") {
         const d = n.svgPathD;
         const pr = parseSvgViewBox(n.svgViewBox);
