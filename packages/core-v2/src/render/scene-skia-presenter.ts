@@ -15,6 +15,7 @@ import { colorStringToCkColor } from "../text/css-color.ts";
 import { buildAndDrawParagraphRuns } from "../text/paragraph-from-runs.ts";
 import { mapParagraphTextAlign, mergedRunStyleToCkTextStyle } from "../text/skia-text-style.ts";
 import { mergePlainTextStyle } from "../text/text-flat-run.ts";
+import { PickBuffer } from "../hit/pick-buffer.ts";
 import { initCanvasKit } from "./canvaskit.ts";
 
 export type AttachSceneSkiaOptions = {
@@ -70,6 +71,13 @@ export async function attachSceneSkiaPresenter(
     throw new Error("[@react-canvas/core-v2] Failed to create CanvasKit surface for <canvas>.");
   }
   const skSurface = surface;
+
+  let pickSurface = ck.MakeSurface(bw, bh);
+  if (!pickSurface) {
+    throw new Error("[@react-canvas/core-v2] Failed to create CanvasKit pick surface.");
+  }
+  const pickBuffer = new PickBuffer();
+  runtime.setHitResolver((x, y) => pickBuffer.hitAt(x, y));
 
   let rafId: number | null = null;
   let lastPayload: LayoutCommitPayload | null = null;
@@ -425,6 +433,10 @@ export async function attachSceneSkiaPresenter(
   }
 
   const unsubLayout = runtime.subscribeAfterLayout((p) => {
+    pickBuffer.rebuildPickIdMap(p);
+    if (pickSurface) {
+      pickBuffer.rebuildSurface(p, ck, pickSurface, rootScale);
+    }
     lastPayload = p;
     schedulePaint();
   });
@@ -434,6 +446,8 @@ export async function attachSceneSkiaPresenter(
     if (rafId !== null && typeof g.cancelAnimationFrame === "function") {
       g.cancelAnimationFrame(rafId as number);
     }
+    runtime.setHitResolver(null);
+    pickSurface?.delete();
     skSurface.delete();
   };
 }
