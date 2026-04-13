@@ -766,6 +766,15 @@ export async function createSceneRuntime(
         existing.textRuns = textRuns;
         existing.viewStyle = { ...existing.viewStyle, ...style };
         rebuildYogaStyle(existing, store, yoga);
+        /**
+         * 文本内在尺寸变化时，带 measure 的叶需失效测量缓存；否则父 flex 行可能仍按旧宽度分配空间
+         *（如 i18n 切换后标签变长被挤压换行）。Yoga 3：仅 **仍挂有 measureFunc** 的叶可安全 `markDirty`；
+         * 固定数字 `height` 的路径会 `unsetMeasureFunc`，对其 `markDirty` 会 wasm abort。
+         */
+        const fixedH = existing.viewStyle?.height;
+        if (!(typeof fixedH === "number" && Number.isFinite(fixedH))) {
+          existing.yogaNode.markDirty();
+        }
         runLayout();
         applyResolvedCursor();
         return;

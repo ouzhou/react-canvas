@@ -216,7 +216,10 @@ export function SmokeCanvasApp() {
                     gap: 4,
                   }}
                 >
-                  <View id="smoke-sidebar-brand" style={{ paddingBottom: 12, marginBottom: 4 }}>
+                  <View
+                    id="smoke-sidebar-brand"
+                    style={{ flexShrink: 0, paddingBottom: 12, marginBottom: 4 }}
+                  >
                     <Text
                       style={{
                         fontSize: 16,
@@ -238,39 +241,49 @@ export function SmokeCanvasApp() {
                       {t`能力示例`}
                     </Text>
                   </View>
-                  {smokeDemoList.map((item) => {
-                    const active = demo === item.id;
-                    return (
-                      <View
-                        key={item.id}
-                        id={`nav-${item.id}`}
-                        style={({ hovered }) => ({
-                          paddingLeft: 10,
-                          paddingRight: 10,
-                          paddingTop: 8,
-                          paddingBottom: 8,
-                          borderRadius: 6,
-                          backgroundColor: active
-                            ? AD_NAV_BG_SELECTED
-                            : hovered
-                              ? AD_NAV_BG_HOVER
-                              : "transparent",
-                          cursor: "pointer",
-                        })}
-                        onClick={() => setDemo(item.id)}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 13,
-                            color: active ? AD_COLOR_PRIMARY : AD_TEXT,
-                            lineHeight: 1.45,
-                          }}
-                        >
-                          {item.label}
-                        </Text>
-                      </View>
-                    );
-                  })}
+                  <ScrollView
+                    id="smoke-sidebar-scroll"
+                    style={{ flex: 1, minHeight: 0, width: "100%", alignSelf: "stretch" }}
+                  >
+                    <View
+                      id="smoke-sidebar-nav"
+                      style={{ flexDirection: "column", gap: 4, paddingBottom: 4 }}
+                    >
+                      {smokeDemoList.map((item) => {
+                        const active = demo === item.id;
+                        return (
+                          <View
+                            key={item.id}
+                            id={`nav-${item.id}`}
+                            style={({ hovered }) => ({
+                              paddingLeft: 10,
+                              paddingRight: 10,
+                              paddingTop: 8,
+                              paddingBottom: 8,
+                              borderRadius: 6,
+                              backgroundColor: active
+                                ? AD_NAV_BG_SELECTED
+                                : hovered
+                                  ? AD_NAV_BG_HOVER
+                                  : "transparent",
+                              cursor: "pointer",
+                            })}
+                            onClick={() => setDemo(item.id)}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 13,
+                                color: active ? AD_COLOR_PRIMARY : AD_TEXT,
+                                lineHeight: 1.45,
+                              }}
+                            >
+                              {item.label}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
                 </View>
                 <View
                   id="smoke-sidebar-rail"
@@ -310,8 +323,8 @@ export function SmokeCanvasApp() {
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                       {(
                         [
-                          { code: "zh-cn" as const, label: t`中文` },
-                          { code: "en" as const, label: t`English` },
+                          { code: "zh-cn" as const, label: "中文" },
+                          { code: "en" as const, label: "English" },
                         ] as const
                       ).map(({ code, label }) => {
                         const active = i18nLocale === code;

@@ -14,21 +14,21 @@
 
 ## File map（创建 / 修改）
 
-| 路径 | 职责 |
-|------|------|
-| `packages/core-v2/src/scene/scene-node.ts` | `SceneNodeKind` 含 `"scrollView"`；`SceneNode.scrollY` |
-| `packages/core-v2/src/runtime/scene-runtime.ts` | `insertScrollView`、`addScrollY`/`setScrollY`、`dispatchWheel`、拖拽状态、`emitLayoutCommit` 无 Yoga 路径、`LayoutSnapshot` 增加 `scrollY?` |
-| `packages/core-v2/src/runtime/node-store.ts` | `rebuildYogaStyle`：`scrollView` 走与 `view` 相同 Yoga 路径（不测 `measureFunc`） |
-| `packages/core-v2/src/hit/hit-test.ts` | scroll 视口裁剪 + 子树坐标 `+scrollY`（与 paint 互逆） |
-| `packages/core-v2/src/render/scene-skia-presenter.ts` | `nodeKind === "scrollView"` 时在子 `paintSubtree` 前 `translate(0, -scrollY)`（`scrollY` 来自 `commit.layout[id].scrollY`） |
-| `packages/core-v2/src/input/canvas-stage-pointer.ts` | `wheel` → `runtime.dispatchWheel(...)`，`passive: true` |
-| `packages/core-v2/src/index.ts` | 导出新增类型 / API（若需） |
-| `packages/core-v2/tests/scroll-view-hit.test.ts`（新建） | 命中 + `scrollY` |
-| `packages/core-v2/tests/scroll-view-layout.test.ts`（新建，可选合并） | `maxScrollY` 钳制与快照字段 |
-| `packages/react-v2/src/scroll-view.tsx`（新建） | `ScrollView` 组件 |
-| `packages/react-v2/src/index.ts` | `export { ScrollView }` |
-| `packages/react-v2/tests/scroll-view.test.tsx`（新建） | 集成：滚轮或 `addScrollY` 后 click 命中 |
-| `apps/v3/src/react-smoke.tsx` | 主栏文档区 + 控件 + `smoke-stage` 外包 `<ScrollView>`（固定顶栏外） |
+| 路径                                                                  | 职责                                                                                                                                        |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/core-v2/src/scene/scene-node.ts`                            | `SceneNodeKind` 含 `"scrollView"`；`SceneNode.scrollY`                                                                                      |
+| `packages/core-v2/src/runtime/scene-runtime.ts`                       | `insertScrollView`、`addScrollY`/`setScrollY`、`dispatchWheel`、拖拽状态、`emitLayoutCommit` 无 Yoga 路径、`LayoutSnapshot` 增加 `scrollY?` |
+| `packages/core-v2/src/runtime/node-store.ts`                          | `rebuildYogaStyle`：`scrollView` 走与 `view` 相同 Yoga 路径（不测 `measureFunc`）                                                           |
+| `packages/core-v2/src/hit/hit-test.ts`                                | scroll 视口裁剪 + 子树坐标 `+scrollY`（与 paint 互逆）                                                                                      |
+| `packages/core-v2/src/render/scene-skia-presenter.ts`                 | `nodeKind === "scrollView"` 时在子 `paintSubtree` 前 `translate(0, -scrollY)`（`scrollY` 来自 `commit.layout[id].scrollY`）                 |
+| `packages/core-v2/src/input/canvas-stage-pointer.ts`                  | `wheel` → `runtime.dispatchWheel(...)`，`passive: true`                                                                                     |
+| `packages/core-v2/src/index.ts`                                       | 导出新增类型 / API（若需）                                                                                                                  |
+| `packages/core-v2/tests/scroll-view-hit.test.ts`（新建）              | 命中 + `scrollY`                                                                                                                            |
+| `packages/core-v2/tests/scroll-view-layout.test.ts`（新建，可选合并） | `maxScrollY` 钳制与快照字段                                                                                                                 |
+| `packages/react-v2/src/scroll-view.tsx`（新建）                       | `ScrollView` 组件                                                                                                                           |
+| `packages/react-v2/src/index.ts`                                      | `export { ScrollView }`                                                                                                                     |
+| `packages/react-v2/tests/scroll-view.test.tsx`（新建）                | 集成：滚轮或 `addScrollY` 后 click 命中                                                                                                     |
+| `apps/v3/src/react-smoke.tsx`                                         | 主栏文档区 + 控件 + `smoke-stage` 外包 `<ScrollView>`（固定顶栏外）                                                                         |
 
 ---
 
@@ -375,16 +375,16 @@ git commit -m "feat(v3): wrap smoke main column in ScrollView"
 
 ## Spec self-review（计划 ↔ 规格）
 
-| 规格 § | 覆盖 Task |
-|--------|-----------|
-| scrollView 节点 + scrollY | 1, 2 |
-| 绘制 translate + clip | 4 |
-| 命中逆变换 | 3 |
-| maxScrollY 钳制 | 2 |
-| wheel 策略 B passive | 5 |
-| 拖拽滚动 | 6 |
-| react ScrollView + 内容槽 | 7 |
-| v3 smoke 包裹 | 8 |
+| 规格 §                     | 覆盖 Task                 |
+| -------------------------- | ------------------------- |
+| scrollView 节点 + scrollY  | 1, 2                      |
+| 绘制 translate + clip      | 4                         |
+| 命中逆变换                 | 3                         |
+| maxScrollY 钳制            | 2                         |
+| wheel 策略 B passive       | 5                         |
+| 拖拽滚动                   | 6                         |
+| react ScrollView + 内容槽  | 7                         |
+| v3 smoke 包裹              | 8                         |
 | 非目标：惯性/嵌套/onScroll | 不在本计划列任务（YAGNI） |
 
 **Placeholder 扫描：** 无 TBD；`addScrollY` / `insertScrollView` 名称以最终实现为准，各 Task 已写明代号调整处。
@@ -395,7 +395,7 @@ git commit -m "feat(v3): wrap smoke main column in ScrollView"
 
 **Plan complete and saved to `docs/superpowers/plans/2026-04-12-scrollview-implementation.md`. Two execution options:**
 
-1. **Subagent-Driven (recommended)** — 每个 Task 派生子代理，Task 间人工快速验收  
-2. **Inline Execution** — 本会话内按 Task 顺序实现，关键点设检查点  
+1. **Subagent-Driven (recommended)** — 每个 Task 派生子代理，Task 间人工快速验收
+2. **Inline Execution** — 本会话内按 Task 顺序实现，关键点设检查点
 
 **Which approach do you want?**（直接回复 `1` 或 `2`；若自行开干，可按文件中 Checkbox 逐项勾选。）

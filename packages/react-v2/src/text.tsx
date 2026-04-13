@@ -137,6 +137,18 @@ export function Text(props: TextProps): ReactNode {
     return toInsertTextPayload(runs);
   }, [children, parsedStyle]);
 
+  /**
+   * 仅卸载时移除场景节点。必须与下方「插入/更新」effect 拆开：
+   * 若在同一 effect 的 cleanup 里 `removeView`，再在依赖（如 `textPayload`）变化时重跑，
+   * 会先删后建；`insertText` 走 `createChildAt` 会把节点追加到父节点 **末尾**，导致兄弟顺序错乱
+   *（例如父级 setState 后嵌套 M3 段落整块跑到列尾）。内容/样式变化应走 `insertText` 的 existing 分支原地更新。
+   */
+  useLayoutEffect(() => {
+    return () => {
+      rt.removeView(nodeId);
+    };
+  }, [rt, nodeId]);
+
   useLayoutEffect(() => {
     if (parentId === null) {
       throw new Error("Text must be rendered under Canvas");
@@ -164,7 +176,6 @@ export function Text(props: TextProps): ReactNode {
 
     return () => {
       cancelled = true;
-      rt.removeView(nodeId);
     };
   }, [rt, parentId, nodeId, textPayload, parsedStyle]);
 
