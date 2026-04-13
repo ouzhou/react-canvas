@@ -258,6 +258,11 @@ export type SceneRuntime = {
   hasSceneNode(id: string): boolean;
   /** 每次内部布局同步完成后调用；注册时立即派发当前一帧。 */
   subscribeAfterLayout(listener: (payload: LayoutCommitPayload) => void): () => void;
+  /**
+   * 注入像素级命中解析器（由 `attachSceneSkiaPresenter` 在 pick buffer 就绪后注入）。
+   * 传入 `null` 时回退到 `hitTestAt`（CPU 布局盒命中）。
+   */
+  setHitResolver(fn: ((x: number, y: number) => string | null) | null): void;
 };
 
 function normalizeInsertTextContent(content: string | readonly TextFlatRun[]): {
@@ -341,6 +346,7 @@ export async function createSceneRuntime(
 
   /** 自上次 `calculateAndSyncLayout` 以来场景树或样式是否已变（干净路径下指针派发跳过 Yoga）。 */
   let layoutDirty = true;
+  let hitResolver: ((x: number, y: number) => string | null) | null = null;
   /** 上一帧命中叶（内部 hover；不对外暴露 getter）。 */
   let lastHitTargetId: string | null = null;
 
@@ -575,13 +581,15 @@ export async function createSceneRuntime(
       const d = scrollDrag;
       applyScrollDelta(d.scrollId, ev.y - d.lastY);
       scrollDrag = { kind: "dragging", scrollId: d.scrollId, lastY: ev.y };
-      lastHitTargetId = hitTestAt(ev.x, ev.y, rootId, store);
+      lastHitTargetId = hitResolver
+        ? hitResolver(ev.x, ev.y)
+        : hitTestAt(ev.x, ev.y, rootId, store);
       applyResolvedCursor();
       lastTrace = { hit: null, targetId: null, entries: [] };
       return;
     }
 
-    const nextLeaf = hitTestAt(ev.x, ev.y, rootId, store);
+    const nextLeaf = hitResolver ? hitResolver(ev.x, ev.y) : hitTestAt(ev.x, ev.y, rootId, store);
     const prev = lastHitTargetId;
     let merged: DispatchTraceEntry[] = [];
 
@@ -919,6 +927,10 @@ export async function createSceneRuntime(
       return () => {
         layoutListeners.delete(listener);
       };
+    },
+
+    setHitResolver(fn) {
+      hitResolver = fn;
     },
   };
 
