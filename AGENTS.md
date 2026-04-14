@@ -87,4 +87,4 @@ For GitHub Actions, consider using [`voidzero-dev/setup-vp`](https://github.com/
 - [ ] Run `vp check` and `vp test` to validate changes.
 <!--VITE PLUS END-->
 
-当前开发的是packages/core-v2和packages/react-v2，对应的网页测试应用是apps/v2
+当前开发的是 packages/core-v2 和 packages/react-v2，对应的网页测试应用是 apps/v3。

@@ -1,71 +1,77 @@
 # React Canvas
 
-用 React 组件直接渲染到 Canvas 画布。
+Render React components directly to a `<canvas>`.
 
-借鉴 React Native 的组件体系与 `style` 属性设计，通过 Skia（CanvasKit WASM）绘制、Yoga 驱动 Flexbox 布局，在浏览器 `<canvas>` 上实现高性能的声明式 UI。
+The API borrows from React Native’s component model and `style` props: Skia via CanvasKit (WASM) for drawing and Yoga for Flexbox layout, giving declarative, high-performance UI on the canvas.
 
-## 架构
+**Other languages:** [简体中文](README.zh-CN.md)
+
+### Architecture
 
 ```
-JSX 组件树
+JSX tree
     │  React custom reconciler
     ▼
-可变场景树（@react-canvas/core）
-    │  Yoga 布局计算
+Mutable scene tree (@react-canvas/core-v2)
+    │  Yoga layout
     ▼
-Skia / CanvasKit 绘制 → <canvas>
+Skia / CanvasKit drawing → <canvas>
 ```
 
-**`@react-canvas/react`** 通过 custom reconciler 将 JSX 的增删改同步到 **`@react-canvas/core`** 的可变场景树；core 再按树结构驱动 Skia 在 `<canvas>` 上绘制。
+**`@react-canvas/react-v2`** uses a custom reconciler to mirror JSX mount/update/unmount into **`@react-canvas/core-v2`**’s mutable scene tree; core then walks the tree and drives Skia to paint on `<canvas>`.
 
-## 核心设计
+### Design highlights
 
-- **React Native 式组件模型** — 宿主类型（`View`、`Text` 等）+ `style` 对象描述外观与布局，而非「舞台 + 图形原语」式 API。
-- **Skia 绘制** — 经 CanvasKit（WASM）接入，提供 GPU 加速的 2D 渲染能力。
-- **Yoga 布局** — 完整的 Flexbox 布局引擎，支持与 React Native 一致的布局语义。
-- **分层解耦** — `core` 只维护场景树与绘制管线，不依赖 React；`react` 封装 reconciler、JSX 类型与入口 API（`render`、`<Canvas>` 等）。
+- **React Native–style primitives** — Host components (`View`, `Text`, …) and `style` objects instead of a low-level “stage + graphics primitives” API.
+- **Skia** — CanvasKit (WASM) for GPU-accelerated 2D rendering.
+- **Yoga** — Full Flexbox semantics, aligned with React Native layout behavior.
+- **Layering** — `core-v2` owns the scene graph and render pipeline with no React dependency; `react-v2` wraps the reconciler, JSX types, and public API (`render`, `<Canvas>`, etc.).
 
-## 仓库结构
+For deeper modules (Runtime, Stage, events, …), see [`docs/core-design.md`](docs/core-design.md). That document still uses legacy package names `@react-canvas/core` / `@react-canvas/react`; they map to the `*-v2` packages in this repo.
 
-| 路径             | 包名                  | 说明                                                      |
-| ---------------- | --------------------- | --------------------------------------------------------- |
-| `packages/core`  | `@react-canvas/core`  | 场景树、Yoga 布局、Skia 绘制管线                          |
-| `packages/react` | `@react-canvas/react` | React reconciler、JSX 类型、入口 API                      |
-| `packages/ui`    | `@react-canvas/ui`    | 画布侧 UI 组件与主题（演进中）                            |
-| `docs/`          | —                     | 说明文档，按包分目录，见 [docs/README.md](docs/README.md) |
-| `apps/website`   | —                     | 文档站（Astro Starlight）                                 |
+### Repository layout
 
-## 环境要求
+| Path                | Package                  | Notes                                                        |
+| ------------------- | ------------------------ | ------------------------------------------------------------ |
+| `packages/core-v2`  | `@react-canvas/core-v2`  | Scene graph, Yoga, Skia pipeline                             |
+| `packages/react-v2` | `@react-canvas/react-v2` | Reconciler, JSX types, public API                            |
+| `apps/v3`           | `v3` (private app)       | Integration / demo UI (depends on workspace `*-v2` packages) |
+| `docs/`             | —                        | Design notes and archives                                    |
 
-请保证本地 **Node.js**、**Git** 的版本**不低于**下表（满足即可，无需完全一致）。
+### Requirements
 
-| 工具                           | 推荐最低版本 |
-| ------------------------------ | ------------ |
-| [Node.js](https://nodejs.org/) | **22.12.0**  |
-| [Git](https://git-scm.com/)    | **2.32**     |
+Local **Node.js** and **Git** should meet at least:
 
-## 快速开始
+| Tool                           | Minimum version |
+| ------------------------------ | --------------- |
+| [Node.js](https://nodejs.org/) | **22.12.0**     |
+| [Git](https://git-scm.com/)    | **2.32**        |
+
+### Quick start
+
+This monorepo uses **Vite+** (global CLI `vp`) and **pnpm** workspaces. Conventions are in [`AGENTS.md`](AGENTS.md).
 
 ```bash
-# 安装依赖
-pnpm install
+# Install dependencies (prefer vp; avoid calling pnpm/npm/yarn for installs directly)
+vp install
 
-# 启动文档站开发服务器
-pnpm dev
+# Run the demo app (apps/v3)
+pnpm run v3
+# same as: vp run v3#dev
 
-# 格式化 + 检查 + 测试 + 构建
+# Format + lint + recursive tests + recursive build
 pnpm run ready
 ```
 
-> 以上示例使用 pnpm，也可以换成 npm / yarn 等任意包管理工具——实际执行的是 `package.json` 中定义的 scripts。
+Root-level `vp test` merges `test.setupFiles` from [`vite.config.ts`](vite.config.ts) so `react-v2` WASM mocks apply correctly.
 
-## 技术栈
+### Stack
 
-| 领域     | 技术                                                                                                                                                                                                     |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 渲染引擎 | [CanvasKit (Skia WASM)](https://skia.org/docs/user/modules/canvaskit/)                                                                                                                                   |
-| 布局引擎 | [Yoga](https://yogalayout.dev/)                                                                                                                                                                          |
-| UI 框架  | [React 19](https://react.dev/) + [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler) + [scheduler](https://github.com/facebook/react/tree/main/packages/scheduler) |
-| 工具链   | [Vite+](https://vite.dev/) · pnpm workspace                                                                                                                                                              |
+| Area       | Technology                                                                                                                                                                                               |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Renderer   | [CanvasKit (Skia WASM)](https://skia.org/docs/user/modules/canvaskit/)                                                                                                                                   |
+| Layout     | [Yoga](https://yogalayout.dev/)                                                                                                                                                                          |
+| UI runtime | [React 19](https://react.dev/) + [react-reconciler](https://github.com/facebook/react/tree/main/packages/react-reconciler) + [scheduler](https://github.com/facebook/react/tree/main/packages/scheduler) |
+| Tooling    | [Vite+](https://vite.dev/) (`vite-plus`) · pnpm workspace                                                                                                                                                |
 
-工具链与命令约定见 [`AGENTS.md`](AGENTS.md)。
+See [`AGENTS.md`](AGENTS.md) for toolchain and command rules.
