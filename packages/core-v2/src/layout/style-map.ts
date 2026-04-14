@@ -10,6 +10,10 @@ import {
   Wrap,
 } from "yoga-layout/load";
 
+import type { TransformOp } from "./transform-rn.ts";
+
+export type { TransformOp } from "./transform-rn.ts";
+
 /** 与 `width`/`height` 一致：px 或百分比字符串，供 Yoga 映射字段复用。 */
 export type YogaLength = number | `${number}%`;
 
@@ -27,6 +31,33 @@ export type TextAlignStyle = "left" | "right" | "center" | "justify" | "start" |
 
 /** 与 CSS `font-style` 一致；`oblique` 映射为 Skia Italic。 */
 export type FontStyleCss = "normal" | "italic" | "oblique";
+
+/**
+ * 线性渐变填充（Skia Shader），不传 Yoga；`angleRad` 变化时仅重绘、不重算布局（配合仅绘制类 `patchStyle`）。
+ * 端点取在节点轴对齐包围盒中心的外接圆上，随角度旋转，适合彩虹等循环动画。
+ */
+export type BackgroundLinearGradient = {
+  angleRad: number;
+  /**
+   * 至少 2 个 CSS 颜色串；省略时使用运行时默认柔和彩虹色带。
+   * 建议使用 `#rrggbb` / `rgb()`；`hsl()` 在 CanvasKit 中可能解析失败并回退为深色。
+   */
+  colors?: readonly string[];
+};
+
+/**
+ * 径向渐变（中心向外），不传 Yoga；`radiusScale` 动画即可形成扩散/脉冲，无旋转。
+ * 实际半径 =（中心到角点的最大距离）× `radiusScale`。
+ */
+export type BackgroundRadialGradient = {
+  /** 建议约 `0.12`～`1`，越大色环越铺到边缘 */
+  radiusScale: number;
+  /** 圆心水平位置，相对节点宽，默认 `0.5` */
+  centerX?: number;
+  /** 圆心垂直位置，相对节点高，默认 `0.5` */
+  centerY?: number;
+  colors?: readonly string[];
+};
 
 /** react-v2 `<View style>` 首版子集（可逐步扩展）。 */
 export type ViewStyle = {
@@ -72,6 +103,16 @@ export type ViewStyle = {
   bottom?: YogaLength;
   /** 例如 `#e8f4fc`；未设置时 Skia 不绘制该节点矩形 */
   backgroundColor?: string;
+  /**
+   * 线性渐变背景（CanvasKit Shader）。与 {@link backgroundColor} 同时存在时优先绘制渐变。
+   * 不传 Yoga。
+   */
+  backgroundLinearGradient?: BackgroundLinearGradient;
+  /**
+   * 径向渐变背景。与 {@link backgroundLinearGradient} 同时存在时 **径向优先**。
+   * 不传 Yoga。
+   */
+  backgroundRadialGradient?: BackgroundRadialGradient;
   /**
    * 不透明度 `0`–`1`（与 RN/CSS 一致）。不传 Yoga；由布局快照带给 Skia 做组透明。
    * 缺省视为 `1`。非法值在写入快照时按 {@link clampOpacityForSnapshot} 处理。
@@ -163,6 +204,11 @@ export type ViewStyle = {
   borderColor?: string;
   /** 宽高比（`width` / `height`）；未设置时由 Yoga 默认。 */
   aspectRatio?: number;
+  /**
+   * 与 React Native `transform` 一致：对象数组，每项仅一个变换键。
+   * 不传 Yoga；在布局盒中心合成 2D 矩阵后由 Skia / PickBuffer 使用。
+   */
+  transform?: readonly TransformOp[];
 };
 
 /** 布局快照中透传的文本排版字段（供绘制与调试）。 */
@@ -548,4 +594,25 @@ export function clampOpacityForSnapshot(value: unknown): number | undefined {
   if (value >= 1) return undefined;
   if (value <= 0) return 0;
   return value;
+}
+
+/** 仅影响绘制 / 命中元数据、不改变 Yoga 布局尺寸的样式键（用于 `patchStyle` 跳过重算）。 */
+const PAINT_ONLY_STYLE_KEYS = new Set<keyof ViewStyle>([
+  "backgroundColor",
+  "backgroundLinearGradient",
+  "backgroundRadialGradient",
+  "borderColor",
+  "opacity",
+  "pointerEvents",
+  "cursor",
+]);
+
+/** 若 `patch` 中仅包含上述键，则可只 `emitLayoutCommit` 而不 `runLayout`。 */
+export function isPaintOnlyStylePatch(patch: Partial<ViewStyle>): boolean {
+  const keys = Object.keys(patch) as (keyof ViewStyle)[];
+  if (keys.length === 0) return false;
+  for (const k of keys) {
+    if (!PAINT_ONLY_STYLE_KEYS.has(k)) return false;
+  }
+  return true;
 }

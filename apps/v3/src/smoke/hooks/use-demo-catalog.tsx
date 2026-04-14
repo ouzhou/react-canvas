@@ -15,10 +15,22 @@ export function useDemoCatalog() {
   return useMemo(() => {
     const DEMO_PAGES: readonly DemoPageMeta[] = [
       {
+        id: "intro",
+        navLabel: t`首页介绍`,
+        title: t`画布场景与能力索引`,
+        description: t`几何、绘制、指针三段说明；卡片与侧栏同步。`,
+      },
+      {
         id: "media",
         navLabel: t`图片与矢量`,
         title: t`Image 与 SvgPath`,
         description: t`位图：data URL 与 object-fit（contain / cover / fill）。矢量：@lucide/icons 的 camera 图标 node 合并为单条 path d，默认 viewBox 0 0 24 24。`,
+      },
+      {
+        id: "scroll-demo",
+        navLabel: t`滚动快照`,
+        title: t`ScrollView 与布局快照`,
+        description: t`无 onScroll 回调时，用 subscribeAfterLayout 读取 scrollY，驱动三角形的旋转、缩放与透明度。`,
       },
       {
         id: "layout",

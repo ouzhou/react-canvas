@@ -1,5 +1,6 @@
 import type { CanvasKit, Surface } from "canvaskit-wasm";
 
+import { buildRnTransformMatrix3x3 } from "../layout/transform-rn.ts";
 import type { LayoutCommitPayload } from "../runtime/scene-runtime.ts";
 import { PICK_ID_EMPTY, pickIdToRgba, rgbaToPickId } from "./pick-id-codec.ts";
 
@@ -128,6 +129,16 @@ export class PickBuffer {
         }
       }
 
+      const tf = box.transform;
+      let tfPushed = false;
+      if (tf !== undefined && tf.length > 0) {
+        skCanvas.save();
+        skCanvas.concat(
+          buildRnTransformMatrix3x3(ck, tf, box.absLeft, box.absTop, box.width, box.height),
+        );
+        tfPushed = true;
+      }
+
       if (pickId !== undefined) {
         const [r, g, b, a] = pickIdToRgba(pickId);
         paintFill.setColor(ck.Color(r, g, b, a));
@@ -153,6 +164,10 @@ export class PickBuffer {
             paintNode(childId);
           }
         }
+      }
+
+      if (tfPushed) {
+        skCanvas.restore();
       }
 
       if (clipPushed) {

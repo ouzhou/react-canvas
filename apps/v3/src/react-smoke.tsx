@@ -1,5 +1,5 @@
 import { Canvas, CanvasProvider, ScrollView, Text, View } from "@react-canvas/react-v2";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TEXT_DEMO_WRAP_MAX, TEXT_DEMO_WRAP_MIN } from "./demo-dimensions.ts";
 import { readDemoSearch, type SmokeDemoId } from "./smoke-types.ts";
 import {
@@ -20,11 +20,16 @@ import {
   AD_TEXT_TERTIARY,
   SIDEBAR_W,
 } from "./smoke/constants.ts";
+import {
+  SMOKE_REPO_RAINBOW_LAYER_ID,
+  SMOKE_REPO_RAINBOW_LAYER_STYLE,
+} from "./smoke/components/smoke-repo-rainbow-tick.tsx";
 import { demoStageSize } from "./smoke/demo-stage.ts";
 import { useViewportSize } from "./smoke/hooks/use-viewport-size.ts";
 import { BorderDemoScene } from "./smoke/scenes/border-demo-scene.tsx";
 import { CursorDemoScene } from "./smoke/scenes/cursor-demo-scene.tsx";
 import { HoverDemoScene } from "./smoke/scenes/hover-demo-scene.tsx";
+import { IntroDemoScene } from "./smoke/scenes/intro-demo-scene.tsx";
 import { LayoutDemoScene } from "./smoke/scenes/layout-demo-scene.tsx";
 import { MediaDemoScene } from "./smoke/scenes/media-demo-scene.tsx";
 import { ModalDemoInCanvas } from "./smoke/scenes/modal-demo-scene.tsx";
@@ -35,8 +40,10 @@ import { StyleDemoScene } from "./smoke/scenes/style-demo-scene.tsx";
 import { TextDemoScene } from "./smoke/scenes/text-demo-scene.tsx";
 import { ThroughClickLog } from "./smoke/scenes/through-click-log.tsx";
 import { ThroughDemoScene } from "./smoke/scenes/through-demo-scene.tsx";
+import { ScrollDemoScene } from "./smoke/scenes/scroll-demo-scene.tsx";
 import { useLingui } from "@lingui/react/macro";
-import { activateLinguiLocale, linguiI18n } from "./lib/lingui.ts";
+import { activateLinguiLocale, linguiI18n, normalizeLinguiLocale } from "./lib/lingui.ts";
+import { persistV3Locale } from "./lib/locale-preference.ts";
 import localParagraphFontUrl from "./assets/NotoSansSC-Regular.otf?url";
 
 /**
@@ -73,6 +80,7 @@ export function SmokeCanvasApp() {
   const [i18nLocale, setI18nLocale] = useState(() => linguiI18n.locale);
   const pickLocale = useCallback((locale: string) => {
     activateLinguiLocale(locale);
+    persistV3Locale(normalizeLinguiLocale(locale));
     setI18nLocale(linguiI18n.locale);
   }, []);
   const onPointerHit = useCallback((label: string) => setLastClickTarget(label), []);
@@ -86,7 +94,7 @@ export function SmokeCanvasApp() {
   }, [repoUrl]);
 
   useEffect(() => {
-    if (demo !== "pointer" && demo !== "through") setLastClickTarget(null);
+    if (demo !== "intro" && demo !== "pointer" && demo !== "through") setLastClickTarget(null);
   }, [demo]);
 
   useEffect(() => {
@@ -104,6 +112,12 @@ export function SmokeCanvasApp() {
   useEffect(() => {
     if (demo !== "popover") setPopoverLog(null);
   }, [demo]);
+
+  const introFeaturePages = useMemo(
+    () =>
+      smokeDemoList.filter((item) => item.id !== "intro").map((item) => getDemoPageMeta(item.id)),
+    [smokeDemoList, getDemoPageMeta],
+  );
 
   const { dw, dh } = demoStageSize(demo);
   const doc = getDemoPageMeta(demo);
@@ -340,12 +354,25 @@ export function SmokeCanvasApp() {
                       paddingTop: 8,
                       paddingBottom: 8,
                       borderRadius: 6,
-                      backgroundColor: hovered ? AD_NAV_BG_HOVER : "transparent",
+                      borderWidth: 1,
+                      borderColor: hovered
+                        ? "rgba(22, 119, 255, 0.45)"
+                        : "rgba(22, 119, 255, 0.28)",
+                      overflow: "hidden",
+                      position: "relative",
                       cursor: "pointer",
                     })}
                     onClick={openRepo}
                   >
-                    <Text style={{ fontSize: 12, color: AD_TEXT_TERTIARY, lineHeight: 1.4 }}>
+                    <View id={SMOKE_REPO_RAINBOW_LAYER_ID} style={SMOKE_REPO_RAINBOW_LAYER_STYLE} />
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "rgba(255,255,255,0.96)",
+                        lineHeight: 1.4,
+                      }}
+                    >
                       {t`GitHub 仓库 ↗`}
                     </Text>
                   </View>
@@ -649,7 +676,9 @@ export function SmokeCanvasApp() {
                           position: "relative",
                         }}
                       >
-                        {demo === "layout" ? (
+                        {demo === "intro" ? (
+                          <IntroDemoScene W={dw} H={dh} pages={introFeaturePages} />
+                        ) : demo === "layout" ? (
                           <LayoutDemoScene W={dw} H={dh} />
                         ) : demo === "text" ? (
                           <TextDemoScene
@@ -699,6 +728,8 @@ export function SmokeCanvasApp() {
                           <BorderDemoScene W={dw} H={dh} />
                         ) : demo === "media" ? (
                           <MediaDemoScene W={dw} H={dh} />
+                        ) : demo === "scroll-demo" ? (
+                          <ScrollDemoScene W={dw} H={dh} scrollResetKey={demo} />
                         ) : (
                           <HoverDemoScene />
                         )}

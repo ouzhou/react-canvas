@@ -25,6 +25,10 @@ msgstr " and local lineHeight ↑2.45"
 msgid "。自动换行段："
 msgstr ". Auto-wrap paragraph:"
 
+#: src/smoke/scenes/triangles-demo-scene.tsx
+#~ msgid "（装饰层）"
+#~ msgstr "(decorative layer)"
+
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "【Caption】小号灰条 lineHeight≈1.38；与主段同宽随滑块变宽。主段外层≈1.82，并含嵌套 run 更高行距。覆盖 M3、硬换行与自动换行。"
 msgstr "【Caption】Small gray bar lineHeight≈1.38; same width as main paragraph, expands with slider. Main outer≈1.82, contains nested runs with higher lineHeight. Covers M3, hard wrap and auto-wrap."
@@ -32,6 +36,46 @@ msgstr "【Caption】Small gray bar lineHeight≈1.38; same width as main paragr
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "【Skia 文本样式】textAlign · textDecoration（含 decorationColor）· letterSpacing / wordSpacing · fontStyle · rgba() · fontFamily 逗号回退"
 msgstr "【Skia Text Styles】textAlign · textDecoration (including decorationColor) · letterSpacing / wordSpacing · fontStyle · rgba() · fontFamily comma fallback"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "@react-canvas/core-v2 负责 Yoga 布局、CanvasKit/Skia 绘制与统一指针管线；@react-canvas/react-v2 把 React 组件接到这套画布运行时。"
+#~ msgstr "@react-canvas/core-v2 handles Yoga layout, CanvasKit/Skia drawing, and a unified pointer pipeline; @react-canvas/react-v2 connects React components to this canvas runtime."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "@react-canvas/react-v2 只做组件层：把熟悉的 View / Text 接到同一套运行时 API，不负责替换 DOM。左侧导航与下文「能力示例」逐项对应，便于你对照行为与源码。"
+#~ msgstr "@react-canvas/react-v2 is the component layer only: it wires familiar View / Text to the same runtime APIs and does not replace the DOM. The left nav and the capability cards below map one-to-one so you can compare behavior with source."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "• 命中与事件：hitTestAt、pointerEvents 与 dispatchPointerLike（捕获 / 冒泡）。"
+#~ msgstr "• Hit-testing & events: hitTestAt, pointerEvents, and dispatchPointerLike (capture / bubble)."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "• 命中与事件：hitTestAt、pointerEvents（auto / none）、dispatchPointerLike 与合成 hover 的 enter / leave（方案 A，仅叶节点）。"
+#~ msgstr "• Hit-testing & events: hitTestAt, pointerEvents (auto / none), dispatchPointerLike, and synthesized hover enter/leave (scheme A, leaf-only)."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "• 布局与快照：calculateAndSyncLayout、absoluteBoundsFor，布局提交后可订阅快照。"
+#~ msgstr "• Layout & snapshots: calculateAndSyncLayout, absoluteBoundsFor; subscribe to snapshots after layout commits."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "• 布局与快照：calculateAndSyncLayout、absoluteBoundsFor；subscribeAfterLayout 读取提交后的 scrollY 等（见滚动示例）。"
+#~ msgstr "• Layout & snapshots: calculateAndSyncLayout, absoluteBoundsFor; subscribeAfterLayout reads committed scrollY, etc. (see scroll demo)."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "• 绘制：CanvasKit 初始化与 Skia 呈现，支持位图 Image 与 SvgPath。"
+#~ msgstr "• Drawing: CanvasKit initialization and Skia presentation; bitmap Image and SvgPath."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "• 绘制：initCanvasKit、attachSceneSkiaPresenter；舞台坐标与 DPR 通过 canvasBackingStoreSize 等与 backing store 对齐。"
+#~ msgstr "• Drawing: initCanvasKit, attachSceneSkiaPresenter; stage coordinates and DPR align with the backing store via canvasBackingStoreSize."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "• 输入：attachCanvasStagePointer 合并 pointermove；clientXYToStageLocal 把指针映射到舞台本地坐标。"
+#~ msgstr "• Input: attachCanvasStagePointer merges pointermove; clientXYToStageLocal maps pointer to stage-local coordinates."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "• 输入：attachCanvasStagePointer，指针坐标映射到舞台本地空间。"
+#~ msgstr "• Input: attachCanvasStagePointer maps pointer coordinates to stage-local space."
 
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "── 硬换行收尾：拖窄灰条主段应自动增高。"
@@ -56,6 +100,10 @@ msgstr "3px orange"
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "aspectRatio + overflow"
 msgstr "aspectRatio + overflow"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "attachCanvasStagePointer 把指针事件送进舞台，clientXYToStageLocal 换成舞台坐标；hitTestAt 按「同父级后插入在上」的规则取最深节点，pointer-events: none 会摘掉整棵子树。dispatchPointerLike 负责捕获与冒泡；hover 的 enter / leave 只在叶节点之间切换（README 所称方案 A）。"
+msgstr "attachCanvasStagePointer feeds pointer events into the stage; clientXYToStageLocal converts to stage coordinates; hitTestAt picks the deepest node using the rule that later-inserted siblings stack above under the same parent, and pointer-events: none prunes the whole subtree. dispatchPointerLike handles capture and bubble; hover enter/leave only swap between leaf nodes (README scheme A)."
 
 #: src/smoke/scenes/border-demo-scene.tsx
 msgid "borderWidth 12 与 padding 8 同时挤占内区；内层 flex:1 展示剩余空间。"
@@ -89,6 +137,18 @@ msgstr "click: {lastClickTarget}"
 #: src/smoke/scenes/media-demo-scene.tsx
 msgid "contain"
 msgstr "contain"
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+#~ msgid "core-v2 未提供 onScroll；滚动时更新 scrollY 并 emitLayoutCommit。此处用 subscribeAfterLayout + getLayoutSnapshot()[scrollId].scrollY 驱动下方三角形（旋转 / 放大 / 缩小 / 淡出）。"
+#~ msgstr "core-v2 has no onScroll; scrolling updates scrollY and emitLayoutCommit. Here subscribeAfterLayout + getLayoutSnapshot()[scrollId].scrollY drives the triangles below (rotate / grow / shrink / fade)."
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+#~ msgid "core-v2 未提供 onScroll；滚动时更新 scrollY 并 emitLayoutCommit。此处用 subscribeAfterLayout + getLayoutSnapshot()[scrollId].scrollY 驱动下方多排三角形（旋转 / 放大 / 缩小 / 淡出）。"
+#~ msgstr "core-v2 has no onScroll; scrolling updates scrollY and emitLayoutCommit. Here subscribeAfterLayout + getLayoutSnapshot()[scrollId].scrollY drives the triangle rows below (rotate / grow / shrink / fade)."
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+msgid "core-v2 未提供 onScroll；滚动时更新 scrollY 并 emitLayoutCommit。此处用 subscribeAfterLayout + getLayoutSnapshot()[scrollId].scrollY 驱动下方多排三角形（旋转 / 放大 / 缩小 / 淡出）。每排对 scrollY 做阶梯偏移（row × stagger），避免各排同相、看起来「后面不动」。"
+msgstr "core-v2 has no onScroll; scrolling updates scrollY and emitLayoutCommit. Here subscribeAfterLayout + getLayoutSnapshot()[scrollId].scrollY drives the triangle rows below (rotate / grow / shrink / fade). Each row applies a stepped scrollY offset (row × stagger) so rows are not in phase and the lower rows don't look \"frozen.\""
 
 #: src/smoke/scenes/media-demo-scene.tsx
 msgid "cover"
@@ -154,6 +214,22 @@ msgstr "Image & SvgPath"
 msgid "Image（src/assets/hero.png）"
 msgstr "Image (src/assets/hero.png)"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "initRuntime 同时持有 Yoga 与 CanvasKit；core-v2 的导出与框架无关。若在 React 里等就绪，可用 subscribeRuntimeInit、getRuntimeSnapshot 配合 useSyncExternalStore。"
+msgstr "initRuntime owns both Yoga and CanvasKit; core-v2 exports are framework-agnostic. In React, wait for readiness with subscribeRuntimeInit and getRuntimeSnapshot alongside useSyncExternalStore."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "initRuntime 拉起 CanvasKit，attachSceneSkiaPresenter 订阅布局提交后重绘。除 View 背景外，还支持 Image 与 SvgPath；canvas 与 DPR 的关系由 canvasBackingStoreSize 等与 backing store 对齐。"
+msgstr "initRuntime loads CanvasKit; attachSceneSkiaPresenter repaints after each layout commit. Besides View backgrounds, Image and SvgPath are supported; canvas vs DPR alignment goes through canvasBackingStoreSize and the backing store."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "initRuntime 聚合 Yoga 与 CanvasKit 单例，宿主可用 subscribeRuntimeInit、getRuntimeSnapshot 与 React 的 useSyncExternalStore 对齐就绪状态。core-v2 导出的 API 不绑定框架；react-v2 在 reconciler 里把 props / 函数式 style 落到 insertView、updateStyle、事件监听等调用上。"
+#~ msgstr "initRuntime owns the Yoga and CanvasKit singletons; hosts can pair subscribeRuntimeInit and getRuntimeSnapshot with React's useSyncExternalStore for readiness. core-v2 APIs are framework-agnostic; react-v2 maps props and functional style in the reconciler to insertView, updateStyle, and event subscriptions."
+
+#: src/smoke/scenes/intro-click-log.tsx
+#~ msgid "intro-through-target（命中成功，说明点击已穿透）"
+#~ msgstr "intro-through-target (hit OK — click passed through)"
+
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "letterSpacing:2px，wordSpacing:10px → alpha·beta·gamma·delta（看点距与词距）"
 msgstr "letterSpacing:2px, wordSpacing:10px → alpha·beta·gamma·delta (observe letter and word spacing)"
@@ -202,24 +278,64 @@ msgstr "paddingTop overrides all-side padding; flexWrap wraps."
 msgid "pointer-events 穿透"
 msgstr "pointer-events pass"
 
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "Popover"
+msgstr "Popover"
+
+#: src/react-smoke.tsx
+msgid "popover: （尚未点击）"
+msgstr "popover: (not yet clicked)"
+
+#: src/react-smoke.tsx
+msgid "popover: {popoverLog}"
+msgstr "popover: {popoverLog}"
+
 #: src/react-smoke.tsx
 msgid "react-canvas · 场景演示"
 msgstr "react-canvas · Scene Demo"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "react-canvas 在此以声明式 View / Text、Yoga 布局与统一命中管线，逐项验证绘制与交互语义。"
+#~ msgstr "Here react-canvas uses declarative View/Text, Yoga layout, and a unified hit pipeline to validate drawing and interaction semantics item by item."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "react-canvas：画布上的声明式界面"
+#~ msgstr "react-canvas: declarative UI on the canvas"
+
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "row-reverse"
 msgstr "row-reverse"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "ScrollView 与布局快照"
+msgstr "ScrollView & layout snapshot"
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+msgid "scrollY = {scrollY}px"
+msgstr "scrollY = {scrollY}px"
 
 #. placeholder {0}: sizeOffset >= 0 ? "+" : ""
 #: src/smoke/scenes/media-demo-scene.tsx
 msgid "size {0}{sizeOffset}"
 msgstr "size {0}{sizeOffset}"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "SMOKE · INTRO"
+msgstr "SMOKE · INTRO"
+
 #. placeholder {0}: strokeOffset >= 0 ? "+" : ""
 #. placeholder {1}: strokeOffset.toFixed(2)
 #: src/smoke/scenes/media-demo-scene.tsx
 msgid "stroke {0}{1}"
 msgstr "stroke {0}{1}"
+
+#: src/smoke/scenes/triangles-demo-scene.tsx
+#~ msgid "SvgPath 三角形"
+#~ msgstr "SvgPath triangles"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "SvgPath 三角形与滚动"
+#~ msgstr "SvgPath triangles & scrolling"
 
 #. placeholder {0}: new Date().toLocaleTimeString()
 #: src/react-smoke.tsx
@@ -254,9 +370,33 @@ msgstr "Vite-built URL, decoded by runtime fetch + CanvasKit; three columns: con
 msgid "Yoga 扩展：margin、gap、padding 与换行、flex 分项、方向翻转、透明度与裁剪、圆角与 hover 等。请用下方标签切换子示例。"
 msgstr "Yoga extensions: margin, gap, padding and wrap, flex items, direction flip, opacity and clip, borderRadius and hover, etc. Use tabs below to switch sub-examples."
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "一条管线：先布局，再绘制，再命中"
+#~ msgstr "One pipeline: layout first, then draw, then hit-test"
+
 #: src/smoke/scenes/cursor-demo-scene.tsx
 msgid "三列分别为 pointer / text / crosshair。"
 msgstr "Three columns: pointer / text / crosshair."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "三角形"
+#~ msgstr "Triangles"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "下列说明与左侧导航中的每一项一一对应；请从侧栏切换进入对应舞台。"
+#~ msgstr "Each description below matches one item in the left nav; switch from the sidebar to open the matching stage."
+
+#: src/smoke/scenes/triangles-demo-scene.tsx
+#~ msgid "下方为多块不同颜色与尺寸的矢量三角形，分布在足够高的内容区中；请上下滚动主舞台验证 ScrollView 与叠放顺序（同父内后声明的节点在上层）。"
+#~ msgstr "Below are multiple vector triangles of different colors and sizes in a tall content area; scroll the main stage vertically to verify ScrollView and paint order (later siblings stack above earlier ones under the same parent)."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "下方按钮上方叠了一层半透明蓝色浮层，并设置为 pointer-events: none。请点击蓝色区域：命中应落在底层按钮（见页面底部日志）。"
+#~ msgstr "A semi-transparent blue layer sits above the button with pointer-events: none. Click the blue area: the hit should reach the underlying button (see the log at the bottom of the page)."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "下面介绍的是本仓库正在落地的能力：@react-canvas/core-v2 在浏览器里用 CanvasKit / Skia 呈现场景，把 Yoga 布局、命中测试与指针派发串成一条可预测的管线。"
+#~ msgstr "What follows reflects what this repo is shipping: @react-canvas/core-v2 renders scenes with CanvasKit / Skia in the browser and threads Yoga layout, hit-testing, and pointer dispatch into one predictable pipeline."
 
 #: src/smoke/scenes/hover-demo-scene.tsx
 msgid "两例互不依赖，用于确认多个节点可同时维护各自 hovered 态。"
@@ -302,9 +442,37 @@ msgstr "Full-screen semi-transparent overlay, click overlay to close, content ce
 msgid "内区（flex:1）"
 msgstr "Inner area (flex:1)"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "几何"
+msgstr "Geometry"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "几何、绘制、指针三段说明；卡片与侧栏同步；文末穿透实验。"
+#~ msgstr "Three sections on geometry, drawing, and pointers; cards mirror the sidebar; pass-through demo at the end."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "几何、绘制、指针三段说明；卡片与侧栏同步。"
+msgstr "Three sections on geometry, drawing, and pointers; cards mirror the sidebar."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "分节说明 core-v2 管线与 React 分层；下列卡片与侧栏对应，文末可试穿透命中。"
+#~ msgstr "Sectioned overview of the core-v2 pipeline and React layering; cards match the sidebar; try pass-through hit-testing at the end."
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "前景层使用 pointer-events: none 时，事件应穿过该层命中背后节点。用于验证穿透语义与命中链。"
-msgstr "When foreground layer uses pointer-events: none, events should pass through and hit nodes behind. Validates穿透 semantics and hit chain."
+msgstr "When foreground layer uses pointer-events: none, events should pass through and hit nodes behind. Validates pass-through semantics and hit chain."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "功能索引与穿透实验"
+#~ msgstr "Feature index & pass-through demo"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "动手试一次：穿透命中"
+#~ msgstr "Try it: pass-through hit-testing"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "半透明层使用 pointer-events: none，点击蓝色区域应命中底层按钮；页面底部日志用于核对。"
+#~ msgstr "The semi-transparent layer uses pointer-events: none; clicking the blue area should hit the underlying button. Check the log at the bottom."
 
 #: src/smoke/scenes/border-demo-scene.tsx
 msgid "半透明描边与实色底叠加，用于肉眼核对 Skia 颜色解析。"
@@ -334,9 +502,37 @@ msgstr "Rounded button + hover"
 msgid "在粉区内按下拖动为抓取；移出粉区后光标随当前命中节点变化（粉区为 grab / grabbing）。"
 msgstr "Press and drag in pink area to grab; cursor changes with current hit node after leaving pink area (pink area is grab/grabbing)."
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "场景是一棵树：insertView / removeView / updateStyle 驱动变化，Yoga 产出尺寸与偏移；需要绝对盒时用 absoluteBoundsFor，滚动位移可在 subscribeAfterLayout 里读 scrollY（滚动示例里有用法）。"
+msgstr "The scene is a tree: insertView/removeView/updateStyle drive changes; Yoga produces sizes and offsets; use absoluteBoundsFor when you need absolute boxes, and read scrollY from subscribeAfterLayout for scroll offset (see the scroll demo)."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "场景树由 createSceneRuntime 维护；样式变更会走 calculateAndSyncLayout，布局提交后再交给 Skia 呈现（含位图 Image 与 SvgPath）。命中 hitTestAt 与绘制顺序共享同一套子节点次序：同一父级下后插入的兄弟更靠上；pointerEvents 为 none 时整棵子树不参与命中，与 README 中的约定一致。"
+#~ msgstr "The scene tree is maintained by createSceneRuntime; style changes run calculateAndSyncLayout, then Skia presentation after commit (bitmap Image and SvgPath). hitTestAt and paint order share the same child ordering: later-inserted siblings under the same parent stack on top; pointerEvents: none excludes the whole subtree from hits, matching the README."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "基于 Modal 槽位渲染的非模态浮层示例，验证 click-away、四向定位与边界修正。"
+msgstr "Non-modal overlay rendered via the Modal slot; validates click-away, four-way placement, and edge correction."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "声明一次，画布与命中一致"
+#~ msgstr "Declare once—canvas drawing and hit-testing stay aligned."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "声明式画布与 core-v2"
+#~ msgstr "Declarative canvas & core-v2"
+
 #: src/smoke/scenes/media-demo-scene.tsx
 msgid "外部控制：点击调整后，下面全部 icon 会实时更新"
 msgstr "External controls: after click adjustments, all icons below update in real time."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "多块彩色 SvgPath 三角形分布在高于视口的内容区中，主舞台内 ScrollView 可上下滚动；用于查看矢量叠放与滚动行为。"
+#~ msgstr "Multiple colored SvgPath triangles sit in content taller than the viewport; the main stage ScrollView scrolls vertically to inspect vector stacking and scroll behavior."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "多块彩色 SvgPath 三角形分布在高于视口的内容区中，主舞台内 ScrollView 可上下滚动；顶部有橙色三角形演示 style.transform（平移/旋转/缩放）动画。"
+#~ msgstr "Multiple colored SvgPath triangles sit in content taller than the viewport; the main stage ScrollView scrolls vertically. At the top, an orange triangle demonstrates style.transform animation (translate / rotate / scale)."
 
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "多行短条展示 textAlign / textDecoration / letterSpacing / rgba / fontFamily 回退。"
@@ -349,6 +545,14 @@ msgstr "Left: child block inherits parent progress; right: child block zoom-in o
 #: src/smoke/scenes/layout-demo-scene.tsx
 msgid "左侧为画布预览；右侧为对应 JSX 片段（只读）。"
 msgstr "Canvas preview on the left; matching JSX snippet on the right (read-only)."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "左侧导航与下方「能力示例」一一对应；用熟悉的 View / Text 与 Yoga 样式，逐项验证绘制与交互语义。"
+#~ msgstr "The left nav matches each capability card below; use familiar View / Text and Yoga styles to verify drawing and interaction semantics step by step."
+
+#: src/smoke/scenes/triangles-demo-scene.tsx
+#~ msgid "已到底部占位区：若能看到本段文字，说明纵向滚动行程足够。"
+#~ msgstr "End-of-scroll placeholder: if you can read this, vertical scroll range is sufficient."
 
 #: src/smoke/scenes/modal-demo-scene.tsx
 msgid "已打开 Modal"
@@ -376,6 +580,10 @@ msgstr "Green bar inside popup (doesn't close Modal)"
 msgid "当前子示例：{0}。{1}"
 msgstr "Current sub-example: {0}. {1}"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "当前实现里，你可以重点核对这些接口"
+#~ msgstr "In the current implementation, verify these APIs"
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "悬停"
 msgstr "Hover"
@@ -388,6 +596,14 @@ msgstr "Hover Style"
 msgid "打开弹窗"
 msgstr "Open Popup"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "指针"
+msgstr "Pointers"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "接下来：按场景拆开验证"
+#~ msgstr "Next: validate scenario by scenario"
+
 #: src/smoke/scenes/layout-demo-scene.tsx
 msgid "提示：右侧源码由 react-live 转译校验；展示使用 ScrollView + Text（不可编辑）。画布预览与 DOM LivePreview 无关。"
 msgstr "Note: Source on the right is transpiled with react-live for validation; it is shown with ScrollView + Text (not editable). The canvas preview is unrelated to DOM LivePreview."
@@ -395,6 +611,10 @@ msgstr "Note: Source on the right is transpiled with react-live for validation; 
 #: src/smoke/scenes/layout-demo-scene.tsx
 #~ msgid "提示：点击命中与「绘制顺序」无关；本页仅展示布局结果。"
 #~ msgstr "Note: Click hit is unrelated to 'draw order'; this page only shows layout results."
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+msgid "放大"
+msgstr "Grow"
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "文本"
@@ -404,9 +624,17 @@ msgstr "Text"
 msgid "文本与段落"
 msgstr "Text & Paragraph"
 
+#: src/smoke/scenes/scroll-demo-scene.tsx
+msgid "旋转"
+msgstr "Rotate"
+
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "无 flex 数字，仅用 grow+shrink+basis 占满剩余宽。"
 msgstr "No flex number, only use grow+shrink+basis to fill remaining width."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "无 onScroll 回调时，用 subscribeAfterLayout 读取 scrollY，驱动三角形的旋转、缩放与透明度。"
+msgstr "Without an onScroll callback, use subscribeAfterLayout to read scrollY and drive triangle rotation, scale, and opacity."
 
 #: src/smoke/scenes/border-demo-scene.tsx
 msgid "无边"
@@ -424,13 +652,49 @@ msgstr "Modal"
 msgid "橙层不接收事件，点击应落在绿色底层。"
 msgstr "Orange layer doesn't receive events, click should land on green bottom layer."
 
+#: src/smoke/scenes/triangles-demo-scene.tsx
+#~ msgid "橙色示例：translateX / translateY / rotate / scale 通过 style.transform 驱动（requestAnimationFrame 更新），用于验证画布矢量与命中。"
+#~ msgstr "Orange demo: translateX / translateY / rotate / scale driven by style.transform (requestAnimationFrame updates), to verify vector drawing and hit-testing."
+
 #: src/react-smoke.tsx
 msgid "正在加载画布运行时…"
 msgstr "Loading canvas runtime…"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "每张卡片与左侧导航同名；点侧栏或记住 demo= 参数即可切换。"
+msgstr "Each card matches a left-nav label; switch via the sidebar or the demo= query parameter."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "每张卡片对应侧栏一项；从你最关心的主题点进去即可。"
+#~ msgstr "Each card matches one sidebar entry; open the topic you care about."
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "汇总各能力示例的说明（与左侧导航一致）；文末用覆盖在按钮上的半透明浮层演示 pointer-events: none 时的穿透命中。"
+#~ msgstr "Summarizes each capability (same as the left nav); ends with a semi-transparent layer over a button to demo pass-through hits with pointer-events: none."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "浏览能力示例"
+#~ msgstr "Browse capability examples"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "浮层"
+msgstr "Overlay"
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+msgid "淡出"
+msgstr "Fade"
+
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "滑块调左半透明块与下行父容器 α；右为不透明参照；子块仍带自身 opacity。"
 msgstr "Slider adjusts left semi-transparent block and next row parent container α; right is opaque reference; child blocks still carry their own opacity."
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+msgid "滚动与快照"
+msgstr "Scroll & snapshot"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "滚动快照"
+msgstr "Scroll snapshot"
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "点击与层级"
@@ -440,13 +704,45 @@ msgstr "Click & Layer"
 msgid "点击命中顺序"
 msgstr "Click Hit Order"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "点击我（穿透命中底层）"
+#~ msgstr "Click me (pass-through hits below)"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "点击我（穿透至底层）"
+#~ msgstr "Click me (pass-through to bottom)"
+
 #: src/smoke/scenes/modal-demo-scene.tsx
 msgid "点我 · 不关窗"
 msgstr "Click me · Don't close"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "点我验证穿透"
+#~ msgstr "Click to verify pass-through"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "画布上的声明式界面"
+#~ msgstr "Declarative UI on the canvas"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "画布场景：从布局到像素再到指针"
+msgstr "Canvas scene: from layout to pixels to pointers"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "画布场景与能力索引"
+msgstr "Canvas scene & capability index"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "画布由谁驱动"
+#~ msgstr "What powers the canvas"
+
 #: src/react-smoke.tsx
 msgid "画布运行时加载失败"
 msgstr "Canvas runtime failed to load"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+#~ msgid "画布运行时概览（Yoga、Skia、统一命中与指针）；下列卡片与左侧导航一致，文末可试 pointer-events 穿透。"
+#~ msgstr "Canvas runtime overview (Yoga, Skia, unified hit-testing and pointers); cards below match the left nav; try pointer-events pass-through at the end."
 
 #: src/smoke/scenes/media-demo-scene.tsx
 msgid "直接使用封装后的 LucideIcon 组件，支持 size / color / strokeWidth 配置。"
@@ -487,6 +783,10 @@ msgstr "Example 1: Red first, green later, overlap area hits later-drawn"
 #: src/smoke/scenes/cursor-demo-scene.tsx
 msgid "示例一：静态 cursor"
 msgstr "Example 1: Static cursor"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "示例一览"
+#~ msgstr "All examples"
 
 #: src/smoke/scenes/cursor-demo-scene.tsx
 msgid "示例三：hover 切换 cursor"
@@ -548,6 +848,10 @@ msgstr "Enter turns red, leave restores blue."
 msgid "穿透"
 msgstr "Through"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "穿透小实验"
+#~ msgstr "Pass-through mini demo"
+
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "粗体红"
 msgstr "Bold red"
@@ -560,17 +864,45 @@ msgstr "Red and green rectangles partially overlap, later-drawn block is on top.
 #~ msgid "纵向三等分；每行内再 flex：顶行 3 等分、中行 2 等分、底行 4 等分。"
 #~ msgstr "Vertical three equal parts; each row uses flex: top row 3 equal parts, middle row 2 equal parts, bottom row 4 equal parts."
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "绘制"
+msgstr "Drawing"
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+#~ msgid "继续滚动以观察上方四枚三角形的 transform / opacity 变化。"
+#~ msgstr "Keep scrolling to see transform / opacity changes on the four triangles above."
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+msgid "继续滚动以观察上方多排三角形的 transform / opacity 变化。"
+msgstr "Keep scrolling to see transform / opacity changes on the triangle rows above."
+
 #: src/smoke/scenes/pointer-demo-scene.tsx
 msgid "绿块后插入、面积更大；重叠处点击应记录绿块。"
 msgstr "Green block inserted later, larger area; overlap click should record green block."
+
+#: src/smoke/scenes/scroll-demo-scene.tsx
+msgid "缩小"
+msgstr "Shrink"
 
 #: src/react-smoke.tsx
 msgid "能力示例"
 msgstr "Capability Examples"
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "能力示例索引"
+#~ msgstr "Capability example index"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "能力索引"
+msgstr "Capability index"
+
 #: src/smoke/scenes/pointer-demo-scene.tsx
 msgid "蓝在上、紫在下；重叠处应命中蓝块。"
 msgstr "Blue on top, purple below; overlap should hit blue block."
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "蓝色半透明层不接收命中；点击该区域的视觉中心应让底层圆角按钮收到事件，页底 click 日志可对照。"
+#~ msgstr "The blue semi-transparent layer doesn't receive hits; clicking there should deliver the event to the rounded button underneath—compare with the click log at the bottom."
 
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "行向 gap；首块 marginTop、次块左右 margin。"
@@ -580,6 +912,10 @@ msgstr "Row gap; first block marginTop, second block left-right margin."
 msgid "覆盖静态 cursor、父子继承与覆盖、hover 时变更、穿透层对光标的影响，以及 grab / grabbing 与画布外松手恢复。"
 msgstr "Covers static cursor, parent-child inheritance and override, hover change,穿透 layer's effect on cursor, and grab/grabbing with release outside canvas recovery."
 
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "请点击半透明蓝色区域：上层为 pointer-events: none，命中应落在底层按钮。页面底部日志用于核对。"
+#~ msgstr "Click the semi-transparent blue area: the top layer uses pointer-events: none, so hits should reach the button underneath. Use the log at the bottom to verify."
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "边框"
 msgstr "Border"
@@ -587,6 +923,14 @@ msgstr "Border"
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "边框与圆角"
 msgstr "Border & Corner"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+#~ msgid "运行时与 React 分层"
+#~ msgstr "Runtime vs React layering"
+
+#: src/smoke/scenes/intro-demo-scene.tsx
+msgid "这里用几句话说明本仓库在浏览器里实际跑什么：几何由 Yoga 算，帧由 CanvasKit / Skia 画，交互走 core-v2 的命中与派发；@react-canvas/react-v2 只把这一切包进组件与 hooks，不替代 DOM。"
+msgstr "In short, here's what runs in the browser: Yoga computes geometry, CanvasKit/Skia paints frames, and core-v2 handles hit-testing and dispatch; @react-canvas/react-v2 wraps that in components and hooks without replacing the DOM."
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "通过函数式 style 根据 hovered 切换背景色。用于验证 pointerenter / pointerleave 与 hover 态样式更新。"
@@ -603,6 +947,10 @@ msgstr ""
 #: src/smoke/scenes/through-click-log.tsx
 msgid "错误：through-front（橙）不应收到 click"
 msgstr "Error: through-front (orange) should not receive click"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "首页介绍"
+msgstr "Intro"
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "验证纵向 flex 容器内多行子布局：各行内再使用行向 flex 与 flex 比例，用于对照 Yoga 分行、占比与基础绘制。"

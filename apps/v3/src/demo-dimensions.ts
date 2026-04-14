@@ -1,4 +1,6 @@
 /** 各示例画布尺寸（core / react 共用，保证像素一致） */
+/** intro：功能索引列表 + 穿透点击演示 */
+export const DEMO_INTRO = { w: 820, h: 1700 } as const;
 /** layout：双列「预览 + 只读代码」需更宽舞台 */
 export const DEMO_LAYOUT = { w: 920, h: 520 } as const;
 export const DEMO_POINTER = { w: 560, h: 440 } as const;
@@ -18,5 +20,7 @@ export const DEMO_STYLE = { w: 620, h: 340 } as const;
 export const DEMO_BORDER = { w: 560, h: 420 } as const;
 /** Image + SvgPath（Lucide） */
 export const DEMO_MEDIA = { w: 620, h: 420 } as const;
+/** 滚动快照驱动 transform / opacity 实验 */
+export const DEMO_SCROLL_DEMO = { w: 620, h: 560 } as const;
 export const TEXT_DEMO_WRAP_MIN = 80;
 export const TEXT_DEMO_WRAP_MAX = DEMO_TEXT.w - 32;

@@ -1,4 +1,4 @@
-import type { CanvasKit, Paint, TypefaceFontProvider } from "canvaskit-wasm";
+import type { CanvasKit, Paint, Shader, TypefaceFontProvider } from "canvaskit-wasm";
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
 import { computeImageDestSrcRects } from "../media/image-object-fit.ts";
@@ -11,12 +11,104 @@ import type {
   LayoutSnapshot,
   SceneRuntime,
 } from "../runtime/scene-runtime.ts";
+import { buildRnTransformMatrix3x3 } from "../layout/transform-rn.ts";
 import { colorStringToCkColor } from "../text/css-color.ts";
 import { buildAndDrawParagraphRuns } from "../text/paragraph-from-runs.ts";
 import { mapParagraphTextAlign, mergedRunStyleToCkTextStyle } from "../text/skia-text-style.ts";
 import { mergePlainTextStyle } from "../text/text-flat-run.ts";
 import { PickBuffer } from "../hit/pick-buffer.ts";
 import { initCanvasKit } from "./canvaskit.ts";
+
+/**
+ * 柔和彩虹（高亮）。须为 `#rrggbb` / `rgb()` 等 CanvasKit 可解析串；
+ * `hsl()` 在部分环境下会解析失败并落入 {@link colorStringToCkColor} 的深色回退（整段变黑）。
+ */
+const DEFAULT_RAINBOW_GRADIENT_COLORS: readonly string[] = [
+  "#fb7185",
+  "#fbbf24",
+  "#a3e635",
+  "#34d399",
+  "#60a5fa",
+  "#a78bfa",
+  "#e879f9",
+  "#fb7185",
+];
+
+type CkShaderApi = {
+  Shader?: {
+    MakeLinearGradient: (
+      start: [number, number],
+      end: [number, number],
+      colors: unknown[],
+      positions: Float32Array | null,
+      mode: number,
+    ) => Shader;
+    MakeRadialGradient?: (
+      center: [number, number],
+      radius: number,
+      colors: unknown[],
+      positions: Float32Array | null,
+      mode: number,
+    ) => Shader;
+  };
+  TileMode?: { Clamp: number };
+};
+
+function tryMakeLinearGradientShader(
+  ck: CanvasKit,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  cssColors: readonly string[],
+): Shader | null {
+  const api = ck as unknown as CkShaderApi;
+  const mk = api.Shader?.MakeLinearGradient;
+  if (!mk) return null;
+  const colors: unknown[] = [];
+  for (const s of cssColors) {
+    colors.push(colorStringToCkColor(ck, s));
+  }
+  if (colors.length < 2) return null;
+  const mode = typeof api.TileMode?.Clamp === "number" ? api.TileMode.Clamp : 0;
+  return mk([x0, y0], [x1, y1], colors, null, mode);
+}
+
+function tryMakeRadialGradientShader(
+  ck: CanvasKit,
+  cx: number,
+  cy: number,
+  radius: number,
+  cssColors: readonly string[],
+): Shader | null {
+  const api = ck as unknown as CkShaderApi;
+  const mk = api.Shader?.MakeRadialGradient;
+  if (!mk) return null;
+  const colors: unknown[] = [];
+  for (const s of cssColors) {
+    colors.push(colorStringToCkColor(ck, s));
+  }
+  if (colors.length < 2) return null;
+  const mode = typeof api.TileMode?.Clamp === "number" ? api.TileMode.Clamp : 0;
+  return mk([cx, cy], radius, colors, null, mode);
+}
+
+function gradientEndpointsForBox(
+  box: LayoutSnapshot[string],
+  angleRad: number,
+): { x0: number; y0: number; x1: number; y1: number } {
+  const cx = box.absLeft + box.width * 0.5;
+  const cy = box.absTop + box.height * 0.5;
+  const r = Math.hypot(box.width, box.height) * 0.65 + 0.5;
+  const c = Math.cos(angleRad);
+  const s = Math.sin(angleRad);
+  return {
+    x0: cx + c * r,
+    y0: cy + s * r,
+    x1: cx - c * r,
+    y1: cy - s * r,
+  };
+}
 
 export type AttachSceneSkiaOptions = {
   /** 默认 `globalThis.devicePixelRatio` 或 1 */
@@ -28,7 +120,7 @@ export type AttachSceneSkiaOptions = {
 
 /**
  * 将 {@link SceneRuntime} 的布局盒绘制到 `<canvas>`（CanvasKit Skia）。
- * 仅当节点提供可解析的 `backgroundColor` 时绘制填充（不画默认描边，避免 UI 出现粗线框感）；随 `subscribeAfterLayout` 刷新。
+ * 填充：`backgroundRadialGradient` → `backgroundLinearGradient` → `backgroundColor`；不画默认描边；随 `subscribeAfterLayout` 刷新。
  */
 export async function attachSceneSkiaPresenter(
   runtime: SceneRuntime,
@@ -184,6 +276,16 @@ export async function attachSceneSkiaPresenter(
         }
       }
 
+      const tf = box?.transform;
+      let tfPushed = false;
+      if (box && tf !== undefined && tf.length > 0) {
+        skCanvas.save();
+        skCanvas.concat(
+          buildRnTransformMatrix3x3(ck, tf, box.absLeft, box.absTop, box.width, box.height),
+        );
+        tfPushed = true;
+      }
+
       let layerPaint: Paint | null = null;
       if (a < 1 && bounds) {
         layerPaint = new ck.Paint();
@@ -196,6 +298,9 @@ export async function attachSceneSkiaPresenter(
         if (layerPaint) {
           skCanvas.restore();
           layerPaint.delete();
+        }
+        if (tfPushed) {
+          skCanvas.restore();
         }
         if (clipPushed) {
           skCanvas.restore();
@@ -216,7 +321,66 @@ export async function attachSceneSkiaPresenter(
       const brx = box.borderRadiusRx ?? 0;
       const bry = box.borderRadiusRy ?? 0;
 
-      if (box.backgroundColor) {
+      const gr = box.backgroundRadialGradient;
+      const gl = box.backgroundLinearGradient;
+      let filledBackground = false;
+      if (gr) {
+        const cssColors =
+          gr.colors !== undefined && gr.colors.length >= 2
+            ? gr.colors
+            : DEFAULT_RAINBOW_GRADIENT_COLORS;
+        const cx = box.absLeft + (gr.centerX ?? 0.5) * box.width;
+        const cy = box.absTop + (gr.centerY ?? 0.5) * box.height;
+        const maxCornerR = Math.hypot(box.width * 0.5, box.height * 0.5);
+        const rs =
+          typeof gr.radiusScale === "number" && Number.isFinite(gr.radiusScale)
+            ? gr.radiusScale
+            : 0.6;
+        const radius = Math.max(2, maxCornerR * Math.min(Math.max(rs, 0.04), 3));
+        const shader = tryMakeRadialGradientShader(ck, cx, cy, radius, cssColors);
+        if (shader) {
+          const pGrad = new ck.Paint();
+          pGrad.setAntiAlias(true);
+          pGrad.setStyle(ck.PaintStyle.Fill);
+          pGrad.setShader(shader);
+          try {
+            if (brx > 0 || bry > 0) {
+              skCanvas.drawRRect(ck.RRectXY(rect, brx, bry), pGrad);
+            } else {
+              skCanvas.drawRect(rect, pGrad);
+            }
+            filledBackground = true;
+          } finally {
+            pGrad.delete();
+            shader.delete();
+          }
+        }
+      } else if (gl) {
+        const cssColors =
+          gl.colors !== undefined && gl.colors.length >= 2
+            ? gl.colors
+            : DEFAULT_RAINBOW_GRADIENT_COLORS;
+        const { x0, y0, x1, y1 } = gradientEndpointsForBox(box, gl.angleRad);
+        const shader = tryMakeLinearGradientShader(ck, x0, y0, x1, y1, cssColors);
+        if (shader) {
+          const pGrad = new ck.Paint();
+          pGrad.setAntiAlias(true);
+          pGrad.setStyle(ck.PaintStyle.Fill);
+          pGrad.setShader(shader);
+          try {
+            if (brx > 0 || bry > 0) {
+              skCanvas.drawRRect(ck.RRectXY(rect, brx, bry), pGrad);
+            } else {
+              skCanvas.drawRect(rect, pGrad);
+            }
+            filledBackground = true;
+          } finally {
+            pGrad.delete();
+            shader.delete();
+          }
+        }
+      }
+      if (!filledBackground && box.backgroundColor) {
         const fillC = colorStringToCkColor(ck, box.backgroundColor);
         const a =
           typeof fillC === "object" &&

@@ -8,6 +8,8 @@ export {
   type AttachSceneSkiaOptions,
 } from "./render/scene-skia-presenter.ts";
 export type {
+  BackgroundLinearGradient,
+  BackgroundRadialGradient,
   FontStyleCss,
   TextAlignStyle,
   TextDecorationLineKeyword,
@@ -15,13 +17,18 @@ export type {
   TextDecorationStyleCss,
   TextLayoutStyleSnapshot,
   TextRunStylePatch,
+  TransformOp,
   ViewStyle,
   YogaLength,
 } from "./layout/style-map.ts";
 export type { ImageObjectFit } from "./media/image-object-fit.ts";
 export { computeImageDestSrcRects } from "./media/image-object-fit.ts";
 export type { TextFlatRun } from "./text/text-flat-run.ts";
-export { applyStylesToYoga, clampOpacityForSnapshot } from "./layout/style-map.ts";
+export {
+  applyStylesToYoga,
+  clampOpacityForSnapshot,
+  isPaintOnlyStylePatch,
+} from "./layout/style-map.ts";
 export { hitTestAt } from "./hit/hit-test.ts";
 export { PickBuffer } from "./hit/pick-buffer.ts";
 export { PICK_ID_EMPTY, pickIdToRgba, rgbaToPickId } from "./hit/pick-id-codec.ts";

@@ -14,7 +14,11 @@ import {
   applyStylesToYoga,
   clearYogaLayoutStyle,
   clampOpacityForSnapshot,
+  isPaintOnlyStylePatch,
+  type BackgroundLinearGradient,
+  type BackgroundRadialGradient,
   type TextLayoutStyleSnapshot,
+  type TransformOp,
   type ViewStyle,
 } from "../layout/style-map.ts";
 import { bindTextNodeMeasure } from "../layout/text-yoga-measure.ts";
@@ -160,6 +164,8 @@ export type LayoutSnapshot = Record<
     absLeft: number;
     absTop: number;
     backgroundColor?: string;
+    backgroundLinearGradient?: BackgroundLinearGradient;
+    backgroundRadialGradient?: BackgroundRadialGradient;
     /** 组透明；省略时视为 `1`。 */
     opacity?: number;
     /** 与 `ViewStyle.overflow` 一致；省略时绘制侧视为 `visible`。 */
@@ -193,6 +199,8 @@ export type LayoutSnapshot = Record<
     svgStrokeWidth?: number;
     /** 命中测试穿透；`"none"` 时本节点及子树不参与指针目标，与 `ViewStyle.pointerEvents` 一致。 */
     pointerEvents?: "auto" | "none";
+    /** 与 {@link ViewStyle.transform} 一致；省略表示无变换。 */
+    transform?: readonly TransformOp[];
   }
 >;
 
@@ -437,6 +445,10 @@ export async function createSceneRuntime(
       };
       const bg = n.viewStyle?.backgroundColor;
       if (bg !== undefined) entry.backgroundColor = bg;
+      const bgGrad = n.viewStyle?.backgroundLinearGradient;
+      if (bgGrad !== undefined) entry.backgroundLinearGradient = bgGrad;
+      const bgRadial = n.viewStyle?.backgroundRadialGradient;
+      if (bgRadial !== undefined) entry.backgroundRadialGradient = bgRadial;
       const o = clampOpacityForSnapshot(n.viewStyle?.opacity);
       if (o !== undefined) entry.opacity = o;
       const ov = n.viewStyle?.overflow;
@@ -497,6 +509,10 @@ export async function createSceneRuntime(
       }
       const pe = n.viewStyle?.pointerEvents;
       if (pe === "none") entry.pointerEvents = "none";
+      const tf = n.viewStyle?.transform;
+      if (tf !== undefined && tf.length > 0) {
+        entry.transform = [...tf];
+      }
       if (nk === "svgPath") {
         const d = n.svgPathD;
         const pr = parseSvgViewBox(n.svgViewBox);
@@ -895,8 +911,13 @@ export async function createSceneRuntime(
     patchStyle(id, patch) {
       const n = store.get(id);
       if (!n) return;
-      layoutDirty = true;
       n.viewStyle = { ...n.viewStyle, ...patch };
+      if (isPaintOnlyStylePatch(patch)) {
+        emitLayoutCommit();
+        applyResolvedCursor();
+        return;
+      }
+      layoutDirty = true;
       rebuildYogaStyle(n, store, yoga);
       runLayout();
       applyResolvedCursor();

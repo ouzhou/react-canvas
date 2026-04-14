@@ -1,4 +1,6 @@
 export type {
+  BackgroundLinearGradient,
+  BackgroundRadialGradient,
   ImageObjectFit,
   LayoutCommitPayload,
   PointerEventType,
