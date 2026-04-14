@@ -14,7 +14,8 @@
     "@lingui/react": "^5.9.3",
     "@lucide/icons": "catalog:",
     "@react-canvas/react-v2": "workspace:*",
-    "react-live": "catalog:"
+    "react-live": "catalog:",
+    "react-router-dom": "catalog:"
   },
   "devDependencies": {
     "@lingui/babel-plugin-lingui-macro": "^5.9.3",

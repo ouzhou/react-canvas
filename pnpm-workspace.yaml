@@ -39,6 +39,7 @@ catalog:
   react-jsx-parser: ^2.4.1
   react-live: ^4.1.8
   react-reconciler: 0.33.0
+  react-router-dom: ^7.14.1
   scheduler: 0.27.0
   shiki: ^4.0.2
   streamdown: ^2.5.0
