@@ -119,7 +119,7 @@ export function IntroDemoScene({
       }}
     >
       <View style={{ flexDirection: "column", gap: 8 }}>
-        <Text style={kicker}>{t`SMOKE · INTRO`}</Text>
+        <Text style={kicker}>{t`INTRO`}</Text>
         <Text style={h1}>{t`react-canvas 核心技术演示`}</Text>
         <Text style={{ ...body, fontSize: 14 }}>
           {t`这是一个运行在 Canvas 上的高性能 UI 渲染引擎，专为复杂的画布场景（如白板、设计工具、复杂数据可视化等）设计。底层的 core-v2 引擎提供了一套完整的 UI 运行时框架，而 @react-canvas/react-v2 让我们能用熟悉的 React 语法（View、Text 及 Hooks）来构建画布内容。`}
@@ -212,9 +212,11 @@ export function IntroDemoScene({
                 <Text style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.45, color: AD_TEXT }}>
                   {p.title}
                 </Text>
-                <Text style={{ fontSize: 12, lineHeight: 1.6, color: AD_TEXT_SECONDARY }}>
-                  {p.description}
-                </Text>
+                {p.description ? (
+                  <Text style={{ fontSize: 12, lineHeight: 1.6, color: AD_TEXT_SECONDARY }}>
+                    {p.description}
+                  </Text>
+                ) : null}
               </View>
             </View>
           );

@@ -17,8 +17,8 @@ export function useDemoCatalog() {
       {
         id: "intro",
         navLabel: t`首页介绍`,
-        title: t`Smoke 总览与能力索引`,
-        description: t`先说明是什么、用了哪些技术、本页做什么；下方卡片与左侧导航同名，可进各演示。`,
+        title: t`总览与能力索引`,
+        description: t`概览引擎能力与技术要点；下列演示可逐项体验。`,
       },
       {
         id: "media",

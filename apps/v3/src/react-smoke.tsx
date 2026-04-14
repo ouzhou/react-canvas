@@ -483,59 +483,6 @@ export function SmokeCanvasApp() {
                         alignSelf: "stretch",
                       }}
                     >
-                      <View
-                        id="smoke-doc-block"
-                        style={{
-                          flexShrink: 0,
-                          paddingLeft: 24,
-                          paddingRight: 24,
-                          paddingTop: 20,
-                          paddingBottom: 8,
-                        }}
-                      >
-                        <Text
-                          id="smoke-doc-title"
-                          style={{
-                            fontSize: 22,
-                            fontWeight: 600,
-                            color: AD_TEXT,
-                            lineHeight: 1.35,
-                            width: Math.max(40, innerW - 48),
-                          }}
-                        >
-                          {doc.title}
-                        </Text>
-                        <Text
-                          id="smoke-doc-desc"
-                          style={{
-                            marginTop: 10,
-                            fontSize: 14,
-                            color: AD_TEXT_SECONDARY,
-                            lineHeight: 1.6,
-                            width: Math.max(40, innerW - 48),
-                          }}
-                        >
-                          {doc.description}
-                        </Text>
-                        {demo === "style" ? (
-                          <Text
-                            id="smoke-doc-style-case"
-                            style={{
-                              marginTop: 10,
-                              fontSize: 13,
-                              color: AD_TEXT_TERTIARY,
-                              lineHeight: 1.55,
-                              width: Math.max(40, innerW - 48),
-                            }}
-                          >
-                            {(() => {
-                              const c = styleDemoCases.find((x) => x.id === styleCase);
-                              return c ? t`当前子示例：${c.label}。${c.hint}` : "";
-                            })()}
-                          </Text>
-                        ) : null}
-                      </View>
-
                       {demo === "style" ? (
                         <View
                           style={{
@@ -545,7 +492,7 @@ export function SmokeCanvasApp() {
                             gap: 6,
                             paddingLeft: 24,
                             paddingRight: 24,
-                            paddingTop: 4,
+                            paddingTop: 20,
                             paddingBottom: 8,
                           }}
                         >
@@ -582,55 +529,6 @@ export function SmokeCanvasApp() {
                               </View>
                             );
                           })}
-                        </View>
-                      ) : null}
-
-                      {demo === "text" ? (
-                        <View
-                          style={{
-                            flexShrink: 0,
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: 8,
-                            paddingLeft: 24,
-                            paddingRight: 24,
-                            paddingTop: 4,
-                            paddingBottom: 8,
-                          }}
-                        >
-                          <View
-                            id="text-wrap-minus"
-                            style={({ hovered }) => ({
-                              width: 36,
-                              height: 28,
-                              borderRadius: 6,
-                              backgroundColor: hovered ? AD_NAV_BG_HOVER : AD_SPLIT,
-                              justifyContent: "center",
-                              alignItems: "center",
-                              cursor: "pointer",
-                            })}
-                            onClick={() => bumpTextWrap(-24)}
-                          >
-                            <Text style={{ fontSize: 14, color: AD_TEXT }}>−</Text>
-                          </View>
-                          <Text
-                            style={{ fontSize: 12, color: AD_TEXT_TERTIARY }}
-                          >{`${textWrapWidth}px`}</Text>
-                          <View
-                            id="text-wrap-plus"
-                            style={({ hovered }) => ({
-                              width: 36,
-                              height: 28,
-                              borderRadius: 6,
-                              backgroundColor: hovered ? AD_NAV_BG_HOVER : AD_SPLIT,
-                              justifyContent: "center",
-                              alignItems: "center",
-                              cursor: "pointer",
-                            })}
-                            onClick={() => bumpTextWrap(24)}
-                          >
-                            <Text style={{ fontSize: 14, color: AD_TEXT }}>+</Text>
-                          </View>
                         </View>
                       ) : null}
 
@@ -676,6 +574,110 @@ export function SmokeCanvasApp() {
                               cursor: "pointer",
                             })}
                             onClick={() => bumpOpacity(5)}
+                          >
+                            <Text style={{ fontSize: 14, color: AD_TEXT }}>+</Text>
+                          </View>
+                        </View>
+                      ) : null}
+
+                      <View
+                        id="smoke-doc-block"
+                        style={{
+                          flexShrink: 0,
+                          paddingLeft: 24,
+                          paddingRight: 24,
+                          paddingTop: demo === "style" ? 4 : 20,
+                          paddingBottom: 8,
+                        }}
+                      >
+                        <Text
+                          id="smoke-doc-title"
+                          style={{
+                            fontSize: 22,
+                            fontWeight: 600,
+                            color: AD_TEXT,
+                            lineHeight: 1.35,
+                            width: Math.max(40, innerW - 48),
+                          }}
+                        >
+                          {doc.title}
+                        </Text>
+                        {doc.description ? (
+                          <Text
+                            id="smoke-doc-desc"
+                            style={{
+                              marginTop: 10,
+                              fontSize: 14,
+                              color: AD_TEXT_SECONDARY,
+                              lineHeight: 1.6,
+                              width: Math.max(40, innerW - 48),
+                            }}
+                          >
+                            {doc.description}
+                          </Text>
+                        ) : null}
+                        {demo === "style" ? (
+                          <Text
+                            id="smoke-doc-style-case"
+                            style={{
+                              marginTop: 10,
+                              fontSize: 13,
+                              color: AD_TEXT_TERTIARY,
+                              lineHeight: 1.55,
+                              width: Math.max(40, innerW - 48),
+                            }}
+                          >
+                            {(() => {
+                              const c = styleDemoCases.find((x) => x.id === styleCase);
+                              return c ? t`当前子示例：${c.label}。${c.hint}` : "";
+                            })()}
+                          </Text>
+                        ) : null}
+                      </View>
+
+                      {demo === "text" ? (
+                        <View
+                          style={{
+                            flexShrink: 0,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            gap: 8,
+                            paddingLeft: 24,
+                            paddingRight: 24,
+                            paddingTop: 4,
+                            paddingBottom: 8,
+                          }}
+                        >
+                          <View
+                            id="text-wrap-minus"
+                            style={({ hovered }) => ({
+                              width: 36,
+                              height: 28,
+                              borderRadius: 6,
+                              backgroundColor: hovered ? AD_NAV_BG_HOVER : AD_SPLIT,
+                              justifyContent: "center",
+                              alignItems: "center",
+                              cursor: "pointer",
+                            })}
+                            onClick={() => bumpTextWrap(-24)}
+                          >
+                            <Text style={{ fontSize: 14, color: AD_TEXT }}>−</Text>
+                          </View>
+                          <Text
+                            style={{ fontSize: 12, color: AD_TEXT_TERTIARY }}
+                          >{`${textWrapWidth}px`}</Text>
+                          <View
+                            id="text-wrap-plus"
+                            style={({ hovered }) => ({
+                              width: 36,
+                              height: 28,
+                              borderRadius: 6,
+                              backgroundColor: hovered ? AD_NAV_BG_HOVER : AD_SPLIT,
+                              justifyContent: "center",
+                              alignItems: "center",
+                              cursor: "pointer",
+                            })}
+                            onClick={() => bumpTextWrap(24)}
                           >
                             <Text style={{ fontSize: 14, color: AD_TEXT }}>+</Text>
                           </View>

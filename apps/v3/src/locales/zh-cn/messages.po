@@ -352,12 +352,16 @@ msgstr "size {0}{sizeOffset}"
 #~ msgstr "Skia 近1s：{skiaFps} 次/秒"
 
 #: src/smoke/scenes/intro-demo-scene.tsx
-msgid "SMOKE · INTRO"
-msgstr "SMOKE · INTRO"
+msgid "INTRO"
+msgstr "INTRO"
 
 #: src/smoke/hooks/use-demo-catalog.tsx
-msgid "Smoke 总览与能力索引"
-msgstr "Smoke 总览与能力索引"
+msgid "总览与能力索引"
+msgstr "总览与能力索引"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "概览引擎能力与技术要点；下列演示可逐项体验。"
+msgstr "概览引擎能力与技术要点；下列演示可逐项体验。"
 
 #: src/smoke/scenes/intro-demo-scene.tsx
 #~ msgid "Smoke 演示：react-canvas 在浏览器里是什么"
@@ -501,10 +505,6 @@ msgstr "你好 react-canvas · Hello paragraph demo。重复中文与 English mi
 #: src/smoke/scenes/intro-demo-scene.tsx
 msgid "使用标准的 Flexbox 布局模型，底层由 Yoga 提供高性能的计算支持。引擎会自动计算场景树中每个元素的精确尺寸与偏移，支持相对布局、绝对定位，以及自定义滚动的处理。"
 msgstr "使用标准的 Flexbox 布局模型，底层由 Yoga 提供高性能的计算支持。引擎会自动计算场景树中每个元素的精确尺寸与偏移，支持相对布局、绝对定位，以及自定义滚动的处理。"
-
-#: src/smoke/hooks/use-demo-catalog.tsx
-msgid "先说明是什么、用了哪些技术、本页做什么；下方卡片与左侧导航同名，可进各演示。"
-msgstr "先说明是什么、用了哪些技术、本页做什么；下方卡片与左侧导航同名，可进各演示。"
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "光标"
