@@ -7,7 +7,7 @@ export const DEMO_POINTER = { w: 560, h: 440 } as const;
 export const DEMO_THROUGH = { w: 560, h: 360 } as const;
 export const DEMO_HOVER = { w: 360, h: 340 } as const;
 /** cursor：多段说明 + 静态 / 父链 / hover / 穿透 / 拖拽（示例五含说明行） */
-export const DEMO_CURSOR = { w: 560, h: 560 } as const;
+export const DEMO_CURSOR = { w: 560, h: 760 } as const;
 export const DEMO_MODAL = { w: 560, h: 300 } as const;
 /** Popover：四向 trigger + 滚动区（滚动关闭验证） */
 export const DEMO_POPOVER = { w: 620, h: 420 } as const;
@@ -22,5 +22,8 @@ export const DEMO_BORDER = { w: 560, h: 420 } as const;
 export const DEMO_MEDIA = { w: 620, h: 420 } as const;
 /** 滚动快照驱动 transform / opacity 实验 */
 export const DEMO_SCROLL_DEMO = { w: 620, h: 560 } as const;
+/** requestAnimationFrame 驱动 opacity / transform 组合实验 */
+export const DEMO_ANIMATION = { w: 620, h: 860 } as const;
 export const TEXT_DEMO_WRAP_MIN = 80;
-export const TEXT_DEMO_WRAP_MAX = DEMO_TEXT.w - 32;
+/** 与 smoke `DEMO_PAGE_PADDING_X`（左右各 28）一致的可排版宽度 */
+export const TEXT_DEMO_WRAP_MAX = DEMO_TEXT.w - 56;

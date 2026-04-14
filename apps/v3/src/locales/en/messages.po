@@ -97,6 +97,10 @@ msgstr "2px rgba blue border"
 msgid "3px 橙"
 msgstr "3px orange"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "ANIMATION · RAF"
+msgstr "ANIMATION · RAF"
+
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "aspectRatio + overflow"
 msgstr "aspectRatio + overflow"
@@ -266,6 +270,10 @@ msgstr "not supported"
 msgid "onRequestClose（点遮罩关闭）"
 msgstr "onRequestClose (click overlay to close)"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "opacity 在约 0.35–1 之间连续变化。"
+msgstr "Opacity oscillates continuously between roughly 0.35 and 1."
+
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "opacity 组透明"
 msgstr "opacity group transparency"
@@ -285,6 +293,14 @@ msgstr "pointer-events pass"
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "Popover"
 msgstr "Popover"
+
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "Popover Demo（滚动时自动关闭）"
+msgstr "Popover demo (auto-closes on scroll)"
+
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "Popover placement: {placement}"
+msgstr "Popover placement: {placement}"
 
 #: src/react-smoke.tsx
 msgid "popover: （尚未点击）"
@@ -309,6 +325,10 @@ msgstr "react-canvas core technology showcase"
 #: src/smoke/scenes/intro-demo-scene.tsx
 #~ msgid "react-canvas：画布上的声明式界面"
 #~ msgstr "react-canvas: declarative UI on the canvas"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "requestAnimationFrame 更新状态，驱动 opacity 与 transform（平移、旋转、缩放）及组合，用于对照逐帧绘制与交互命中。"
+msgstr "requestAnimationFrame updates state, driving opacity and transforms (translate, rotate, scale) and combinations, to verify per-frame drawing and hit-testing."
 
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "row-reverse"
@@ -377,6 +397,14 @@ msgstr "textAlign: right"
 #: src/smoke/scenes/through-click-log.tsx
 msgid "through-back（绿，背后层）"
 msgstr "through-back (green, back layer)"
+
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "translate、rotate、scale、opacity 同时作用在同一视图上。"
+msgstr "translate, rotate, scale, and opacity applied together on one view."
+
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "translateX 在灰色槽内往复，便于对照布局盒与视觉位置。"
+msgstr "translateX oscillates within the gray track to compare layout box vs visual position."
 
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "underline + line-through；装饰线深红、字色深灰（textDecorationColor 与 color 分离）。"
@@ -458,6 +486,10 @@ msgstr "Main: {textDemoClickLog}"
 msgid "交互与事件系统"
 msgstr "Interaction & event system"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "以下示例通过 requestAnimationFrame 更新 React 状态，驱动 style.opacity 与 style.transform（rotate / scale / translate）。用于观察逐帧重绘、矢量变换与（若有）命中区域是否随矩阵更新。"
+msgstr "These demos update React state on each animation frame, driving style.opacity and style.transform (rotate / scale / translate). Use them to observe per-frame redraws, vector transforms, and whether hit regions follow the transform matrix (if applicable)."
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "位图：data URL 与 object-fit（contain / cover / fill）。矢量：@lucide/icons 的 camera 图标 node 合并为单条 path d，默认 viewBox 0 0 24 24。"
 msgstr "Bitmap: data URL with object-fit (contain / cover / fill). Vector: Lucide camera icon nodes merged into one path d, default viewBox 0 0 24 24."
@@ -510,6 +542,10 @@ msgstr "A compositing event system handles all pointer events on the canvas. Hit
 #~ msgid "分节说明 core-v2 管线与 React 分层；下列卡片与侧栏对应，文末可试穿透命中。"
 #~ msgstr "Sectioned overview of the core-v2 pipeline and React layering; cards match the sidebar; try pass-through hit-testing at the end."
 
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "切换打开：trigger {activeTrigger} -> {p}，已更新 placement 与 triggerRect。"
+msgstr "Switch open: trigger {activeTrigger} -> {p}; updated placement and triggerRect."
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "前景层使用 pointer-events: none 时，事件应穿过该层命中背后节点。用于验证穿透语义与命中链。"
 msgstr "When foreground layer uses pointer-events: none, events should pass through and hit nodes behind. Validates pass-through semantics and hit chain."
@@ -525,6 +561,10 @@ msgstr "Demo list"
 #: src/smoke/scenes/intro-demo-scene.tsx
 #~ msgid "动手试一次：穿透命中"
 #~ msgstr "Try it: pass-through hit-testing"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "动画"
+msgstr "Animation"
 
 #: src/smoke/scenes/intro-demo-scene.tsx
 #~ msgid "半透明层使用 pointer-events: none，点击蓝色区域应命中底层按钮；页面底部日志用于核对。"
@@ -549,6 +589,10 @@ msgstr "Semi-transparent stroke叠加 with solid color background, for visual ve
 #: src/smoke/scenes/layout-demo-scene.tsx
 msgid "同一行 flex:1 三等分；右侧为对应片段。"
 msgstr "Same row flex:1 in three equal parts; the matching snippet is on the right."
+
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "向下滚动后 Popover 将自动关闭并打印日志。中部四个 trigger 分别对应 top / bottom / left / right。"
+msgstr "After scrolling down, the popover closes automatically and logs. The four center triggers map to top / bottom / left / right."
 
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "固定宽 + aspectRatio 推导高；子项宽于父；overflow hidden + borderRadius 15%（Skia 裁剪/圆角）。"
@@ -586,6 +630,10 @@ msgstr "Non-modal overlay rendered via the Modal slot; validates click-away, fou
 #~ msgid "声明式画布与 core-v2"
 #~ msgstr "Declarative canvas & core-v2"
 
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "外部关闭：Popover 由 onRequestClose 触发关闭（点击外部/遮罩）。"
+msgstr "External close: Popover closed via onRequestClose (backdrop / outside click)."
+
 #: src/smoke/scenes/media-demo-scene.tsx
 msgid "外部控制：点击调整后，下面全部 icon 会实时更新"
 msgstr "External controls: after click adjustments, all icons below update in real time."
@@ -610,6 +658,10 @@ msgstr "Multi-line short bars show textAlign / textDecoration / letterSpacing / 
 #: src/smoke/scenes/glyph-grid-demo-scene.tsx
 #~ msgid "字形栅格（Glyph Grid）"
 #~ msgstr "Glyph grid"
+
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "定位失败：无法从 layout snapshot 读取 trigger={p} 的绝对坐标，已取消打开。"
+msgstr "Position failed: could not read absolute coordinates for trigger={p} from the layout snapshot; open cancelled."
 
 #: src/smoke/scenes/glyph-grid-demo-scene.tsx
 #~ msgid "密铺「a」、纯黑底：指针近处粗重艳红，向外经橙黄、亮蓝，外缘极细深海军蓝。触摸设备为静态弱对比。"
@@ -745,6 +797,14 @@ msgstr "Without an onScroll callback, use subscribeAfterLayout to read scrollY a
 msgid "无边"
 msgstr "No border"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "时间与变换"
+msgstr "Time & transforms"
+
+#: src/smoke/hooks/use-demo-catalog.tsx
+msgid "时间与变换动画"
+msgstr "Time-driven transforms"
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "样式"
 msgstr "Style"
@@ -756,6 +816,10 @@ msgstr "The core-v2 engine is framework-agnostic: deep React integration or plai
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "模态框"
 msgstr "Modal"
+
+#: src/smoke/scenes/cursor-demo-scene.tsx
+msgid "橙层 pointer-events: none，光标应落在绿色底层。"
+msgstr ""
 
 #: src/smoke/scenes/through-demo-scene.tsx
 msgid "橙层不接收事件，点击应落在绿色底层。"
@@ -785,6 +849,10 @@ msgstr "Rendering: yes"
 #~ msgid "正在渲染：是（近期在往屏上画）"
 #~ msgstr "Rendering: yes (drawing to screen recently)"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "正弦相位驱动 rotate 与 scale，方块在原地脉动旋转。"
+msgstr "Sine phases drive rotate and scale; the square pulses and spins in place."
+
 #: src/smoke/scenes/intro-demo-scene.tsx
 #~ msgid "每张卡片与左侧导航同名；点侧栏或记住 demo= 参数即可切换。"
 #~ msgstr "Each card matches a left-nav label; switch via the sidebar or the demo= query parameter."
@@ -805,9 +873,17 @@ msgstr "Rendering: yes"
 msgid "浮层"
 msgstr "Overlay"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "淡入淡出"
+msgstr "Fade"
+
 #: src/smoke/scenes/scroll-demo-scene.tsx
 msgid "淡出"
 msgstr "Fade"
+
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "滑动"
+msgstr "Slide"
 
 #: src/smoke/hooks/use-style-demo-cases.tsx
 msgid "滑块调左半透明块与下行父容器 α；右为不透明参照；子块仍带自身 opacity。"
@@ -817,6 +893,10 @@ msgstr "Slider adjusts left semi-transparent block and next row parent container
 msgid "滚动与快照"
 msgstr "Scroll & snapshot"
 
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "滚动关闭：检测到 ScrollView 发生滚动，已关闭 Popover。"
+msgstr "Scroll close: ScrollView scroll detected; Popover closed."
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "滚动快照"
 msgstr "Scroll snapshot"
@@ -824,6 +904,14 @@ msgstr "Scroll snapshot"
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "点击与层级"
 msgstr "Click & Layer"
+
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "点击关闭：再次点击同一 trigger（{p}）关闭 Popover。"
+msgstr "Click to close: clicked the same trigger ({p}) again to close the popover."
+
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "点击同一 trigger 会关闭；切换 trigger 会更新定位并复用同一个 Popover 实例。"
+msgstr "Clicking the same trigger again closes it; switching triggers updates placement and reuses the same popover instance."
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "点击命中顺序"
@@ -836,6 +924,10 @@ msgstr "Click Hit Order"
 #: src/smoke/scenes/intro-demo-scene.tsx
 #~ msgid "点击我（穿透至底层）"
 #~ msgstr "Click me (pass-through to bottom)"
+
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "点击打开：trigger={p}，Popover 已打开。"
+msgstr "Click open: trigger={p}; popover opened."
 
 #: src/smoke/scenes/modal-demo-scene.tsx
 msgid "点我 · 不关窗"
@@ -893,6 +985,10 @@ msgstr "Example 1: Multi-row flex ratio"
 msgid "示例一：左上单色块"
 msgstr "Example 1: Top-left solid color block"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "示例一：旋转 + 缩放"
+msgstr "Demo 1: Rotate + scale"
+
 #: src/smoke/scenes/text-demo-scene.tsx
 msgid "示例一：段落、嵌套 run 与主段点击"
 msgstr "Example 1: Paragraph, nested run and main paragraph click"
@@ -921,6 +1017,10 @@ msgstr "Example 3: Hover switch cursor"
 msgid "示例三：线宽对比"
 msgstr "Example 3: Line width comparison"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "示例三：透明度脉冲"
+msgstr "Demo 3: Opacity pulse"
+
 #: src/smoke/scenes/through-demo-scene.tsx
 msgid "示例二：与「点击与层级」对照——此处橙层不参与命中；彼处后绘色块参与命中。"
 msgstr "Example 2: Compared with 'Click & Layer' — here orange layer doesn't participate in hit; there later-drawn color block participates in hit."
@@ -941,6 +1041,10 @@ msgstr "Example 2: Alignment, decoration, spacing and font"
 msgid "示例二：小范围叠放（右下）"
 msgstr "Example 2: Small overlap (bottom-right)"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "示例二：水平平移"
+msgstr "Demo 2: Horizontal translation"
+
 #: src/smoke/scenes/border-demo-scene.tsx
 msgid "示例二：细边框与 rgba 描边"
 msgstr "Example 2: Thin border and rgba stroke"
@@ -957,6 +1061,10 @@ msgstr "Example 5: Press to grab"
 msgid "示例四：穿透命中光标"
 msgstr "Example 4: Through-hit cursor"
 
+#: src/smoke/scenes/animation-demo-scene.tsx
+msgid "示例四：组合变换"
+msgstr "Demo 4: Combined transforms"
+
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "视图布局样式"
 msgstr "View Layout Styles"
@@ -968,6 +1076,10 @@ msgstr "Enter turns light green, leave restores dark green."
 #: src/smoke/scenes/hover-demo-scene.tsx
 msgid "移入变红，移出恢复蓝。"
 msgstr "Enter turns red, leave restores blue."
+
+#: src/smoke/scenes/cursor-demo-scene.tsx
+msgid "移入条内为 grab，移出为 col-resize（hover 态驱动）。"
+msgstr ""
 
 #: src/smoke/hooks/use-demo-catalog.tsx
 msgid "穿透"
@@ -1000,6 +1112,10 @@ msgstr "Red and green rectangles partially overlap, later-drawn block is on top.
 #: src/smoke/scenes/scroll-demo-scene.tsx
 msgid "继续滚动以观察上方多排三角形的 transform / opacity 变化。"
 msgstr "Keep scrolling to see transform / opacity changes on the triangle rows above."
+
+#: src/smoke/scenes/popover-demo-scene.tsx
+msgid "继续滚动此区域可触发“滚动关闭”。这是用于验证策略 A 的可滚动内容区。"
+msgstr "Keep scrolling in this area to trigger “scroll close”. Scrollable content for validating strategy A."
 
 #: src/smoke/scenes/pointer-demo-scene.tsx
 msgid "绿块后插入、面积更大；重叠处点击应记录绿块。"

@@ -1,163 +1,192 @@
 import { Text, View } from "@react-canvas/react-v2";
 import { useLingui } from "@lingui/react/macro";
+import type { ReactNode } from "react";
 
-import { AD_TEXT, AD_TEXT_SECONDARY } from "../constants.ts";
+import {
+  AD_TEXT,
+  AD_TEXT_SECONDARY,
+  DEMO_PAGE_BG,
+  DEMO_PAGE_MARGIN_TOP,
+  DEMO_PAGE_PADDING_X,
+  DEMO_PAGE_SECTION_GAP,
+  demoPageContentWidth,
+} from "../constants.ts";
 import { CursorDragGrabSection } from "./cursor-drag-strip.tsx";
+
+const demoTitle = {
+  fontSize: 13,
+  fontWeight: 600,
+  color: AD_TEXT,
+  lineHeight: 1.4,
+} as const;
+
+const demoDesc = {
+  fontSize: 12,
+  color: AD_TEXT_SECONDARY,
+  lineHeight: 1.45,
+} as const;
+
+/** 单列示例块：标题 + 说明 + 演示区 */
+function CursorDemoBlock(props: { children: ReactNode }) {
+  return (
+    <View style={{ alignSelf: "stretch", flexDirection: "column", gap: 8 }}>{props.children}</View>
+  );
+}
 
 export function CursorDemoScene({ W, H }: { W: number; H: number }) {
   const { t } = useLingui();
+  const contentW = demoPageContentWidth(W);
+
   return (
     <View
       id="cursor-root"
       style={{
         width: W,
-        height: H,
+        minHeight: H,
+        marginTop: DEMO_PAGE_MARGIN_TOP,
+        padding: DEMO_PAGE_PADDING_X,
         flexDirection: "column",
-        padding: 8,
-        backgroundColor: "#fafafa",
+        gap: DEMO_PAGE_SECTION_GAP,
+        backgroundColor: DEMO_PAGE_BG,
       }}
     >
-      <Text style={{ fontSize: 13, fontWeight: 600, color: AD_TEXT, lineHeight: 1.35 }}>
-        {t`示例一：静态 cursor`}
-      </Text>
-      <Text style={{ fontSize: 12, color: AD_TEXT_SECONDARY, lineHeight: 1.4, marginBottom: 6 }}>
-        {t`三列分别为 pointer / text / crosshair。`}
-      </Text>
-      <View id="cursor-row-static" style={{ flexDirection: "row", height: 74 }}>
-        <View
-          id="c-static-ptr"
-          style={{ flex: 1, backgroundColor: "#fecaca", cursor: "pointer" }}
-        />
-        <View id="c-static-txt" style={{ flex: 1, backgroundColor: "#bbf7d0", cursor: "text" }} />
-        <View
-          id="c-static-cross"
-          style={{ flex: 1, backgroundColor: "#dbeafe", cursor: "crosshair" }}
-        />
-      </View>
+      <CursorDemoBlock>
+        <Text style={demoTitle}>{t`示例一：静态 cursor`}</Text>
+        <Text style={demoDesc}>{t`三列分别为 pointer / text / crosshair。`}</Text>
+        <View id="cursor-row-static" style={{ width: contentW, flexDirection: "row", height: 74 }}>
+          <View
+            id="c-static-ptr"
+            style={{ flex: 1, backgroundColor: "#fecaca", cursor: "pointer" }}
+          />
+          <View id="c-static-txt" style={{ flex: 1, backgroundColor: "#bbf7d0", cursor: "text" }} />
+          <View
+            id="c-static-cross"
+            style={{ flex: 1, backgroundColor: "#dbeafe", cursor: "crosshair" }}
+          />
+        </View>
+      </CursorDemoBlock>
 
-      <View id="cursor-gap-1" style={{ height: 8 }} />
+      <CursorDemoBlock>
+        <Text style={demoTitle}>{t`示例二：继承与覆盖`}</Text>
+        <Text style={demoDesc}>{t`左：子块继承父 progress；右：子块 zoom-in 覆盖父 alias。`}</Text>
+        <View id="cursor-row-chain" style={{ width: contentW, flexDirection: "row", height: 92 }}>
+          <View
+            id="c-chain-parent-only"
+            style={{
+              flex: 1,
+              position: "relative",
+              backgroundColor: "#e9d5ff",
+              cursor: "progress",
+            }}
+          >
+            <View
+              id="c-chain-inherit"
+              style={{
+                position: "absolute",
+                left: 24,
+                top: 16,
+                width: 120,
+                height: 48,
+                backgroundColor: "#c084fc",
+              }}
+            />
+          </View>
+          <View
+            id="c-chain-child-wins"
+            style={{
+              flex: 1,
+              position: "relative",
+              backgroundColor: "#fef3c7",
+              cursor: "alias",
+            }}
+          >
+            <View
+              id="c-chain-zoom"
+              style={{
+                position: "absolute",
+                left: 24,
+                top: 16,
+                width: 120,
+                height: 48,
+                backgroundColor: "#f59e0b",
+                cursor: "zoom-in",
+              }}
+            />
+          </View>
+        </View>
+      </CursorDemoBlock>
 
-      <Text style={{ fontSize: 13, fontWeight: 600, color: AD_TEXT, lineHeight: 1.35 }}>
-        {t`示例二：继承与覆盖`}
-      </Text>
-      <Text style={{ fontSize: 12, color: AD_TEXT_SECONDARY, lineHeight: 1.4, marginBottom: 6 }}>
-        {t`左：子块继承父 progress；右：子块 zoom-in 覆盖父 alias。`}
-      </Text>
-      <View id="cursor-row-chain" style={{ flexDirection: "row", height: 92 }}>
+      <CursorDemoBlock>
+        <Text style={demoTitle}>{t`示例三：hover 切换 cursor`}</Text>
+        <Text style={demoDesc}>{t`移入条内为 grab，移出为 col-resize（hover 态驱动）。`}</Text>
         <View
-          id="c-chain-parent-only"
+          id="c-hover-wrap"
           style={{
-            flex: 1,
+            width: contentW,
+            height: 70,
             position: "relative",
-            backgroundColor: "#e9d5ff",
-            cursor: "progress",
+            backgroundColor: "#e2e8f0",
+            borderRadius: 6,
           }}
         >
           <View
-            id="c-chain-inherit"
-            style={{
+            id="c-hover-fn"
+            style={({ hovered }) => ({
               position: "absolute",
-              left: 24,
-              top: 16,
-              width: 120,
-              height: 48,
-              backgroundColor: "#c084fc",
-            }}
+              left: 12,
+              top: 8,
+              width: contentW - 24,
+              height: 54,
+              backgroundColor: hovered ? "#0ea5e9" : "#94a3b8",
+              cursor: hovered ? "grab" : "col-resize",
+            })}
           />
         </View>
+      </CursorDemoBlock>
+
+      <CursorDemoBlock>
+        <Text style={demoTitle}>{t`示例四：穿透命中光标`}</Text>
+        <Text style={demoDesc}>{t`橙层 pointer-events: none，光标应落在绿色底层。`}</Text>
         <View
-          id="c-chain-child-wins"
+          id="c-through-wrap"
           style={{
-            flex: 1,
+            width: contentW,
+            height: 70,
             position: "relative",
-            backgroundColor: "#fef3c7",
-            cursor: "alias",
+            backgroundColor: "#cbd5e1",
+            borderRadius: 6,
           }}
         >
           <View
-            id="c-chain-zoom"
+            id="c-through-back"
             style={{
               position: "absolute",
-              left: 24,
-              top: 16,
-              width: 120,
-              height: 48,
-              backgroundColor: "#f59e0b",
-              cursor: "zoom-in",
+              left: 16,
+              top: 8,
+              width: contentW - 32,
+              height: 54,
+              backgroundColor: "#16a34a",
+              cursor: "pointer",
+            }}
+          />
+          <View
+            id="c-through-front"
+            style={{
+              position: "absolute",
+              left: 16,
+              top: 8,
+              width: contentW - 32,
+              height: 54,
+              backgroundColor: "rgba(251, 146, 60, 0.45)",
+              pointerEvents: "none",
             }}
           />
         </View>
-      </View>
+      </CursorDemoBlock>
 
-      <View id="cursor-gap-2" style={{ height: 8 }} />
-
-      <Text style={{ fontSize: 13, fontWeight: 600, color: AD_TEXT, lineHeight: 1.35 }}>
-        {t`示例三：hover 切换 cursor`}
-      </Text>
-      <View
-        id="c-hover-wrap"
-        style={{
-          height: 70,
-          position: "relative",
-          backgroundColor: "#e2e8f0",
-        }}
-      >
-        <View
-          id="c-hover-fn"
-          style={({ hovered }) => ({
-            position: "absolute",
-            left: 12,
-            top: 8,
-            width: W - 40,
-            height: 54,
-            backgroundColor: hovered ? "#0ea5e9" : "#94a3b8",
-            cursor: hovered ? "grab" : "col-resize",
-          })}
-        />
-      </View>
-
-      <View id="cursor-gap-3" style={{ height: 8 }} />
-
-      <Text style={{ fontSize: 13, fontWeight: 600, color: AD_TEXT, lineHeight: 1.35 }}>
-        {t`示例四：穿透命中光标`}
-      </Text>
-      <View
-        id="c-through-wrap"
-        style={{
-          height: 70,
-          position: "relative",
-          backgroundColor: "#cbd5e1",
-        }}
-      >
-        <View
-          id="c-through-back"
-          style={{
-            position: "absolute",
-            left: 16,
-            top: 8,
-            width: 280,
-            height: 54,
-            backgroundColor: "#16a34a",
-            cursor: "pointer",
-          }}
-        />
-        <View
-          id="c-through-front"
-          style={{
-            position: "absolute",
-            left: 16,
-            top: 8,
-            width: 280,
-            height: 54,
-            backgroundColor: "rgba(251, 146, 60, 0.45)",
-            pointerEvents: "none",
-          }}
-        />
-      </View>
-
-      <View id="cursor-gap-4" style={{ height: 8 }} />
-
-      <CursorDragGrabSection />
+      <CursorDemoBlock>
+        <CursorDragGrabSection />
+      </CursorDemoBlock>
     </View>
   );
 }

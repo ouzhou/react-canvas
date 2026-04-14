@@ -19,13 +19,13 @@ export function CursorDragGrabSection() {
   }, [pressed]);
 
   return (
-    <View id="c-drag-section" style={{ flexDirection: "column" }}>
+    <View id="c-drag-section" style={{ flexDirection: "column", gap: 8 }}>
       <Text
         style={{
           fontSize: 13,
           fontWeight: 600,
           color: AD_TEXT,
-          lineHeight: 1.35,
+          lineHeight: 1.4,
           cursor: "default",
         }}
       >
@@ -35,8 +35,7 @@ export function CursorDragGrabSection() {
         style={{
           fontSize: 12,
           color: AD_TEXT_SECONDARY,
-          lineHeight: 1.4,
-          marginBottom: 6,
+          lineHeight: 1.45,
           cursor: "default",
         }}
       >
@@ -47,6 +46,7 @@ export function CursorDragGrabSection() {
         style={{
           alignSelf: "stretch",
           height: 64,
+          borderRadius: 6,
           backgroundColor: pressed ? "#f9a8d4" : "#fce7f3",
           cursor: pressed ? "grabbing" : "grab",
         }}

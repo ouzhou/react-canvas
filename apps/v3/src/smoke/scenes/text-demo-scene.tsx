@@ -1,7 +1,13 @@
 import { Text, View } from "@react-canvas/react-v2";
 import { useLingui } from "@lingui/react/macro";
 
-import { AD_TEXT, AD_TEXT_SECONDARY } from "../constants.ts";
+import {
+  AD_TEXT,
+  AD_TEXT_SECONDARY,
+  DEMO_PAGE_BG,
+  DEMO_PAGE_MARGIN_TOP,
+  DEMO_PAGE_PADDING_X,
+} from "../constants.ts";
 
 export function TextDemoScene(props: {
   W: number;
@@ -21,10 +27,11 @@ export function TextDemoScene(props: {
       id="text-root"
       style={{
         width: W,
-        height: H,
+        height: H - DEMO_PAGE_MARGIN_TOP,
         flexDirection: "column",
-        backgroundColor: "#f8fafc",
-        padding: 16,
+        backgroundColor: DEMO_PAGE_BG,
+        marginTop: DEMO_PAGE_MARGIN_TOP,
+        padding: DEMO_PAGE_PADDING_X,
       }}
     >
       <View style={{ marginBottom: 10 }}>

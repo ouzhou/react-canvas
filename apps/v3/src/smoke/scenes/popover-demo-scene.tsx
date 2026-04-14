@@ -1,6 +1,13 @@
 import { ScrollView, Text, View, useSceneRuntime } from "@react-canvas/react-v2";
+import { useLingui } from "@lingui/react/macro";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import {
+  DEMO_PAGE_BG,
+  DEMO_PAGE_MARGIN_TOP,
+  DEMO_PAGE_PADDING_X,
+  demoPageContentWidth,
+} from "../constants.ts";
 import { Popover } from "../components/popover.tsx";
 import type { PopoverPlacement, PopoverTriggerRect } from "../lib/compute-popover-position.ts";
 
@@ -24,6 +31,7 @@ const TRIGGER_IDS: Record<PopoverPlacement, string> = {
 };
 
 export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
+  const { t } = useLingui();
   const { W, H, viewportW, viewportH, onLog } = props;
   const rt = useSceneRuntime();
   const [open, setOpen] = useState(false);
@@ -35,9 +43,10 @@ export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
   const wasOpenRef = useRef(open);
 
   const frame = useMemo(() => {
-    const left = 20;
-    const top = 62;
-    const width = Math.max(240, W - 40);
+    const pad = DEMO_PAGE_PADDING_X;
+    const left = pad;
+    const top = DEMO_PAGE_MARGIN_TOP + pad + 18;
+    const width = Math.max(240, demoPageContentWidth(W));
     const height = Math.max(180, H - 82);
     return { left, top, width, height };
   }, [W, H]);
@@ -120,7 +129,7 @@ export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
     if (changed && open) {
       setOpen(false);
       setActiveTrigger(null);
-      onLog("滚动关闭：检测到 ScrollView 发生滚动，已关闭 Popover。");
+      onLog(t`滚动关闭：检测到 ScrollView 发生滚动，已关闭 Popover。`);
     }
     prevSampledScrollYRef.current = scrollY;
   }, [scrollY, open, onLog]);
@@ -129,7 +138,7 @@ export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
     if (open && activeTrigger === p) {
       setOpen(false);
       setActiveTrigger(null);
-      onLog(`点击关闭：再次点击同一 trigger（${p}）关闭 Popover。`);
+      onLog(t`点击关闭：再次点击同一 trigger（${p}）关闭 Popover。`);
       return;
     }
     const latestScrollY = readCurrentScrollY();
@@ -137,24 +146,32 @@ export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
     prevSampledScrollYRef.current = latestScrollY;
     const nextRect = readTriggerRectFromSnapshot(p);
     if (!nextRect) {
-      onLog(`定位失败：无法从 layout snapshot 读取 trigger=${p} 的绝对坐标，已取消打开。`);
+      onLog(t`定位失败：无法从 layout snapshot 读取 trigger=${p} 的绝对坐标，已取消打开。`);
       return;
     }
     setPlacement(p);
     setTriggerRect(nextRect);
     if (open && activeTrigger && activeTrigger !== p) {
-      onLog(`切换打开：trigger ${activeTrigger} -> ${p}，已更新 placement 与 triggerRect。`);
+      onLog(t`切换打开：trigger ${activeTrigger} -> ${p}，已更新 placement 与 triggerRect。`);
     } else {
-      onLog(`点击打开：trigger=${p}，Popover 已打开。`);
+      onLog(t`点击打开：trigger=${p}，Popover 已打开。`);
     }
     setActiveTrigger(p);
     setOpen(true);
   };
 
   return (
-    <View style={{ width: W, height: H, backgroundColor: "#f8fafc", position: "relative" }}>
-      <Text style={{ position: "absolute", left: 20, top: 16, fontSize: 14, color: "#334155" }}>
-        Popover Demo（滚动时自动关闭）
+    <View style={{ width: W, height: H, backgroundColor: DEMO_PAGE_BG, position: "relative" }}>
+      <Text
+        style={{
+          position: "absolute",
+          left: DEMO_PAGE_PADDING_X,
+          top: DEMO_PAGE_MARGIN_TOP,
+          fontSize: 14,
+          color: "#334155",
+        }}
+      >
+        {t`Popover Demo（滚动时自动关闭）`}
       </Text>
       <ScrollView
         id={SCROLL_ID}
@@ -171,9 +188,15 @@ export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
         }}
       >
         <View style={{ width: frame.width, minHeight: 920, position: "relative" }}>
-          <Text style={{ padding: 16, fontSize: 12, color: "#64748b", lineHeight: 1.5 }}>
-            向下滚动后 Popover 将自动关闭并打印日志。中部四个 trigger 分别对应 top / bottom / left /
-            right。
+          <Text
+            style={{
+              padding: DEMO_PAGE_PADDING_X,
+              fontSize: 12,
+              color: "#64748b",
+              lineHeight: 1.5,
+            }}
+          >
+            {t`向下滚动后 Popover 将自动关闭并打印日志。中部四个 trigger 分别对应 top / bottom / left / right。`}
           </Text>
           {PLACEMENTS.map((p) => {
             const rect = triggerLocalRect[p];
@@ -209,9 +232,9 @@ export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
           <View
             style={{
               position: "absolute",
-              left: 16,
+              left: DEMO_PAGE_PADDING_X,
               top: 560,
-              width: Math.max(40, frame.width - 32),
+              width: Math.max(40, frame.width - 2 * DEMO_PAGE_PADDING_X),
               height: 320,
               borderRadius: 8,
               backgroundColor: "#f1f5f9",
@@ -219,7 +242,7 @@ export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
             }}
           >
             <Text style={{ fontSize: 12, color: "#475569", lineHeight: 1.5 }}>
-              继续滚动此区域可触发“滚动关闭”。这是用于验证策略 A 的可滚动内容区。
+              {t`继续滚动此区域可触发“滚动关闭”。这是用于验证策略 A 的可滚动内容区。`}
             </Text>
           </View>
         </View>
@@ -231,7 +254,7 @@ export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
           if (!nextOpen && open) {
             setOpen(false);
             setActiveTrigger(null);
-            onLog("外部关闭：Popover 由 onRequestClose 触发关闭（点击外部/遮罩）。");
+            onLog(t`外部关闭：Popover 由 onRequestClose 触发关闭（点击外部/遮罩）。`);
             return;
           }
           setOpen(nextOpen);
@@ -245,10 +268,10 @@ export function PopoverDemoScene(props: PopoverDemoSceneProps): ReactNode {
         content={
           <View style={{ gap: 8 }}>
             <Text style={{ fontSize: 13, fontWeight: 600, color: "#0f172a" }}>
-              Popover placement: {placement}
+              {t`Popover placement: ${placement}`}
             </Text>
             <Text style={{ fontSize: 12, color: "#475569", lineHeight: 1.45 }}>
-              点击同一 trigger 会关闭；切换 trigger 会更新定位并复用同一个 Popover 实例。
+              {t`点击同一 trigger 会关闭；切换 trigger 会更新定位并复用同一个 Popover 实例。`}
             </Text>
           </View>
         }

@@ -12,9 +12,11 @@ import {
   DEMO_TEXT,
   DEMO_THROUGH,
   DEMO_SCROLL_DEMO,
+  DEMO_ANIMATION,
 } from "../demo-dimensions.ts";
 import type { SmokeDemoId } from "../smoke-types.ts";
 
+/** 各 demo 设计稿目标宽高；Smoke 壳层会将宽度钳到主列可视宽度，避免大于主列时盖住侧栏 */
 export function demoStageSize(demo: SmokeDemoId): { dw: number; dh: number } {
   const dw =
     demo === "intro"
@@ -41,7 +43,9 @@ export function demoStageSize(demo: SmokeDemoId): { dw: number; dh: number } {
                           ? DEMO_MEDIA.w
                           : demo === "scroll-demo"
                             ? DEMO_SCROLL_DEMO.w
-                            : DEMO_HOVER.w;
+                            : demo === "animation"
+                              ? DEMO_ANIMATION.w
+                              : DEMO_HOVER.w;
   const dh =
     demo === "intro"
       ? DEMO_INTRO.h
@@ -67,6 +71,8 @@ export function demoStageSize(demo: SmokeDemoId): { dw: number; dh: number } {
                           ? DEMO_MEDIA.h
                           : demo === "scroll-demo"
                             ? DEMO_SCROLL_DEMO.h
-                            : DEMO_HOVER.h;
+                            : demo === "animation"
+                              ? DEMO_ANIMATION.h
+                              : DEMO_HOVER.h;
   return { dw, dh };
 }

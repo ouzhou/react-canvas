@@ -3,7 +3,15 @@ import type { ViewStyle } from "@react-canvas/core-v2";
 import { Fragment, type ReactNode } from "react";
 import { useLingui } from "@lingui/react/macro";
 
-import { AD_TEXT, AD_TEXT_SECONDARY, AD_TEXT_TERTIARY } from "../constants.ts";
+import {
+  AD_TEXT,
+  AD_TEXT_SECONDARY,
+  AD_TEXT_TERTIARY,
+  DEMO_PAGE_BG,
+  DEMO_PAGE_MARGIN_TOP,
+  DEMO_PAGE_PADDING_X,
+  demoPageContentWidth,
+} from "../constants.ts";
 import { useLayoutScrollY } from "../hooks/use-layout-scroll-y.ts";
 
 const TRI_D = "M 0 100 L 50 0 L 100 100 Z";
@@ -61,10 +69,10 @@ export function ScrollDemoScene(props: {
 }): ReactNode {
   const { W, H, scrollResetKey } = props;
   const { t } = useLingui();
-  const innerW = Math.max(0, W - 32);
+  const innerW = demoPageContentWidth(W);
   const scrollY = useLayoutScrollY(SCROLL_DEMO_SCROLL_ID);
 
-  const colLeft = (i: number) => 20 + i * ((W - 40) / 4);
+  const colLeft = (i: number) => DEMO_PAGE_PADDING_X + (i * (W - 2 * DEMO_PAGE_PADDING_X)) / 4;
 
   return (
     <View
@@ -72,7 +80,7 @@ export function ScrollDemoScene(props: {
       style={{
         width: W,
         height: H,
-        backgroundColor: "#f8fafc",
+        backgroundColor: DEMO_PAGE_BG,
       }}
     >
       <ScrollView
@@ -92,7 +100,14 @@ export function ScrollDemoScene(props: {
             paddingBottom: 48,
           }}
         >
-          <View style={{ paddingLeft: 16, paddingRight: 16, paddingTop: 16, paddingBottom: 10 }}>
+          <View
+            style={{
+              paddingLeft: DEMO_PAGE_PADDING_X,
+              paddingRight: DEMO_PAGE_PADDING_X,
+              paddingTop: DEMO_PAGE_MARGIN_TOP + DEMO_PAGE_PADDING_X,
+              paddingBottom: 10,
+            }}
+          >
             <Text style={{ fontSize: 15, fontWeight: 600, color: AD_TEXT, lineHeight: 1.4 }}>
               {t`滚动与快照`}
             </Text>
@@ -229,7 +244,7 @@ export function ScrollDemoScene(props: {
           <View
             style={{
               position: "absolute",
-              left: 16,
+              left: DEMO_PAGE_PADDING_X,
               top: CONTENT_MIN_H - 100,
               width: Math.max(40, innerW),
               padding: 12,

@@ -1,20 +1,28 @@
 import { Text, View } from "@react-canvas/react-v2";
 import { useLingui } from "@lingui/react/macro";
 
-import { AD_TEXT, AD_TEXT_SECONDARY } from "../constants.ts";
+import {
+  AD_TEXT,
+  AD_TEXT_SECONDARY,
+  DEMO_PAGE_BG,
+  DEMO_PAGE_MARGIN_TOP,
+  DEMO_PAGE_PADDING_X,
+  demoPageContentWidth,
+} from "../constants.ts";
 
 export function BorderDemoScene({ W, H }: { W: number; H: number }) {
   const { t } = useLingui();
-  const shellW = Math.min(320, W - 32);
+  const contentW = demoPageContentWidth(W);
   return (
     <View
       id="border-root"
       style={{
         width: W,
-        height: H,
+        height: H - DEMO_PAGE_MARGIN_TOP,
         flexDirection: "column",
-        padding: 16,
-        backgroundColor: "#fafafa",
+        backgroundColor: DEMO_PAGE_BG,
+        marginTop: DEMO_PAGE_MARGIN_TOP,
+        padding: DEMO_PAGE_PADDING_X,
         gap: 14,
       }}
     >
@@ -29,7 +37,7 @@ export function BorderDemoScene({ W, H }: { W: number; H: number }) {
       <View
         id="border-shell"
         style={{
-          width: shellW,
+          width: contentW,
           height: 128,
           flexDirection: "column",
           padding: 8,
@@ -68,7 +76,7 @@ export function BorderDemoScene({ W, H }: { W: number; H: number }) {
       <View
         id="border-rgba-card"
         style={{
-          width: Math.min(280, W - 32),
+          width: contentW,
           height: 64,
           borderWidth: 2,
           borderColor: "rgba(22, 119, 255, 0.55)",

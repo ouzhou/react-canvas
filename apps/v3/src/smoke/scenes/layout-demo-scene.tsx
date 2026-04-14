@@ -4,7 +4,15 @@ import { LiveProvider } from "react-live";
 
 import { CanvasReadonlyCodePreview } from "../components/canvas-readonly-code-preview.tsx";
 import { LiveTranspileErrorText } from "../components/live-transpile-error-text.tsx";
-import { AD_TEXT, AD_TEXT_SECONDARY, AD_TEXT_TERTIARY } from "../constants.ts";
+import {
+  AD_TEXT,
+  AD_TEXT_SECONDARY,
+  AD_TEXT_TERTIARY,
+  DEMO_PAGE_BG,
+  DEMO_PAGE_MARGIN_TOP,
+  DEMO_PAGE_PADDING_X,
+  demoPageContentWidth,
+} from "../constants.ts";
 import { LAYOUT_SNIPPET_FLEX_GRID, LAYOUT_SNIPPET_ROW_THREE } from "./layout-demo-snippets.ts";
 import { layoutDemoLiveScope } from "./layout-live-scope.ts";
 
@@ -28,17 +36,18 @@ const ROW2_H = 72;
 
 export function LayoutDemoScene({ W, H }: { W: number; H: number }) {
   const { t } = useLingui();
-  const innerW = Math.max(0, W - 28);
+  const innerW = demoPageContentWidth(W);
 
   return (
     <View
       id="layout-root"
       style={{
         width: W,
-        height: H,
+        height: H - DEMO_PAGE_MARGIN_TOP,
         flexDirection: "column",
-        backgroundColor: "#fafafa",
-        padding: 14,
+        backgroundColor: DEMO_PAGE_BG,
+        marginTop: DEMO_PAGE_MARGIN_TOP,
+        padding: DEMO_PAGE_PADDING_X,
         gap: 12,
       }}
     >
@@ -124,7 +133,7 @@ export function LayoutDemoScene({ W, H }: { W: number; H: number }) {
         </View>
       </LiveProvider>
 
-      <Text style={{ fontSize: 11, color: AD_TEXT_TERTIARY, lineHeight: 1.4 }}>
+      <Text style={{ fontSize: 11, color: AD_TEXT_TERTIARY, lineHeight: 1.4, width: innerW }}>
         {t`提示：右侧源码由 react-live 转译校验；展示使用 ScrollView + Text（不可编辑）。画布预览与 DOM LivePreview 无关。`}
       </Text>
     </View>

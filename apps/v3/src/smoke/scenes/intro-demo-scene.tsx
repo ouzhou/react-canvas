@@ -1,7 +1,16 @@
 import { Text, View } from "@react-canvas/react-v2";
 import { useLingui } from "@lingui/react/macro";
 
-import { AD_TEXT, AD_TEXT_SECONDARY, AD_TEXT_TERTIARY } from "../constants.ts";
+import {
+  AD_TEXT,
+  AD_TEXT_SECONDARY,
+  AD_TEXT_TERTIARY,
+  DEMO_PAGE_BG,
+  DEMO_PAGE_MARGIN_TOP,
+  DEMO_PAGE_PADDING_X,
+  DEMO_PAGE_SECTION_GAP,
+  demoPageContentWidth,
+} from "../constants.ts";
 import type { DemoPageMeta } from "../hooks/use-demo-catalog.tsx";
 import { LucideIcon } from "../components/lucide-icon.tsx";
 import type { LucideIconData } from "../lib/lucide-icon-to-d.ts";
@@ -20,11 +29,13 @@ import typeIcon from "@lucide/icons/icons/type";
 import palette from "@lucide/icons/icons/palette";
 import panelTop from "@lucide/icons/icons/panel-top";
 import fileText from "@lucide/icons/icons/file-text";
+import sparkles from "@lucide/icons/icons/sparkles";
 
 const DEMO_ICONS: Record<string, LucideIconData> = {
   intro: info,
   media: imageIcon,
   "scroll-demo": scrollText,
+  animation: sparkles,
   layout: layoutTemplate,
   pointer: mousePointer2,
   through: layers,
@@ -41,6 +52,7 @@ const DEMO_ICON_COLORS: Record<string, string> = {
   intro: "#3b82f6",
   media: "#8b5cf6",
   "scroll-demo": "#10b981",
+  animation: "#f97316",
   layout: "#f59e0b",
   pointer: "#ef4444",
   through: "#6366f1",
@@ -99,11 +111,11 @@ export function IntroDemoScene({
         width: W,
         minHeight: H,
         position: "relative",
-        backgroundColor: "#ffffff",
-        marginTop: 16,
-        padding: 28,
+        backgroundColor: DEMO_PAGE_BG,
+        marginTop: DEMO_PAGE_MARGIN_TOP,
+        padding: DEMO_PAGE_PADDING_X,
         flexDirection: "column",
-        gap: 18,
+        gap: DEMO_PAGE_SECTION_GAP,
       }}
     >
       <View style={{ flexDirection: "column", gap: 8 }}>
@@ -152,7 +164,7 @@ export function IntroDemoScene({
         </Text>
       </View>
 
-      <View style={{ height: 1, backgroundColor: "#eceef2", width: W - 56 }} />
+      <View style={{ height: 1, backgroundColor: "#eceef2", width: demoPageContentWidth(W) }} />
 
       <View style={{ flexDirection: "column", gap: 6 }}>
         <Text style={h2}>{t`功能演示列表`}</Text>

@@ -33,6 +33,12 @@ export function useDemoCatalog() {
         description: t`无 onScroll 回调时，用 subscribeAfterLayout 读取 scrollY，驱动三角形的旋转、缩放与透明度。`,
       },
       {
+        id: "animation",
+        navLabel: t`动画`,
+        title: t`时间与变换动画`,
+        description: t`requestAnimationFrame 更新状态，驱动 opacity 与 transform（平移、旋转、缩放）及组合，用于对照逐帧绘制与交互命中。`,
+      },
+      {
         id: "layout",
         navLabel: t`布局`,
         title: t`Flex 布局`,

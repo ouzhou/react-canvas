@@ -19,6 +19,7 @@ import {
   AD_TEXT_SECONDARY,
   AD_TEXT_TERTIARY,
   SIDEBAR_W,
+  SMOKE_STAGE_BG,
 } from "./smoke/constants.ts";
 import {
   SMOKE_REPO_RAINBOW_LAYER_ID,
@@ -43,6 +44,7 @@ import { TextDemoScene } from "./smoke/scenes/text-demo-scene.tsx";
 import { ThroughClickLog } from "./smoke/scenes/through-click-log.tsx";
 import { ThroughDemoScene } from "./smoke/scenes/through-demo-scene.tsx";
 import { ScrollDemoScene } from "./smoke/scenes/scroll-demo-scene.tsx";
+import { AnimationDemoScene } from "./smoke/scenes/animation-demo-scene.tsx";
 import { useLingui } from "@lingui/react/macro";
 import { activateLinguiLocale, linguiI18n, normalizeLinguiLocale } from "./lib/lingui.ts";
 import { persistV3Locale } from "./lib/locale-preference.ts";
@@ -121,7 +123,9 @@ export function SmokeCanvasApp() {
     [smokeDemoList, getDemoPageMeta],
   );
 
-  const { dw, dh } = demoStageSize(demo);
+  const { dw: stageDwRaw, dh } = demoStageSize(demo);
+  /** 设计稿固定宽（如 intro 820）在窄视口会大于主列，画布会向左溢出盖住侧栏 */
+  const dw = Math.min(stageDwRaw, innerW);
   const doc = getDemoPageMeta(demo);
   const { onPresentFrame, redrawsPerSec, isRedrawingNow } = useSmokePresentHud();
 
@@ -471,10 +475,18 @@ export function SmokeCanvasApp() {
                     scrollResetKey={demo}
                     style={{ flex: 1, minHeight: 0, width: innerW, alignSelf: "stretch" }}
                   >
-                    <View id="smoke-main-scroll-inner" style={{ flexDirection: "column" }}>
+                    <View
+                      id="smoke-main-scroll-inner"
+                      style={{
+                        flexDirection: "column",
+                        width: innerW,
+                        alignSelf: "stretch",
+                      }}
+                    >
                       <View
                         id="smoke-doc-block"
                         style={{
+                          flexShrink: 0,
                           paddingLeft: 24,
                           paddingRight: 24,
                           paddingTop: 20,
@@ -527,6 +539,7 @@ export function SmokeCanvasApp() {
                       {demo === "style" ? (
                         <View
                           style={{
+                            flexShrink: 0,
                             flexDirection: "row",
                             flexWrap: "wrap",
                             gap: 6,
@@ -575,6 +588,7 @@ export function SmokeCanvasApp() {
                       {demo === "text" ? (
                         <View
                           style={{
+                            flexShrink: 0,
                             flexDirection: "row",
                             alignItems: "center",
                             gap: 8,
@@ -623,6 +637,7 @@ export function SmokeCanvasApp() {
                       {demo === "style" && styleCase === "opacity" ? (
                         <View
                           style={{
+                            flexShrink: 0,
                             flexDirection: "row",
                             alignItems: "center",
                             gap: 8,
@@ -671,9 +686,11 @@ export function SmokeCanvasApp() {
                         id="smoke-stage"
                         style={{
                           minHeight: Math.max(160, dh + 96),
+                          width: innerW,
+                          alignSelf: "stretch",
                           justifyContent: "center",
                           alignItems: "center",
-                          backgroundColor: "#fafafa",
+                          backgroundColor: SMOKE_STAGE_BG,
                         }}
                       >
                         <View
@@ -738,6 +755,8 @@ export function SmokeCanvasApp() {
                             <MediaDemoScene W={dw} H={dh} />
                           ) : demo === "scroll-demo" ? (
                             <ScrollDemoScene W={dw} H={dh} scrollResetKey={demo} />
+                          ) : demo === "animation" ? (
+                            <AnimationDemoScene W={dw} H={dh} />
                           ) : (
                             <HoverDemoScene />
                           )}
@@ -745,7 +764,10 @@ export function SmokeCanvasApp() {
                       </View>
 
                       {logLine ? (
-                        <View id="smoke-log-wrap" style={{ flexDirection: "column" }}>
+                        <View
+                          id="smoke-log-wrap"
+                          style={{ flexShrink: 0, flexDirection: "column" }}
+                        >
                           <View
                             id="smoke-log-rule"
                             style={{ width: innerW, height: 1, backgroundColor: AD_SPLIT }}
@@ -759,7 +781,7 @@ export function SmokeCanvasApp() {
                               paddingBottom: 16,
                               minHeight: 28,
                               justifyContent: "center",
-                              backgroundColor: "#fafafa",
+                              backgroundColor: SMOKE_STAGE_BG,
                             }}
                           >
                             <Text style={{ fontSize: 12, color: AD_TEXT, lineHeight: 1.5 }}>

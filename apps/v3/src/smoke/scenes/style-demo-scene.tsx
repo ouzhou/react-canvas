@@ -3,6 +3,13 @@ import { useLingui } from "@lingui/react/macro";
 
 import type { StyleDemoCase } from "../../style-demo-content.ts";
 
+import {
+  DEMO_PAGE_BG,
+  DEMO_PAGE_MARGIN_TOP,
+  DEMO_PAGE_PADDING_X,
+  demoPageContentWidth,
+} from "../constants.ts";
+
 export function StyleDemoScene({
   W,
   H,
@@ -15,7 +22,8 @@ export function StyleDemoScene({
   opacityDemoPercent: number;
 }) {
   const { t } = useLingui();
-  const innerW = Math.min(W - 48, 308);
+  const contentW = demoPageContentWidth(W);
+  const rootH = H - DEMO_PAGE_MARGIN_TOP;
   if (scene === "margin-gap") {
     return (
       <View
@@ -23,15 +31,17 @@ export function StyleDemoScene({
         id="style-root"
         style={{
           width: W,
-          height: H,
+          height: rootH,
           flexDirection: "column",
-          backgroundColor: "#f1f5f9",
-          padding: 12,
+          backgroundColor: DEMO_PAGE_BG,
+          marginTop: DEMO_PAGE_MARGIN_TOP,
+          padding: DEMO_PAGE_PADDING_X,
         }}
       >
         <View
           id="mg-row"
           style={{
+            width: contentW,
             flex: 1,
             minHeight: 120,
             flexDirection: "row",
@@ -69,17 +79,18 @@ export function StyleDemoScene({
         id="style-root"
         style={{
           width: W,
-          height: H,
+          height: rootH,
           flexDirection: "column",
-          backgroundColor: "#f1f5f9",
-          padding: 12,
+          backgroundColor: DEMO_PAGE_BG,
+          marginTop: DEMO_PAGE_MARGIN_TOP,
+          padding: DEMO_PAGE_PADDING_X,
         }}
       >
         <View
           id="pw-inner"
           style={{
-            width: innerW,
-            height: H - 48,
+            width: contentW,
+            height: H - DEMO_PAGE_MARGIN_TOP - 2 * DEMO_PAGE_PADDING_X,
             flexDirection: "row",
             flexWrap: "wrap",
             padding: 10,
@@ -106,16 +117,17 @@ export function StyleDemoScene({
         id="style-root"
         style={{
           width: W,
-          height: H,
+          height: rootH,
           flexDirection: "column",
-          backgroundColor: "#f1f5f9",
-          padding: 12,
+          backgroundColor: DEMO_PAGE_BG,
+          marginTop: DEMO_PAGE_MARGIN_TOP,
+          padding: DEMO_PAGE_PADDING_X,
         }}
       >
         <View
           id="fl-row"
           style={{
-            width: W - 24,
+            width: contentW,
             height: 80,
             flexDirection: "row",
             alignItems: "center",
@@ -148,16 +160,17 @@ export function StyleDemoScene({
         id="style-root"
         style={{
           width: W,
-          height: H,
+          height: rootH,
           flexDirection: "column",
-          backgroundColor: "#f1f5f9",
-          padding: 12,
+          backgroundColor: DEMO_PAGE_BG,
+          marginTop: DEMO_PAGE_MARGIN_TOP,
+          padding: DEMO_PAGE_PADDING_X,
         }}
       >
         <View
           id="rev-row"
           style={{
-            width: W - 24,
+            width: contentW,
             height: 76,
             flexDirection: "row-reverse",
             gap: 12,
@@ -180,15 +193,17 @@ export function StyleDemoScene({
         id="style-root"
         style={{
           width: W,
-          height: H,
+          height: rootH,
           flexDirection: "column",
-          backgroundColor: "#f1f5f9",
-          padding: 12,
+          backgroundColor: DEMO_PAGE_BG,
+          marginTop: DEMO_PAGE_MARGIN_TOP,
+          padding: DEMO_PAGE_PADDING_X,
         }}
       >
         <View
           id="btn-row"
           style={{
+            width: contentW,
             flex: 1,
             minHeight: 100,
             flexDirection: "row",
@@ -248,22 +263,27 @@ export function StyleDemoScene({
         id="style-root"
         style={{
           width: W,
-          height: H,
+          height: rootH,
           flexDirection: "column",
-          backgroundColor: "#f1f5f9",
-          padding: 12,
+          backgroundColor: DEMO_PAGE_BG,
+          marginTop: DEMO_PAGE_MARGIN_TOP,
+          padding: DEMO_PAGE_PADDING_X,
         }}
       >
         <View
           id="op-stack"
           style={{
+            width: contentW,
             flex: 1,
             flexDirection: "column",
             gap: 14,
             marginTop: 8,
           }}
         >
-          <View id="op-single-row" style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+          <View
+            id="op-single-row"
+            style={{ flexDirection: "row", gap: 12, alignItems: "center", width: contentW }}
+          >
             <View id="op-ref" style={{ width: 72, height: 56, backgroundColor: "#2563eb" }} />
             <View
               id="op-alone"
@@ -278,7 +298,7 @@ export function StyleDemoScene({
           <View
             id="op-ancestor"
             style={{
-              width: Math.min(W - 48, 280),
+              width: contentW,
               height: 112,
               flexDirection: "row",
               gap: 10,
@@ -306,15 +326,17 @@ export function StyleDemoScene({
       id="style-root"
       style={{
         width: W,
-        height: H,
+        height: rootH,
         flexDirection: "column",
-        backgroundColor: "#f1f5f9",
-        padding: 12,
+        backgroundColor: DEMO_PAGE_BG,
+        marginTop: DEMO_PAGE_MARGIN_TOP,
+        padding: DEMO_PAGE_PADDING_X,
       }}
     >
       <View
         id="ar-stack"
         style={{
+          width: contentW,
           flex: 1,
           minHeight: 140,
           flexDirection: "column",
@@ -326,14 +348,17 @@ export function StyleDemoScene({
         <View
           id="ov-shell"
           style={{
-            width: Math.min(W - 48, 200),
+            width: contentW,
             height: 52,
             overflow: "hidden",
             borderRadius: "15%",
             backgroundColor: "#cbd5e1",
           }}
         >
-          <View id="ov-wide" style={{ width: 280, height: 36, backgroundColor: "#f59e0b" }} />
+          <View
+            id="ov-wide"
+            style={{ width: contentW + 120, height: 36, backgroundColor: "#f59e0b" }}
+          />
         </View>
       </View>
     </View>

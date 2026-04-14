@@ -2,12 +2,20 @@ import { Text, View } from "@react-canvas/react-v2";
 import { useLingui } from "@lingui/react/macro";
 
 import { DEMO_HOVER } from "../../demo-dimensions.ts";
-import { AD_TEXT, AD_TEXT_SECONDARY, AD_TEXT_TERTIARY } from "../constants.ts";
+import {
+  AD_TEXT,
+  AD_TEXT_SECONDARY,
+  AD_TEXT_TERTIARY,
+  DEMO_PAGE_BG,
+  DEMO_PAGE_PADDING_X,
+  demoPageContentWidth,
+} from "../constants.ts";
 
 export function HoverDemoScene() {
   const { t } = useLingui();
   const W = DEMO_HOVER.w;
   const H = DEMO_HOVER.h;
+  const contentW = demoPageContentWidth(W);
   return (
     <View
       id="hover-root"
@@ -15,8 +23,11 @@ export function HoverDemoScene() {
         width: W,
         height: H,
         flexDirection: "column",
-        backgroundColor: "#fafafa",
-        padding: 12,
+        backgroundColor: DEMO_PAGE_BG,
+        paddingLeft: DEMO_PAGE_PADDING_X,
+        paddingRight: DEMO_PAGE_PADDING_X,
+        paddingTop: 12,
+        paddingBottom: 12,
         gap: 10,
       }}
     >
@@ -29,7 +40,7 @@ export function HoverDemoScene() {
       <View
         id="hover-wrap-1"
         style={{
-          width: W - 24,
+          width: contentW,
           height: 72,
           position: "relative",
           backgroundColor: "#f1f5f9",
@@ -60,7 +71,7 @@ export function HoverDemoScene() {
       <View
         id="hover-wrap-2"
         style={{
-          width: W - 24,
+          width: contentW,
           height: 72,
           position: "relative",
           backgroundColor: "#f1f5f9",

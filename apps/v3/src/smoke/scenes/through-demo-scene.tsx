@@ -1,10 +1,17 @@
 import { Text, View } from "@react-canvas/react-v2";
 import { useLingui } from "@lingui/react/macro";
 
-import { AD_TEXT, AD_TEXT_SECONDARY } from "../constants.ts";
+import {
+  AD_TEXT,
+  AD_TEXT_SECONDARY,
+  DEMO_PAGE_BG,
+  DEMO_PAGE_PADDING_X,
+  demoPageContentWidth,
+} from "../constants.ts";
 
 export function ThroughDemoScene({ W, H }: { W: number; H: number }) {
   const { t } = useLingui();
+  const contentW = demoPageContentWidth(W);
   return (
     <View
       id="through-root"
@@ -12,8 +19,11 @@ export function ThroughDemoScene({ W, H }: { W: number; H: number }) {
         width: W,
         height: H,
         flexDirection: "column",
-        backgroundColor: "#fafafa",
-        padding: 12,
+        backgroundColor: DEMO_PAGE_BG,
+        paddingLeft: DEMO_PAGE_PADDING_X,
+        paddingRight: DEMO_PAGE_PADDING_X,
+        paddingTop: 12,
+        paddingBottom: 12,
         gap: 8,
       }}
     >
@@ -28,6 +38,7 @@ export function ThroughDemoScene({ W, H }: { W: number; H: number }) {
       <View
         id="through-wrap"
         style={{
+          width: contentW,
           flex: 1,
           minHeight: 160,
           position: "relative",
@@ -39,9 +50,9 @@ export function ThroughDemoScene({ W, H }: { W: number; H: number }) {
           id="through-back"
           style={{
             position: "absolute",
-            left: 40,
+            left: 0,
             top: 36,
-            width: Math.min(280, W - 80),
+            width: contentW,
             height: 160,
             backgroundColor: "#16a34a",
           }}
@@ -50,9 +61,9 @@ export function ThroughDemoScene({ W, H }: { W: number; H: number }) {
           id="through-front"
           style={{
             position: "absolute",
-            left: 40,
+            left: 0,
             top: 36,
-            width: Math.min(280, W - 80),
+            width: contentW,
             height: 160,
             backgroundColor: "#fb923c",
             pointerEvents: "none",

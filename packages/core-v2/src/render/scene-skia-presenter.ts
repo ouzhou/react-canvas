@@ -248,14 +248,14 @@ export async function attachSceneSkiaPresenter(
 
       const rx = railW / 2;
       const lighten = (n: number, t: number) => Math.min(255, Math.round(n + (255 - n) * t));
-      /** 基准灰 + 向白浅 20%；不透明度再降 20%，整体更淡。 */
+      /** 基准灰 + 向白浅约 36%（在原先 20% 基础上再浅 20%）；不透明度再乘 0.8。 */
       const thumbRect = ck.LTRBRect(trackLeft, thumbTop, trackLeft + railW, thumbTop + thumbH);
       paintFill.setColor(
         ck.Color(
-          lighten(70, 0.2),
-          lighten(75, 0.2),
-          lighten(88, 0.2),
-          Math.max(0, Math.round(140 * 0.8)),
+          lighten(70, 0.36),
+          lighten(75, 0.36),
+          lighten(88, 0.36),
+          Math.max(0, Math.round(140 * 0.8 * 0.8)),
         ),
       );
       skCanvas.drawRRect(ck.RRectXY(thumbRect, rx, rx), paintFill);

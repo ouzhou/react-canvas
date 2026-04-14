@@ -376,14 +376,38 @@ export async function createSceneRuntime(
 
   let apiRef!: SceneRuntime;
 
-  function applyScrollDelta(scrollId: string, deltaY: number): void {
+  /**
+   * 将 `deltaY` 作用到单个 `scrollView`，按边界钳制；返回 **未被消耗** 的增量（嵌套滚动时传给祖先）。
+   */
+  function applyScrollDeltaRemain(scrollId: string, deltaY: number): number {
     const n = store.get(scrollId);
-    if (!n || (n.kind ?? "view") !== "scrollView") return;
+    if (!n || (n.kind ?? "view") !== "scrollView") return deltaY;
     const maxY = maxScrollYForNode(store, scrollId);
     const cur = typeof n.scrollY === "number" && Number.isFinite(n.scrollY) ? n.scrollY : 0;
     const next = Math.min(maxY, Math.max(0, cur + deltaY));
-    if (next === cur) return;
-    n.scrollY = next;
+    const consumed = next - cur;
+    if (next !== cur) {
+      n.scrollY = next;
+    }
+    return deltaY - consumed;
+  }
+
+  /** 沿父链向上，第一个可纵向滚动且 `maxScrollY>0` 的 `scrollView` 祖先（不含 `fromScrollId` 自身）。 */
+  function parentScrollViewAncestor(fromScrollId: string): string | null {
+    let id = store.get(fromScrollId)?.parentId ?? null;
+    while (id !== null) {
+      const n = store.get(id);
+      if (n && (n.kind ?? "view") === "scrollView" && maxScrollYForNode(store, id) > 0) {
+        return id;
+      }
+      id = n?.parentId ?? null;
+    }
+    return null;
+  }
+
+  function applyScrollDelta(scrollId: string, deltaY: number): void {
+    const remain = applyScrollDeltaRemain(scrollId, deltaY);
+    if (remain === deltaY) return;
     emitLayoutCommit();
   }
 
@@ -774,11 +798,23 @@ export async function createSceneRuntime(
       if (layoutDirty) {
         runLayout();
       }
-      const sid = findDeepestScrollViewAtPoint(store, rootId, ev.x, ev.y);
+      let sid = findDeepestScrollViewAtPoint(store, rootId, ev.x, ev.y);
       if (sid === null) {
         return;
       }
-      applyScrollDelta(sid, ev.deltaY);
+      let remain = ev.deltaY;
+      let mutated = false;
+      while (sid !== null && remain !== 0) {
+        const before = remain;
+        remain = applyScrollDeltaRemain(sid, remain);
+        if (before !== remain) {
+          mutated = true;
+        }
+        sid = parentScrollViewAncestor(sid);
+      }
+      if (mutated) {
+        emitLayoutCommit();
+      }
       applyResolvedCursor();
     },
 

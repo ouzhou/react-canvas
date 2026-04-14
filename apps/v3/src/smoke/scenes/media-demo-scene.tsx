@@ -39,6 +39,12 @@ import trash2 from "@lucide/icons/icons/trash-2";
 import userRound from "@lucide/icons/icons/user-round";
 import wifi from "@lucide/icons/icons/wifi";
 import heroPngUrl from "../../assets/hero.png";
+import {
+  DEMO_PAGE_BG,
+  DEMO_PAGE_MARGIN_TOP,
+  DEMO_PAGE_PADDING_X,
+  demoPageContentWidth,
+} from "../constants.ts";
 import { LucideIcon } from "../components/lucide-icon.tsx";
 import type { LucideIconData } from "../lib/lucide-icon-to-d.ts";
 
@@ -127,15 +133,17 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
     { name: "wifi", size: 34, color: "#0284c7", strokeWidth: 1.5 },
   ] as const;
   const palette = ["#0f172a", "#2563eb", "#dc2626", "#16a34a", "#a855f7", "#ea580c"] as const;
+  const contentW = demoPageContentWidth(W);
 
   return (
     <View
       style={{
         width: W,
-        padding: 16,
+        marginTop: DEMO_PAGE_MARGIN_TOP,
+        padding: DEMO_PAGE_PADDING_X,
         flexDirection: "column",
         gap: 14,
-        backgroundColor: "#f8fafc",
+        backgroundColor: DEMO_PAGE_BG,
       }}
     >
       <Text style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", lineHeight: 1.4 }}>
@@ -176,7 +184,15 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
         ))}
       </View>
 
-      <View style={{ height: 1, backgroundColor: "#cbd5e1", marginTop: 4, marginBottom: 4 }} />
+      <View
+        style={{
+          height: 1,
+          width: contentW,
+          backgroundColor: "#cbd5e1",
+          marginTop: 4,
+          marginBottom: 4,
+        }}
+      />
 
       <Text style={{ fontSize: 14, fontWeight: 600, color: "#0f172a", lineHeight: 1.4 }}>
         {t`LucideIcon（camera）`}
@@ -230,6 +246,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
       </Text>
       <View
         style={{
+          width: contentW,
           borderWidth: 1,
           borderColor: "#cbd5e1",
           borderRadius: 10,
@@ -329,7 +346,15 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
           <Text style={{ fontSize: 11, color: "#64748b" }}>{activeColor}</Text>
         </View>
       </View>
-      <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start", flexWrap: "wrap" }}>
+      <View
+        style={{
+          width: contentW,
+          flexDirection: "row",
+          gap: 8,
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+        }}
+      >
         {iconShowcase.map((item) => {
           const icon = iconByName[item.name];
           const renderSize = Math.max(14, item.size + sizeOffset);
@@ -338,13 +363,13 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
           return (
             <View
               key={item.name}
-              style={{
+              style={({ hovered }) => ({
                 width: 112,
                 minHeight: 88,
                 borderWidth: 1,
                 borderColor: "#cbd5e1",
                 borderRadius: 10,
-                backgroundColor: "#ffffff",
+                backgroundColor: hovered ? "#f1f5f9" : "#ffffff",
                 paddingTop: 8,
                 paddingBottom: 6,
                 paddingLeft: 8,
@@ -352,7 +377,7 @@ export function MediaDemoScene(props: { W: number; H: number }): ReactNode {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 6,
-              }}
+              })}
             >
               {icon ? (
                 <LucideIcon

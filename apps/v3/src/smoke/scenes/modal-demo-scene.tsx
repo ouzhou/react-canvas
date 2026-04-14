@@ -2,6 +2,8 @@ import { Modal, Text, View } from "@react-canvas/react-v2";
 import { useLingui } from "@lingui/react/macro";
 import { useState } from "react";
 
+import { DEMO_PAGE_BG, DEMO_PAGE_PADDING_X, demoPageContentWidth } from "../constants.ts";
+
 export function ModalDemoInCanvas(props: {
   W: number;
   H: number;
@@ -17,6 +19,8 @@ export function ModalDemoInCanvas(props: {
   const cardH = 176;
   const cardLeft = Math.max(0, Math.round((viewportW - cardW) / 2));
   const cardTop = Math.max(0, Math.round((viewportH - cardH) / 2));
+  const contentW = demoPageContentWidth(W);
+  const pagePad = DEMO_PAGE_PADDING_X;
 
   return (
     <>
@@ -26,14 +30,14 @@ export function ModalDemoInCanvas(props: {
           width: W,
           height: H,
           position: "relative",
-          backgroundColor: "#f5f5f5",
+          backgroundColor: DEMO_PAGE_BG,
         }}
       >
         <View
           id="modal-open-btn"
           style={{
             position: "absolute",
-            left: 16,
+            left: pagePad,
             top: 16,
             width: 148,
             height: 40,
@@ -65,9 +69,9 @@ export function ModalDemoInCanvas(props: {
           id="modal-main-block"
           style={{
             position: "absolute",
-            left: 16,
+            left: pagePad,
             top: 72,
-            width: W - 32,
+            width: contentW,
             height: H - 88,
             backgroundColor: "#ffffff",
           }}
