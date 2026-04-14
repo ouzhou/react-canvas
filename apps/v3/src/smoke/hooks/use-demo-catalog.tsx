@@ -17,8 +17,8 @@ export function useDemoCatalog() {
       {
         id: "intro",
         navLabel: t`首页介绍`,
-        title: t`画布场景与能力索引`,
-        description: t`几何、绘制、指针三段说明；卡片与侧栏同步。`,
+        title: t`Smoke 总览与能力索引`,
+        description: t`先说明是什么、用了哪些技术、本页做什么；下方卡片与左侧导航同名，可进各演示。`,
       },
       {
         id: "media",

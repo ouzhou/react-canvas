@@ -25,6 +25,7 @@ export {
   subscribeRuntimeInit,
   type AttachSceneSkiaOptions,
 } from "@react-canvas/core-v2";
+export type { PresentFrameInfo } from "@react-canvas/core-v2";
 export { CanvasProvider } from "./canvas-provider.tsx";
 export type { CanvasProviderProps, CanvasProviderRenderProps } from "./canvas-provider.tsx";
 export { Canvas } from "./canvas.tsx";

@@ -1,4 +1,4 @@
-import type { SceneRuntime, TypefaceFontProvider } from "@react-canvas/core-v2";
+import type { PresentFrameInfo, SceneRuntime, TypefaceFontProvider } from "@react-canvas/core-v2";
 import { createSceneRuntime } from "@react-canvas/core-v2";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -11,13 +11,22 @@ export type CanvasProps = {
   children?: ReactNode;
   paragraphFontProvider?: TypefaceFontProvider | null;
   defaultParagraphFontFamily?: string;
+  /** Skia 每帧绘制结束回调（见 {@link PresentFrameInfo}）。 */
+  onPresentFrame?: (info: PresentFrameInfo) => void;
 };
 
 /**
  * 画布场景：内部含 `<canvas />` 与场景上下文；子节点仅应使用 {@link View}（不产生 DOM）。
  */
 export function Canvas(props: CanvasProps): ReactNode {
-  const { width, height, children, paragraphFontProvider, defaultParagraphFontFamily } = props;
+  const {
+    width,
+    height,
+    children,
+    paragraphFontProvider,
+    defaultParagraphFontFamily,
+    onPresentFrame,
+  } = props;
   const [runtime, setRuntime] = useState<SceneRuntime | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
@@ -52,6 +61,7 @@ export function Canvas(props: CanvasProps): ReactNode {
         height={height}
         paragraphFontProvider={paragraphFontProvider}
         defaultParagraphFontFamily={defaultParagraphFontFamily}
+        onPresentFrame={onPresentFrame}
       />
       <SceneRuntimeContext.Provider value={runtime}>
         <ParentSceneIdContext.Provider value={runtime.getContentRootId()}>

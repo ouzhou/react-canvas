@@ -110,12 +110,25 @@ function gradientEndpointsForBox(
   };
 }
 
+/** Skia presenter 每帧 RAF 结束后的调试信息（`attachSceneSkiaPresenter` 可选回调）。 */
+export type PresentFrameInfo = {
+  /** 浏览器传入的 `requestAnimationFrame` 时间参数。 */
+  rafTime: number;
+  /**
+   * 本帧是否对 Skia surface 执行了完整绘制并 `flush`。
+   * 无 layout payload 时会跳过绘制（例如尚未完成首次布局）。
+   */
+  didFlush: boolean;
+};
+
 export type AttachSceneSkiaOptions = {
   /** 默认 `globalThis.devicePixelRatio` 或 1 */
   dpr?: number;
   /** 与 `initRuntime` 注册的段落字体一致；缺省时跳过文本绘制。 */
   paragraphFontProvider?: TypefaceFontProvider | null;
   defaultParagraphFontFamily?: string;
+  /** 每帧 RAF 回调末尾触发（在 `paint()` 之后），用于统计 FPS、区分是否真正落屏绘制。 */
+  onPresentFrame?: (info: PresentFrameInfo) => void;
 };
 
 /**
@@ -174,9 +187,9 @@ export async function attachSceneSkiaPresenter(
   let rafId: number | null = null;
   let lastPayload: LayoutCommitPayload | null = null;
 
-  function paint(): void {
+  function paint(): boolean {
     const payload = lastPayload;
-    if (!payload) return;
+    if (!payload) return false;
     const commit = payload;
     const skCanvas = skSurface.getCanvas();
     skCanvas.save();
@@ -579,6 +592,7 @@ export async function attachSceneSkiaPresenter(
     paintBorder.delete();
     skCanvas.restore();
     skSurface.flush();
+    return true;
   }
 
   function schedulePaint(): void {
@@ -590,9 +604,10 @@ export async function attachSceneSkiaPresenter(
             setTimeout(() => {
               cb(0);
             }, 0) as unknown as number;
-    rafId = raf(() => {
+    rafId = raf((rafTime: number) => {
       rafId = null;
-      paint();
+      const didFlush = paint();
+      options?.onPresentFrame?.({ rafTime, didFlush });
     }) as unknown as number;
   }
 

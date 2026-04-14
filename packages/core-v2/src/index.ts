@@ -6,6 +6,7 @@ export { initCanvasKit } from "./render/canvaskit.ts";
 export {
   attachSceneSkiaPresenter,
   type AttachSceneSkiaOptions,
+  type PresentFrameInfo,
 } from "./render/scene-skia-presenter.ts";
 export type {
   BackgroundLinearGradient,

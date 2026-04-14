@@ -1,6 +1,7 @@
 import {
   attachCanvasStagePointer,
   attachSceneSkiaPresenter,
+  type PresentFrameInfo,
   type SceneRuntime,
   type TypefaceFontProvider,
 } from "@react-canvas/core-v2";
@@ -13,14 +14,24 @@ export type SceneSkiaCanvasProps = {
   height: number;
   paragraphFontProvider?: TypefaceFontProvider | null;
   defaultParagraphFontFamily?: string;
+  onPresentFrame?: (info: PresentFrameInfo) => void;
 };
 
 /**
  * Skia（CanvasKit）绘制 + 画布指针转发；实现均在 `@react-canvas/core-v2`。
  */
 export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
-  const { runtime, width, height, paragraphFontProvider, defaultParagraphFontFamily } = props;
+  const {
+    runtime,
+    width,
+    height,
+    paragraphFontProvider,
+    defaultParagraphFontFamily,
+    onPresentFrame,
+  } = props;
   const ref = useRef<HTMLCanvasElement | null>(null);
+  const onPresentFrameRef = useRef(onPresentFrame);
+  onPresentFrameRef.current = onPresentFrame;
 
   useEffect(() => {
     const canvas = ref.current;
@@ -41,6 +52,7 @@ export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
       dpr,
       paragraphFontProvider,
       defaultParagraphFontFamily,
+      onPresentFrame: (info) => onPresentFrameRef.current?.(info),
     })
       .then((detach) => {
         if (!cancelled) detachSkia = detach;
