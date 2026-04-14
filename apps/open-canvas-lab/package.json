@@ -1,0 +1,41 @@
+{
+  "name": "open-canvas-lab",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "preview": "vp preview"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "catalog:",
+    "@fontsource-variable/geist": "catalog:",
+    "@lingui/core": "catalog:",
+    "@lingui/react": "catalog:",
+    "@radix-ui/react-slot": "catalog:",
+    "@react-canvas/react-v2": "workspace:*",
+    "@tailwindcss/vite": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "ai": "catalog:",
+    "ai-elements": "catalog:",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "lucide-react": "catalog:",
+    "radix-ui": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "shadcn": "catalog:",
+    "tailwind-merge": "catalog:",
+    "tailwindcss": "catalog:",
+    "tw-animate-css": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "~6.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}
