@@ -1,4 +1,13 @@
-import type { Canvas, CanvasKit, Paint, Shader, TypefaceFontProvider } from "canvaskit-wasm";
+import type {
+  Canvas,
+  CanvasKit,
+  ImageInfo,
+  Paint,
+  RuntimeEffect,
+  Shader,
+  Surface,
+  TypefaceFontProvider,
+} from "canvaskit-wasm";
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
 import { computeImageDestSrcRects } from "../media/image-object-fit.ts";
@@ -18,6 +27,7 @@ import { mapParagraphTextAlign, mergedRunStyleToCkTextStyle } from "../text/skia
 import { mergePlainTextStyle } from "../text/text-flat-run.ts";
 import { PickBuffer } from "../hit/pick-buffer.ts";
 import { initCanvasKit } from "./canvaskit.ts";
+import { packPostProcessUniforms } from "./post-process-uniforms.ts";
 import type { PostProcessUniforms } from "./post-process-uniforms.ts";
 
 /**
@@ -211,6 +221,51 @@ export async function attachSceneSkiaPresenter(
 
   let rafId: number | null = null;
   let lastPayload: LayoutCommitPayload | null = null;
+
+  let postProcessEffect: RuntimeEffect | null = null;
+  let sceneColorSurface: Surface | null = null;
+  const postProcessDisabledNotified = new Set<PostProcessDisabledReason>();
+
+  function notifyPostProcessDisabled(reason: PostProcessDisabledReason): void {
+    if (postProcessDisabledNotified.has(reason)) return;
+    postProcessDisabledNotified.add(reason);
+    options?.onPostProcessDisabled?.(reason);
+  }
+
+  if (options?.postProcess) {
+    if (!skSurface.reportBackendTypeIsGPU()) {
+      notifyPostProcessDisabled("software-surface");
+    } else {
+      const compiled = ck.RuntimeEffect.Make(options.postProcess.sksl, (err: string) => {
+        console.warn("[@react-canvas/core-v2] RuntimeEffect compile:", err);
+      });
+      if (!compiled) {
+        notifyPostProcessDisabled("compile-failed");
+      } else {
+        postProcessEffect = compiled;
+      }
+    }
+  }
+
+  function ensureSceneColorSurface(): Surface | null {
+    if (!postProcessEffect) return null;
+    const w = skSurface.width();
+    const h = skSurface.height();
+    if (sceneColorSurface && sceneColorSurface.width() === w && sceneColorSurface.height() === h) {
+      return sceneColorSurface;
+    }
+    sceneColorSurface?.delete();
+    const base = skSurface.imageInfo();
+    const ii: ImageInfo = {
+      width: w,
+      height: h,
+      alphaType: base.alphaType,
+      colorType: base.colorType,
+      colorSpace: base.colorSpace,
+    };
+    sceneColorSurface = skSurface.makeSurface(ii) ?? ck.MakeSurface(w, h);
+    return sceneColorSurface;
+  }
 
   function paintSceneOntoCanvas(skCanvas: Canvas, commit: LayoutCommitPayload): void {
     skCanvas.save();
@@ -622,6 +677,42 @@ export async function attachSceneSkiaPresenter(
   function paint(): boolean {
     const payload = lastPayload;
     if (!payload) return false;
+
+    if (postProcessEffect && options?.postProcess && skSurface.reportBackendTypeIsGPU()) {
+      const scene = ensureSceneColorSurface();
+      if (scene) {
+        paintSceneOntoCanvas(scene.getCanvas(), payload);
+        scene.flush();
+        const snap = scene.makeImageSnapshot();
+        const childShader = snap.makeShaderOptions(
+          ck.TileMode.Clamp,
+          ck.TileMode.Clamp,
+          ck.FilterMode.Linear,
+          ck.MipmapMode.None,
+        );
+        const flat = packPostProcessUniforms(
+          postProcessEffect,
+          options.postProcess.getUniforms({
+            width: bw,
+            height: bh,
+            dpr,
+          }),
+        );
+        const effectShader = postProcessEffect.makeShaderWithChildren(flat, [childShader]);
+        const mainCanvas = skSurface.getCanvas();
+        mainCanvas.clear(ck.Color(248, 250, 252, 255));
+        const overlayPaint = new ck.Paint();
+        overlayPaint.setShader(effectShader);
+        mainCanvas.drawRect(ck.LTRBRect(0, 0, bw, bh), overlayPaint);
+        overlayPaint.delete();
+        effectShader.delete();
+        childShader.delete();
+        snap.delete();
+        skSurface.flush();
+        return true;
+      }
+    }
+
     paintSceneOntoCanvas(skSurface.getCanvas(), payload);
     skSurface.flush();
     return true;
@@ -658,6 +749,8 @@ export async function attachSceneSkiaPresenter(
       g.cancelAnimationFrame(rafId as number);
     }
     runtime.setHitResolver(null);
+    sceneColorSurface?.delete();
+    postProcessEffect?.delete();
     pickSurface?.delete();
     skSurface.delete();
   };
