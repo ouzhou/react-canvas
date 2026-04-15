@@ -16,6 +16,7 @@ export const JuejinPage = () => {
   const { vw, vh } = useViewportSize();
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const postProcess = useGlassLensPostProcess(canvasAreaRef, { radius: 120, lerp: 0.15 });
+  const loadingBarAnimation = "juejin-loading-bar 1.2s ease-in-out infinite";
 
   const onPostProcessDisabled = useCallback((reason: "software-surface" | "compile-failed") => {
     console.warn("[juejin] SkSL post-process disabled:", reason);
@@ -28,7 +29,56 @@ export const JuejinPage = () => {
           return <div>Error loading canvas</div>;
         }
         if (!isReady || !runtime) {
-          return <div>Loading...</div>;
+          return (
+            <div
+              style={{
+                width: vw,
+                height: vh,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#f4f5f5",
+              }}
+            >
+              <style>
+                {`@keyframes juejin-loading-bar {
+                  0% { transform: scaleX(0.25); opacity: 0.5; }
+                  50% { transform: scaleX(1); opacity: 1; }
+                  100% { transform: scaleX(0.25); opacity: 0.5; }
+                }`}
+              </style>
+              <div
+                style={{
+                  width: 240,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 12,
+                }}
+              >
+                <div style={{ fontSize: 15, fontWeight: 500, color: "#4e5969" }}>Loading...</div>
+                <div
+                  style={{
+                    width: "100%",
+                    height: 6,
+                    backgroundColor: "#e5e6eb",
+                    borderRadius: 999,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      backgroundColor: "#1e80ff",
+                      transformOrigin: "left center",
+                      animation: loadingBarAnimation,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
         }
 
         return (
