@@ -1,4 +1,4 @@
-import type { CanvasKit, Paint, Shader, TypefaceFontProvider } from "canvaskit-wasm";
+import type { Canvas, CanvasKit, Paint, Shader, TypefaceFontProvider } from "canvaskit-wasm";
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
 import { computeImageDestSrcRects } from "../media/image-object-fit.ts";
@@ -212,11 +212,7 @@ export async function attachSceneSkiaPresenter(
   let rafId: number | null = null;
   let lastPayload: LayoutCommitPayload | null = null;
 
-  function paint(): boolean {
-    const payload = lastPayload;
-    if (!payload) return false;
-    const commit = payload;
-    const skCanvas = skSurface.getCanvas();
+  function paintSceneOntoCanvas(skCanvas: Canvas, commit: LayoutCommitPayload): void {
     skCanvas.save();
     // DPR 补偿
     skCanvas.scale(rootScale, rootScale);
@@ -621,6 +617,12 @@ export async function attachSceneSkiaPresenter(
     paintFill.delete();
     paintBorder.delete();
     skCanvas.restore();
+  }
+
+  function paint(): boolean {
+    const payload = lastPayload;
+    if (!payload) return false;
+    paintSceneOntoCanvas(skSurface.getCanvas(), payload);
     skSurface.flush();
     return true;
   }
