@@ -7,11 +7,32 @@ import {
   Image,
   SvgPath,
 } from "@react-canvas/react-v2";
+import { useCallback, useMemo } from "react";
 import { useViewportSize } from "../smoke/hooks/use-viewport-size";
 import localParagraphFontUrl from "../assets/NotoSansSC-Regular.otf?url";
 
+/** 掘金页：验证 WebGL 下 SkSL 全屏后处理（轻微暖色偏，无额外 uniform）。 */
+const JUEJIN_POST_SKSL = `uniform shader uScene;
+half4 main(float2 p) {
+    half4 c = uScene.eval(p);
+    half3 t = half3(c.r * 1.05, c.g * 1.02, c.b * 0.95);
+    return half4(saturate(t), c.a);
+}`;
+
 export const JuejinPage = () => {
   const { vw, vh } = useViewportSize();
+
+  const postProcess = useMemo(
+    () => ({
+      sksl: JUEJIN_POST_SKSL,
+      getUniforms: () => ({}),
+    }),
+    [],
+  );
+
+  const onPostProcessDisabled = useCallback((reason: "software-surface" | "compile-failed") => {
+    console.warn("[juejin] SkSL post-process disabled:", reason);
+  }, []);
 
   return (
     <CanvasProvider initOptions={{ defaultParagraphFontUrl: localParagraphFontUrl }}>
@@ -29,6 +50,8 @@ export const JuejinPage = () => {
             height={vh}
             paragraphFontProvider={runtime.paragraphFontProvider}
             defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
+            postProcess={postProcess}
+            onPostProcessDisabled={onPostProcessDisabled}
           >
             <View
               style={{
