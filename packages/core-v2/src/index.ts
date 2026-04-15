@@ -3,15 +3,16 @@ export { resolveCursorFromHitLeaf } from "./input/resolve-cursor.ts";
 export { clientXYToStageLocal, type StageViewportOrigin } from "./input/stage-client-coords.ts";
 export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts";
 export { initCanvasKit } from "./render/canvaskit.ts";
+export { packPostProcessUniforms } from "./render/post-process-uniforms.ts";
 export {
   attachSceneSkiaPresenter,
   type AttachSceneSkiaOptions,
   type PostProcessDisabledReason,
   type PostProcessOptions,
   type PostProcessUniformContext,
-  type PostProcessUniforms,
   type PresentFrameInfo,
 } from "./render/scene-skia-presenter.ts";
+export type { PostProcessUniforms } from "./render/post-process-uniforms.ts";
 export type {
   BackgroundLinearGradient,
   BackgroundRadialGradient,

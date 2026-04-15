@@ -18,6 +18,7 @@ import { mapParagraphTextAlign, mergedRunStyleToCkTextStyle } from "../text/skia
 import { mergePlainTextStyle } from "../text/text-flat-run.ts";
 import { PickBuffer } from "../hit/pick-buffer.ts";
 import { initCanvasKit } from "./canvaskit.ts";
+import type { PostProcessUniforms } from "./post-process-uniforms.ts";
 
 /**
  * 柔和彩虹（高亮）。须为 `#rrggbb` / `rgb()` 等 CanvasKit 可解析串；
@@ -133,11 +134,7 @@ export type PostProcessUniformContext = {
   dpr: number;
 };
 
-/**
- * 每帧可调数值；键为 SkSL 中 `uniform` 声明名；运行期将按 `RuntimeEffect` 元数据打包为 `Float32Array`。
- * 若某 uniform 本帧未提供，填 0。
- */
-export type PostProcessUniforms = Record<string, number | Float32Array>;
+export type { PostProcessUniforms } from "./post-process-uniforms.ts";
 
 export type PostProcessOptions = {
   /** SkSL 源码；须含一个 `shader` 子节点供场景采样（见 README）。 */
