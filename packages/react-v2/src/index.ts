@@ -7,6 +7,7 @@ export type {
   PointerEventType,
   PostProcessDisabledReason,
   PostProcessOptions,
+  PostProcessUniformContext,
   Runtime,
   RuntimeInitSnapshot,
   RuntimeOptions,
@@ -20,6 +21,7 @@ export type {
 export {
   attachCanvasStagePointer,
   attachSceneSkiaPresenter,
+  requestCanvasRepaint,
   clientXYToStageLocal,
   getRuntimeServerSnapshot,
   getRuntimeSnapshot,

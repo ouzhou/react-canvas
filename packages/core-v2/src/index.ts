@@ -7,6 +7,7 @@ export { GLASS_LENS_SKSL } from "./render/glass-lens-sksl.ts";
 export { packPostProcessUniforms } from "./render/post-process-uniforms.ts";
 export {
   attachSceneSkiaPresenter,
+  requestCanvasRepaint,
   type AttachSceneSkiaOptions,
   type PostProcessDisabledReason,
   type PostProcessOptions,

@@ -28,6 +28,17 @@ import { mergePlainTextStyle } from "../text/text-flat-run.ts";
 import { PickBuffer } from "../hit/pick-buffer.ts";
 import { initCanvasKit } from "./canvaskit.ts";
 import { packPostProcessUniforms } from "./post-process-uniforms.ts";
+
+/** 由 {@link attachSceneSkiaPresenter} 注册；用于在「仅 uniform 变化」时唤醒下一帧绘制。 */
+const canvasRepaintRegistry = new WeakMap<HTMLCanvasElement, () => void>();
+
+/**
+ * 请求对指定 `<canvas>` 再调度一次 Skia 绘制（与 `postProcess` 链式重绘配合）。
+ * 须在对应 `attachSceneSkiaPresenter` 完成后才有效。
+ */
+export function requestCanvasRepaint(canvas: HTMLCanvasElement): void {
+  canvasRepaintRegistry.get(canvas)?.();
+}
 import type { PostProcessUniforms } from "./post-process-uniforms.ts";
 
 /**
@@ -155,6 +166,12 @@ export type PostProcessOptions = {
    * 未开启时仍仅在布局提交后绘制。
    */
   continuousRepaint?: boolean;
+  /**
+   * 与 `continuousRepaint` 配合：本帧绘制结束后是否再调度下一帧。
+   * 未提供时等价于始终为 `true`（与旧版「无限 RAF」一致）。
+   * 跟手动画应在 `getUniforms` 内更新状态，再于此判断是否需要继续重绘；指针移动时可调用 {@link requestCanvasRepaint} 唤醒。
+   */
+  shouldContinueRepaint?: (ctx: PostProcessUniformContext) => boolean;
 };
 
 export type AttachSceneSkiaOptions = {
@@ -686,6 +703,7 @@ export async function attachSceneSkiaPresenter(
     if (postProcessEffect && options?.postProcess && skSurface.reportBackendTypeIsGPU()) {
       const scene = ensureSceneColorSurface();
       if (scene) {
+        const uniformCtx: PostProcessUniformContext = { width: bw, height: bh, dpr };
         paintSceneOntoCanvas(scene.getCanvas(), payload);
         scene.flush();
         const snap = scene.makeImageSnapshot();
@@ -697,11 +715,7 @@ export async function attachSceneSkiaPresenter(
         );
         const flat = packPostProcessUniforms(
           postProcessEffect,
-          options.postProcess.getUniforms({
-            width: bw,
-            height: bh,
-            dpr,
-          }),
+          options.postProcess.getUniforms(uniformCtx),
         );
         const effectShader = postProcessEffect.makeShaderWithChildren(flat, [childShader]);
         const mainCanvas = skSurface.getCanvas();
@@ -714,6 +728,12 @@ export async function attachSceneSkiaPresenter(
         childShader.delete();
         snap.delete();
         skSurface.flush();
+        if (options.postProcess.continuousRepaint) {
+          const cont = options.postProcess.shouldContinueRepaint?.(uniformCtx) ?? true;
+          if (cont) {
+            schedulePaint();
+          }
+        }
         return true;
       }
     }
@@ -739,6 +759,10 @@ export async function attachSceneSkiaPresenter(
     }) as unknown as number;
   }
 
+  canvasRepaintRegistry.set(canvas, () => {
+    schedulePaint();
+  });
+
   const unsubLayout = runtime.subscribeAfterLayout((p) => {
     pickBuffer.rebuildPickIdMap(p);
     if (pickSurface) {
@@ -748,35 +772,9 @@ export async function attachSceneSkiaPresenter(
     schedulePaint();
   });
 
-  let continuousRafId: number | null = null;
-  if (options?.postProcess?.continuousRepaint && postProcessEffect) {
-    const loop = (): void => {
-      schedulePaint();
-      continuousRafId =
-        typeof g.requestAnimationFrame === "function"
-          ? g.requestAnimationFrame(loop)
-          : (setTimeout(() => {
-              loop();
-            }, 16) as unknown as number);
-    };
-    continuousRafId =
-      typeof g.requestAnimationFrame === "function"
-        ? g.requestAnimationFrame(loop)
-        : (setTimeout(() => {
-            loop();
-          }, 16) as unknown as number);
-  }
-
   return () => {
     unsubLayout();
-    if (continuousRafId !== null) {
-      if (typeof g.cancelAnimationFrame === "function") {
-        g.cancelAnimationFrame(continuousRafId as number);
-      } else {
-        clearTimeout(continuousRafId as unknown as number);
-      }
-      continuousRafId = null;
-    }
+    canvasRepaintRegistry.delete(canvas);
     if (rafId !== null && typeof g.cancelAnimationFrame === "function") {
       g.cancelAnimationFrame(rafId as number);
     }

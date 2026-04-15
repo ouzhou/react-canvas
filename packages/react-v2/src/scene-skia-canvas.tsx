@@ -79,15 +79,7 @@ export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
       detachSkia?.();
       detachPointer?.();
     };
-  }, [
-    runtime,
-    width,
-    height,
-    paragraphFontProvider,
-    defaultParagraphFontFamily,
-    postProcess?.sksl,
-    postProcess?.continuousRepaint,
-  ]);
+  }, [runtime, width, height, paragraphFontProvider, defaultParagraphFontFamily, postProcess]);
 
   return (
     <canvas

@@ -35,12 +35,20 @@ half4 main(float2 p) {
 
     float distFromCenter = length(px - uLensPos);
     float t = clamp(distFromCenter / uRadius, 0.0, 1.0);
-    float edgeWarp = pow(smoothstep(0.0, 0.98, t), 1.35);
+    // 仅在外圈约 20% 启用扭曲（0.8 -> 1.0）；内部保持基本不变形
+    float rim = smoothstep(0.8, 1.0, t);
+    float edgeWarp = pow(rim, 1.25);
 
+    // 中心保持放大（zoomedVuv），但扭曲只在边缘 rim 生效
     float2 q = zoomedVuv - lensUvCenter;
     float r2 = dot(q, q);
     float barrel = 1.0 + 0.28 * r2 * edgeWarp;
     float2 bentVuv = lensUvCenter + q * barrel;
+    float2 wobble = float2(
+        sin(0.02 * px.x + 0.03 * px.y),
+        cos(0.021 * px.x - 0.017 * px.y)
+    ) * 0.0015 * edgeWarp;
+    float2 bentVuvW = bentVuv + wobble;
 
     float2 dirPix = px - uLensPos;
     float2 direction = length(dirPix) > 1e-4 ? normalize(dirPix) : float2(1.0, 0.0);
@@ -49,9 +57,9 @@ half4 main(float2 p) {
     float2 offsetG = direction * float2((ch - 2.0) / res.x, (ch - 2.0) / res.y) * edgeWarp;
     float2 offsetB = direction * float2((ch - 4.0) / res.x, (ch - 4.0) / res.y) * edgeWarp;
 
-    float2 uvR = bentVuv + offsetR;
-    float2 uvG = bentVuv + offsetG;
-    float2 uvB = bentVuv + offsetB;
+    float2 uvR = clamp(bentVuvW + offsetR, float2(0.0), float2(1.0));
+    float2 uvG = clamp(bentVuvW + offsetG, float2(0.0), float2(1.0));
+    float2 uvB = clamp(bentVuvW + offsetB, float2(0.0), float2(1.0));
     float2 pxR = float2(uvR.x * res.x, (1.0 - uvR.y) * res.y);
     float2 pxG = float2(uvG.x * res.x, (1.0 - uvG.y) * res.y);
     float2 pxB = float2(uvB.x * res.x, (1.0 - uvB.y) * res.y);
