@@ -39,7 +39,7 @@
 - Modify: `packages/core-v2/src/render/scene-skia-presenter.ts`（类型定义区）
 - Modify: `packages/core-v2/src/index.ts`（re-export）
 
-- [ ] **Step 1: 添加类型（仍不接线逻辑）**
+- [x] **Step 1: 添加类型（仍不接线逻辑）**
 
 在 `scene-skia-presenter.ts` 中增加并导出：
 
@@ -75,14 +75,14 @@ export type AttachSceneSkiaOptions = {
 };
 ```
 
-- [ ] **Step 2: `vp check`**
+- [x] **Step 2: `vp check`**
 
 Run: `cd /Users/zhouou/Desktop/react-canvas && vp check`  
 Expected: PASS
 
-- [ ] **Step 3: `index.ts` re-export 新类型**
+- [x] **Step 3: `index.ts` re-export 新类型**
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add packages/core-v2/src/render/scene-skia-presenter.ts packages/core-v2/src/index.ts
