@@ -3,6 +3,7 @@ export { resolveCursorFromHitLeaf } from "./input/resolve-cursor.ts";
 export { clientXYToStageLocal, type StageViewportOrigin } from "./input/stage-client-coords.ts";
 export { canvasBackingStoreSize, gcd } from "./geometry/canvas-backing-store.ts";
 export { initCanvasKit } from "./render/canvaskit.ts";
+export { GLASS_LENS_SKSL } from "./render/glass-lens-sksl.ts";
 export { packPostProcessUniforms } from "./render/post-process-uniforms.ts";
 export {
   attachSceneSkiaPresenter,

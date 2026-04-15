@@ -150,6 +150,11 @@ export type PostProcessOptions = {
   /** SkSL 源码；须含一个 `shader` 子节点供场景采样（见 README）。 */
   sksl: string;
   getUniforms: (ctx: PostProcessUniformContext) => PostProcessUniforms;
+  /**
+   * 为 true 时每帧 `requestAnimationFrame` 触发 `schedulePaint`（用于仅 uniform 变化的后处理，如跟手透镜）。
+   * 未开启时仍仅在布局提交后绘制。
+   */
+  continuousRepaint?: boolean;
 };
 
 export type AttachSceneSkiaOptions = {
@@ -743,8 +748,35 @@ export async function attachSceneSkiaPresenter(
     schedulePaint();
   });
 
+  let continuousRafId: number | null = null;
+  if (options?.postProcess?.continuousRepaint && postProcessEffect) {
+    const loop = (): void => {
+      schedulePaint();
+      continuousRafId =
+        typeof g.requestAnimationFrame === "function"
+          ? g.requestAnimationFrame(loop)
+          : (setTimeout(() => {
+              loop();
+            }, 16) as unknown as number);
+    };
+    continuousRafId =
+      typeof g.requestAnimationFrame === "function"
+        ? g.requestAnimationFrame(loop)
+        : (setTimeout(() => {
+            loop();
+          }, 16) as unknown as number);
+  }
+
   return () => {
     unsubLayout();
+    if (continuousRafId !== null) {
+      if (typeof g.cancelAnimationFrame === "function") {
+        g.cancelAnimationFrame(continuousRafId as number);
+      } else {
+        clearTimeout(continuousRafId as unknown as number);
+      }
+      continuousRafId = null;
+    }
     if (rafId !== null && typeof g.cancelAnimationFrame === "function") {
       g.cancelAnimationFrame(rafId as number);
     }

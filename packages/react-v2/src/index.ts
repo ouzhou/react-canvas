@@ -23,6 +23,7 @@ export {
   clientXYToStageLocal,
   getRuntimeServerSnapshot,
   getRuntimeSnapshot,
+  GLASS_LENS_SKSL,
   initRuntime,
   resetRuntimeInitForTests,
   subscribeRuntimeInit,

@@ -33,6 +33,7 @@
   ```
 
 - **Uniform**：通过 `getUniforms(ctx)` 返回 `Record<string, number | Float32Array | number[]>`，键名与 SkSL 中 `uniform` 名一致；未提供的分量填 `0`。
+- **`continuousRepaint`**：为 `true` 时每帧 `requestAnimationFrame` 触发绘制（用于跟手透镜等仅 uniform 变化的场景）；否则仍在布局提交后绘制。
 
 ---
 

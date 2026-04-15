@@ -86,11 +86,13 @@ export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
     paragraphFontProvider,
     defaultParagraphFontFamily,
     postProcess?.sksl,
+    postProcess?.continuousRepaint,
   ]);
 
   return (
     <canvas
       ref={ref}
+      data-react-canvas="skia"
       style={{
         position: "absolute",
         inset: 0,
