@@ -17,6 +17,11 @@ export function attachCanvasStagePointer(
     return clientXYToStageLocal({ left: r.left, top: r.top }, clientX, clientY);
   };
 
+  /** stage px → world px（相机逆变换）。 */
+  const toWorld = (stageX: number, stageY: number) => {
+    return runtime.screenToWorld(stageX, stageY);
+  };
+
   const dispatch = (
     type: "pointerdown" | "pointerup" | "click",
     el: HTMLCanvasElement,
@@ -24,27 +29,29 @@ export function attachCanvasStagePointer(
     clientY: number,
     buttons?: number,
   ): void => {
-    const { x, y } = toStage(el, clientX, clientY);
-    lastStageX = x;
-    lastStageY = y;
+    const stage = toStage(el, clientX, clientY);
+    const { x, y } = toWorld(stage.x, stage.y);
+    lastStageX = stage.x;
+    lastStageY = stage.y;
     runtime.dispatchPointerLike({ type, x, y, buttons });
   };
 
   let rafId: number | null = null;
-  let pending: { x: number; y: number; buttons: number } | null = null;
+  let pending: { stageX: number; stageY: number; buttons: number } | null = null;
 
   const flushMove = (): void => {
     rafId = null;
     if (pending === null) return;
-    const { x, y, buttons } = pending;
+    const { stageX, stageY, buttons } = pending;
     pending = null;
-    lastStageX = x;
-    lastStageY = y;
+    lastStageX = stageX;
+    lastStageY = stageY;
+    const { x, y } = toWorld(stageX, stageY);
     runtime.dispatchPointerLike({ type: "pointermove", x, y, buttons });
   };
 
-  const schedulePointerMove = (x: number, y: number, buttons: number): void => {
-    pending = { x, y, buttons };
+  const schedulePointerMove = (stageX: number, stageY: number, buttons: number): void => {
+    pending = { stageX, stageY, buttons };
     if (rafId !== null) return;
     rafId = requestAnimationFrame(flushMove);
   };
@@ -71,10 +78,10 @@ export function attachCanvasStagePointer(
   };
 
   const onPointerMove = (e: PointerEvent): void => {
-    const { x, y } = toStage(canvas, e.clientX, e.clientY);
-    lastStageX = x;
-    lastStageY = y;
-    schedulePointerMove(x, y, e.buttons);
+    const { x: stageX, y: stageY } = toStage(canvas, e.clientX, e.clientY);
+    lastStageX = stageX;
+    lastStageY = stageY;
+    schedulePointerMove(stageX, stageY, e.buttons);
   };
 
   const onPointerLeave = (): void => {
@@ -82,7 +89,8 @@ export function attachCanvasStagePointer(
   };
 
   const onWheel = (e: WheelEvent): void => {
-    const { x, y } = toStage(canvas, e.clientX, e.clientY);
+    const stage = toStage(canvas, e.clientX, e.clientY);
+    const { x, y } = toWorld(stage.x, stage.y);
     runtime.dispatchWheel({ x, y, deltaY: e.deltaY });
   };
 

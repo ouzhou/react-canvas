@@ -6,6 +6,7 @@ import { useSceneRuntime } from "./hooks.ts";
 
 export type ScrollViewProps = {
   id?: string;
+  name?: string;
   style?: ViewStyle | ((state: { hovered: boolean }) => ViewStyle);
   /**
    * 变化时将纵向滚动位置重置为 `0`（同 id 的 ScrollView 在切换页面 / tab 时仍保留节点，需显式重置）。
@@ -19,7 +20,7 @@ export type ScrollViewProps = {
  * 默认视口 `overflow: "hidden"`（与 core-v2 ScrollView 规格一致）。
  */
 export function ScrollView(props: ScrollViewProps): ReactNode {
-  const { style, children, id: idProp, scrollResetKey } = props;
+  const { style, children, id: idProp, scrollResetKey, name } = props;
   const rt = useSceneRuntime();
   const parentId = useContext(ParentSceneIdContext);
   const generated = useId().replace(/:/g, "");
@@ -58,12 +59,17 @@ export function ScrollView(props: ScrollViewProps): ReactNode {
         queueMicrotask(scheduleInsert);
         return;
       }
-      rt.insertScrollView(parentId, scrollId, styleRef.current);
-      rt.insertView(scrollId, contentId, {
-        flexDirection: "column",
-        alignSelf: "flex-start",
-        width: "100%",
-      });
+      rt.insertScrollView(parentId, scrollId, styleRef.current, name);
+      rt.insertView(
+        scrollId,
+        contentId,
+        {
+          flexDirection: "column",
+          alignSelf: "flex-start",
+          width: "100%",
+        },
+        name ? `${name} Content` : undefined,
+      );
     };
 
     scheduleInsert();

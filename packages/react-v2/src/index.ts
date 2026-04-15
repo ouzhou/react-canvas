@@ -1,6 +1,7 @@
 export type {
   BackgroundLinearGradient,
   BackgroundRadialGradient,
+  Camera,
   ImageObjectFit,
   LayoutCommitPayload,
   PointerEventType,

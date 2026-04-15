@@ -1,0 +1,521 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=utf-8\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language: \n"
+"Language-Team: \n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#: src/App.tsx
+msgid " 这一帧的数据。"
+msgstr " 这一帧的数据。"
+
+#: src/App.tsx
+msgid "。请先选择目标帧，工具会写入对应那一棵 JSON 树。"
+msgstr "。请先选择目标帧，工具会写入对应那一棵 JSON 树。"
+
+#: src/App.tsx
+msgid "（暂无图层数据）"
+msgstr "（暂无图层数据）"
+
+#: src/App.tsx
+msgid "）。下方展示的是 "
+msgstr "）。下方展示的是 "
+
+#: src/App.tsx
+msgid "# 或 transparent"
+msgstr "# 或 transparent"
+
+#: src/App.tsx
+msgid "AI 对话"
+msgstr "AI 对话"
+
+#: src/App.tsx
+msgid "API Token（本地持久化）"
+msgstr "API Token（本地持久化）"
+
+#: src/App.tsx
+msgid "Canvas 正在加载..."
+msgstr "Canvas 正在加载..."
+
+#: src/App.tsx
+msgid "component（JSON）"
+msgstr "component（JSON）"
+
+#: src/App.tsx
+msgid "DeepSeek Base URL（本地持久化）"
+msgstr "DeepSeek Base URL（本地持久化）"
+
+#: src/App.tsx
+msgid "displayTitle（框外标题）"
+msgstr "displayTitle（框外标题）"
+
+#: src/App.tsx
+msgid "English"
+msgstr "English"
+
+#: src/App.tsx
+#: src/App.tsx
+msgid "frameKey 不能为空"
+msgstr "frameKey 不能为空"
+
+#: src/App.tsx
+msgid "Frames"
+msgstr "Frames"
+
+#: src/App.tsx
+msgid "Free"
+msgstr "Free"
+
+#: src/App.tsx
+msgid "Lab"
+msgstr "Lab"
+
+#: src/App.tsx
+msgid "Lab 中每一帧对应"
+msgstr "Lab 中每一帧对应"
+
+#: src/App.tsx
+msgid "limit（1–100）"
+msgstr "limit（1–100）"
+
+#: src/App.tsx
+msgid "phoneNavTitle（壳内导航）"
+msgstr "phoneNavTitle（壳内导航）"
+
+#: src/App.tsx
+msgid "props（可选 JSON，会与 node.props 合并）"
+msgstr "props（可选 JSON，会与 node.props 合并）"
+
+#: src/App.tsx
+msgid "query（空格分词；留空则列出前若干节点）"
+msgstr "query（空格分词；留空则列出前若干节点）"
+
+#: src/App.tsx
+msgid "React Canvas Lab"
+msgstr "React Canvas Lab"
+
+#: src/App.tsx
+msgid "text 仅对 type: Text 生效。改按钮文案请先 query 找到子 Text 的 nodeId（如 add-to-cart-text）。"
+msgstr "text 仅对 type: Text 生效。改按钮文案请先 query 找到子 Text 的 nodeId（如 add-to-cart-text）。"
+
+#: src/App.tsx
+msgid "text（可选）"
+msgstr "text（可选）"
+
+#: src/App.tsx
+msgid "X/Y 为布局引擎计算结果；改宽高与样式即可间接影响位置。"
+msgstr "X/Y 为布局引擎计算结果；改宽高与样式即可间接影响位置。"
+
+#: src/App.tsx
+msgid "一棵"
+msgstr "一棵"
+
+#: src/App.tsx
+msgid "上次执行结果"
+msgstr "上次执行结果"
+
+#: src/App.tsx
+msgid "与 AI 对话里调用的工具"
+msgstr "与 AI 对话里调用的工具"
+
+#: src/App.tsx
+msgid "业务组件 (Business)"
+msgstr "业务组件 (Business)"
+
+#: src/App.tsx
+msgid "中文"
+msgstr "中文"
+
+#: src/App.tsx
+msgid "为何是只读？"
+msgstr "为何是只读？"
+
+#: src/App.tsx
+msgid "仅当目标节点 type 为 Text 时生效。若需改按钮/容器上的可见文案，请先 querySchemaNodes 用语义关键词找到对应 Text 的 nodeId"
+msgstr "仅当目标节点 type 为 Text 时生效。若需改按钮/容器上的可见文案，请先 querySchemaNodes 用语义关键词找到对应 Text 的 nodeId"
+
+#: src/App.tsx
+msgid "从某一帧 JSON 树删除节点（及子树）。默认操作商品详情帧。"
+msgstr "从某一帧 JSON 树删除节点（及子树）。默认操作商品详情帧。"
+
+#: src/App.tsx
+msgid "位置 X"
+msgstr "位置 X"
+
+#: src/App.tsx
+msgid "位置 Y"
+msgstr "位置 Y"
+
+#: src/App.tsx
+msgid "你好！我是 UI 助手，可以帮你修改画布上的界面元素。请告诉我你想做什么修改？"
+msgstr "你好！我是 UI 助手，可以帮你修改画布上的界面元素。请告诉我你想做什么修改？"
+
+#: src/App.tsx
+msgid ""
+"你是一个 UI 助手，帮助用户修改画布上的移动端 UI 组件。\n"
+"你可以调用以下工具：\n"
+"- querySchemaNodes: 按关键词在某一帧的 JSON 树里检索节点，得到正确的 nodeId（改文案前若不确定 id，请先检索）\n"
+"- updateComponentProps: 修改节点属性；text 字段仅对 type 为 Text 的节点生效，容器上的可见文案应对子 Text 节点的 nodeId 修改\n"
+"- insertComponent: 在指定父节点下插入新组件\n"
+"- removeComponent: 删除指定节点\n"
+"\n"
+"请优先使用工具来修改 UI，工具调用会立即生效并反映在画布上。\n"
+"画布上有多帧预览，每一帧对应一棵独立的 JSON 树（可用 targetFrame 指定，默认 product）。\n"
+"\n"
+"重要：若用户诉求需要改界面（改文案/样式/增删节点），在一条回复内连续调用工具直到完成诉求，不要只执行 querySchemaNodes 就结束。典型流程：querySchemaNodes 得到 nodeId → 立刻 updateComponentProps / insertComponent / removeComponent 完成修改；仅在纯查询或已明确 nodeId 时可只调用一步。"
+msgstr ""
+"你是一个 UI 助手，帮助用户修改画布上的移动端 UI 组件。\n"
+"你可以调用以下工具：\n"
+"- querySchemaNodes: 按关键词在某一帧的 JSON 树里检索节点，得到正确的 nodeId（改文案前若不确定 id，请先检索）\n"
+"- updateComponentProps: 修改节点属性；text 字段仅对 type 为 Text 的节点生效，容器上的可见文案应对子 Text 节点的 nodeId 修改\n"
+"- insertComponent: 在指定父节点下插入新组件\n"
+"- removeComponent: 删除指定节点\n"
+"\n"
+"请优先使用工具来修改 UI，工具调用会立即生效并反映在画布上。\n"
+"画布上有多帧预览，每一帧对应一棵独立的 JSON 树（可用 targetFrame 指定，默认 product）。\n"
+"\n"
+"重要：若用户诉求需要改界面（改文案/样式/增删节点），在一条回复内连续调用工具直到完成诉求，不要只执行 querySchemaNodes 就结束。典型流程：querySchemaNodes 得到 nodeId → 立刻 updateComponentProps / insertComponent / removeComponent 完成修改；仅在纯查询或已明确 nodeId 时可只调用一步。"
+
+#: src/App.tsx
+msgid "你选的是外壳或公共装饰（例如手机框、状态栏），不算本页可编辑内容，右侧改不了。请在左侧图层里点页面里的具体元素。"
+msgstr "你选的是外壳或公共装饰（例如手机框、状态栏），不算本页可编辑内容，右侧改不了。请在左侧图层里点页面里的具体元素。"
+
+#: src/App.tsx
+msgid "保存"
+msgstr "保存"
+
+#: src/App.tsx
+msgid "修改某一帧 JSON 树里某个节点的属性（样式、文本等）。默认修改商品详情帧 product。"
+msgstr "修改某一帧 JSON 树里某个节点的属性（样式、文本等）。默认修改商品详情帧 product。"
+
+#: src/App.tsx
+msgid "共用"
+msgstr "共用"
+
+#: src/App.tsx
+msgid "关"
+msgstr "关"
+
+#: src/App.tsx
+#: src/App.tsx
+msgid "关闭"
+msgstr "关闭"
+
+#: src/App.tsx
+msgid "只读预览：无对应 schema 节点时无法写回。"
+msgstr "只读预览：无对应 schema 节点时无法写回。"
+
+#: src/App.tsx
+msgid "向父节点追加子节点。默认插到 product-details 下。"
+msgstr "向父节点追加子节点。默认插到 product-details 下。"
+
+#: src/App.tsx
+msgid "唯一帧键，字母开头，如 login、orders_v2"
+msgstr "唯一帧键，字母开头，如 login、orders_v2"
+
+#: src/App.tsx
+msgid "图层树"
+msgstr "图层树"
+
+#: src/App.tsx
+msgid "在指定帧的 JSON 树里按关键词检索节点，返回 nodeId、类型、文案摘要与路径。用于在改文案/样式前先找到正确的 nodeId。支持英文及常见中文词（如 价格、价、元）与 schema 中英 id/name 的别名扩展匹配；非向量语义，仍为子串打分。"
+msgstr "在指定帧的 JSON 树里按关键词检索节点，返回 nodeId、类型、文案摘要与路径。用于在改文案/样式前先找到正确的 nodeId。支持英文及常见中文词（如 价格、价、元）与 schema 中英 id/name 的别名扩展匹配；非向量语义，仍为子串打分。"
+
+#: src/App.tsx
+msgid "在某一帧 JSON 树的指定父节点下插入子组件。默认操作商品详情帧。"
+msgstr "在某一帧 JSON 树的指定父节点下插入子组件。默认操作商品详情帧。"
+
+#: src/App.tsx
+msgid "基础图元 (Primitives)"
+msgstr "基础图元 (Primitives)"
+
+#: src/App.tsx
+msgid "外观 (Appearance)"
+msgstr "外观 (Appearance)"
+
+#: src/App.tsx
+msgid "字体 (Font)"
+msgstr "字体 (Font)"
+
+#: src/App.tsx
+msgid "字号"
+msgstr "字号"
+
+#: src/App.tsx
+msgid "字重"
+msgstr "字重"
+
+#: src/App.tsx
+msgid "宽度 W"
+msgstr "宽度 W"
+
+#: src/App.tsx
+msgid "展开侧边栏"
+msgstr "展开侧边栏"
+
+#: src/App.tsx
+msgid "属性"
+msgstr "属性"
+
+#: src/App.tsx
+msgid "工具测试"
+msgstr "工具测试"
+
+#: src/App.tsx
+msgid "工具测试 / JSON 树预览 · 目标帧"
+msgstr "工具测试 / JSON 树预览 · 目标帧"
+
+#. placeholder {0}: nodeSchema.type
+#: src/App.tsx
+msgid "已关联到可编辑 schema（{0}{linkedNameSuffix}）"
+msgstr "已关联到可编辑 schema（{0}{linkedNameSuffix}）"
+
+#: src/App.tsx
+msgid "布局 (Layout)"
+msgstr "布局 (Layout)"
+
+#: src/App.tsx
+msgid "帧键「{fk}」已存在"
+msgstr "帧键「{fk}」已存在"
+
+#: src/App.tsx
+msgid "帧键「{fk}」已存在，请换名或直接使用该 targetFrame"
+msgstr "帧键「{fk}」已存在，请换名或直接使用该 targetFrame"
+
+#: src/App.tsx
+msgid "开"
+msgstr "开"
+
+#: src/App.tsx
+msgid "当前帧 JSON 树（实时）· {frameTemplate}"
+msgstr "当前帧 JSON 树（实时）· {frameTemplate}"
+
+#: src/App.tsx
+msgid "手型工具（拖拽画布）"
+msgstr "手型工具（拖拽画布）"
+
+#: src/App.tsx
+msgid "手机壳内顶部导航栏标题"
+msgstr "手机壳内顶部导航栏标题"
+
+#: src/App.tsx
+msgid "执行 addFrame"
+msgstr "执行 addFrame"
+
+#: src/App.tsx
+msgid "执行 insertComponent"
+msgstr "执行 insertComponent"
+
+#: src/App.tsx
+msgid "执行 querySchemaNodes"
+msgstr "执行 querySchemaNodes"
+
+#: src/App.tsx
+msgid "执行 removeComponent"
+msgstr "执行 removeComponent"
+
+#: src/App.tsx
+msgid "执行 updateComponentProps"
+msgstr "执行 updateComponentProps"
+
+#: src/App.tsx
+msgid "收起侧边栏"
+msgstr "收起侧边栏"
+
+#: src/App.tsx
+msgid "文字颜色"
+msgstr "文字颜色"
+
+#: src/App.tsx
+msgid "文本内容"
+msgstr "文本内容"
+
+#: src/App.tsx
+msgid "新增一帧画布预览：仅创建空根节点 ScreenRoot；请随后用 insertComponent、updateComponentProps 多次调用以流式搭建 UI（勿整树替换）。"
+msgstr "新增一帧画布预览：仅创建空根节点 ScreenRoot；请随后用 insertComponent、updateComponentProps 多次调用以流式搭建 UI（勿整树替换）。"
+
+#: src/App.tsx
+msgid "新增一帧空页面根节点，之后用 insert / update 流式加内容。frameKey 勿与已有重复。"
+msgstr "新增一帧空页面根节点，之后用 insert / update 流式加内容。frameKey 勿与已有重复。"
+
+#: src/App.tsx
+msgid "无 schema"
+msgstr "无 schema"
+
+#. placeholder {0}: targetNode.type
+#: src/App.tsx
+msgid "未写入 text：节点「{nodeId}」类型为 {0}，仅 Text 可改文案。请先调用 querySchemaNodes，用关键词检索展示文案的 Text 的 nodeId（如 basket、加购）。props 仍会合并。"
+msgstr "未写入 text：节点「{nodeId}」类型为 {0}，仅 Text 可改文案。请先调用 querySchemaNodes，用关键词检索展示文案的 Text 的 nodeId（如 basket、加购）。props 仍会合并。"
+
+#: src/App.tsx
+msgid "未找到 id/name 为「{nodeId}」的节点，未写入 text"
+msgstr "未找到 id/name 为「{nodeId}」的节点，未写入 text"
+
+#: src/App.tsx
+#: src/App.tsx
+#: src/App.tsx
+msgid "未知 frameKey「{frame}」"
+msgstr "未知 frameKey「{frame}」"
+
+#. placeholder {0}: Object.keys(frameSchemas).join(", ")
+#: src/App.tsx
+msgid "未知 frameKey「{frame}」。可用键：{0}"
+msgstr "未知 frameKey「{frame}」。可用键：{0}"
+
+#: src/App.tsx
+msgid "检索关键词，空格分词；匹配 id、name、type、节点 text。留空则按前序遍历列出前若干节点供浏览"
+msgstr "检索关键词，空格分词；匹配 id、name、type、节点 text。留空则按前序遍历列出前若干节点供浏览"
+
+#: src/App.tsx
+msgid "每一帧有一棵独立的 JSON 树（frameSchemas[模板名]）。属性面板会把你选中的图层匹配到当前帧那棵树里的节点；有 id / name 且在 JSON 里存在才能写回。"
+msgstr "每一帧有一棵独立的 JSON 树（frameSchemas[模板名]）。属性面板会把你选中的图层匹配到当前帧那棵树里的节点；有 id / name 且在 JSON 里存在才能写回。"
+
+#: src/App.tsx
+msgid "流式搭建：insertComponent 的 targetFrame 填此 frameKey，parentId 可先填 {frameKey}-root"
+msgstr "流式搭建：insertComponent 的 targetFrame 填此 frameKey，parentId 可先填 {frameKey}-root"
+
+#: src/App.tsx
+msgid "清空"
+msgstr "清空"
+
+#: src/App.tsx
+msgid "点击下方按钮后，此处显示返回值。"
+msgstr "点击下方按钮后，此处显示返回值。"
+
+#: src/App.tsx
+msgid "父节点的 id 或 name"
+msgstr "父节点的 id 或 name"
+
+#: src/App.tsx
+msgid "独立的根节点树（"
+msgstr "独立的根节点树（"
+
+#: src/App.tsx
+msgid "用语义/关键词在当前目标帧的 JSON 里检索节点（匹配 id、name、type、文案），拿到 nodeId 后再去改 updateComponentProps。不是向量检索，请拆成中英文关键词。"
+msgstr "用语义/关键词在当前目标帧的 JSON 里检索节点（匹配 id、name、type、文案），拿到 nodeId 后再去改 updateComponentProps。不是向量检索，请拆成中英文关键词。"
+
+#: src/App.tsx
+msgid "画布上该帧上方的说明标题"
+msgstr "画布上该帧上方的说明标题"
+
+#. placeholder {0}: initError.message
+#: src/App.tsx
+msgid "画布初始化失败：{0}"
+msgstr "画布初始化失败：{0}"
+
+#: src/App.tsx
+msgid "目标帧键"
+msgstr "目标帧键"
+
+#: src/App.tsx
+#~ msgid "目标帧键 frameKey：如 product、explore，或 addFrame 注册的 login 等"
+#~ msgstr "目标帧键 frameKey：如 product、explore，或 addFrame 注册的 login 等"
+
+#: src/App.tsx
+msgid "目标帧键，默认 product"
+msgstr "目标帧键，默认 product"
+
+#: src/App.tsx
+msgid "组件库"
+msgstr "组件库"
+
+#: src/App.tsx
+#: src/App.tsx
+msgid "编辑器 & AI"
+msgstr "编辑器 & AI"
+
+#: src/App.tsx
+msgid "背景色"
+msgstr "背景色"
+
+#: src/App.tsx
+msgid "节点无布局数据"
+msgstr "节点无布局数据"
+
+#: src/App.tsx
+msgid "节点的 id 或 name"
+msgstr "节点的 id 或 name"
+
+#: src/App.tsx
+msgid "要修改的帧键；默认 product；动态帧为 addFrame 注册的 frameKey"
+msgstr "要修改的帧键；默认 product；动态帧为 addFrame 注册的 frameKey"
+
+#: src/App.tsx
+msgid "要删除的节点的 id 或 name"
+msgstr "要删除的节点的 id 或 name"
+
+#: src/App.tsx
+msgid "要可编辑：展开对应帧的图层树，点由 SchemaRenderer 渲染的节点（例如商品帧的 product-title、探索帧的 explore-c1-t 等）。"
+msgstr "要可编辑：展开对应帧的图层树，点由 SchemaRenderer 渲染的节点（例如商品帧的 product-title、探索帧的 explore-c1-t 等）。"
+
+#: src/App.tsx
+msgid "要合并到 node.props 的属性对象，例如 style.color 或等价的嵌套样式字段"
+msgstr "要合并到 node.props 的属性对象，例如 style.color 或等价的嵌套样式字段"
+
+#: src/App.tsx
+msgid "要插入的组件 schema"
+msgstr "要插入的组件 schema"
+
+#: src/App.tsx
+msgid "要检索的帧键"
+msgstr "要检索的帧键"
+
+#: src/App.tsx
+msgid "设置"
+msgstr "设置"
+
+#: src/App.tsx
+#: src/App.tsx
+msgid "请先在设置中提供 API Token"
+msgstr "请先在设置中提供 API Token"
+
+#: src/App.tsx
+msgid "请在左侧图层树中选择一个节点"
+msgstr "请在左侧图层树中选择一个节点"
+
+#: src/App.tsx
+msgid "输入 token（保存到 localStorage）"
+msgstr "输入 token（保存到 localStorage）"
+
+#: src/App.tsx
+msgid "输入文本…"
+msgstr "输入文本…"
+
+#: src/App.tsx
+msgid "输入消息…"
+msgstr "输入消息…"
+
+#: src/App.tsx
+msgid "选了手机壳装饰（帧边框 frame-…、PhoneShell、StatusBar、NavBar 等）——它们不在各帧的 JSON 里。"
+msgstr "选了手机壳装饰（帧边框 frame-…、PhoneShell、StatusBar、NavBar 等）——它们不在各帧的 JSON 里。"
+
+#: src/components/color-input.tsx
+msgid "选择颜色"
+msgstr "选择颜色"
+
+#: src/App.tsx
+msgid "重置缩放"
+msgstr "重置缩放"
+
+#. placeholder {0}: e instanceof Error ? e.message : String(e)
+#: src/App.tsx
+#: src/App.tsx
+#: src/App.tsx
+#: src/App.tsx
+#: src/App.tsx
+msgid "错误: {0}"
+msgstr "错误: {0}"
+
+#: src/App.tsx
+msgid "高度 H"
+msgstr "高度 H"
+
+#: src/App.tsx
+msgid "默认删除上面插入的 lab-tool-test-node（需先插入）。"
+msgstr "默认删除上面插入的 lab-tool-test-node（需先插入）。"

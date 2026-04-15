@@ -6,6 +6,7 @@ import { useSceneRuntime } from "./hooks.ts";
 
 export type SvgPathProps = {
   id?: string;
+  name?: string;
   d: string;
   viewBox?: string;
   style?: ViewStyle | ((state: { hovered: boolean }) => ViewStyle);
@@ -31,6 +32,7 @@ export function SvgPath(props: SvgPathProps): ReactNode {
     onPointerUp,
     onClick,
     id: idProp,
+    name,
   } = props;
   const rt = useSceneRuntime();
   const parentId = useContext(ParentSceneIdContext);
@@ -70,15 +72,20 @@ export function SvgPath(props: SvgPathProps): ReactNode {
         queueMicrotask(scheduleInsert);
         return;
       }
-      rt.insertSvgPath(parentId, nodeId, {
-        d,
-        viewBox,
-        style: styleRef.current,
-        stroke,
-        fill,
-        strokeWidth,
-        onError: (e) => onErrorRef.current?.(e),
-      });
+      rt.insertSvgPath(
+        parentId,
+        nodeId,
+        {
+          d,
+          viewBox,
+          style: styleRef.current,
+          stroke,
+          fill,
+          strokeWidth,
+          onError: (e) => onErrorRef.current?.(e),
+        },
+        name,
+      );
     };
 
     scheduleInsert();

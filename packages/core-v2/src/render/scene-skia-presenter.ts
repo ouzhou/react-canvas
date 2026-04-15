@@ -193,7 +193,12 @@ export async function attachSceneSkiaPresenter(
     const commit = payload;
     const skCanvas = skSurface.getCanvas();
     skCanvas.save();
+    // DPR 补偿
     skCanvas.scale(rootScale, rootScale);
+    // 相机变换：先平移，再缩放（等价于 screen = world * scale + (tx, ty)）
+    const cam = runtime.getCamera();
+    skCanvas.translate(cam.tx, cam.ty);
+    skCanvas.scale(cam.scale, cam.scale);
     skCanvas.clear(ck.Color(248, 250, 252, 255));
 
     const paintFill = new ck.Paint();

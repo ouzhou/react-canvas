@@ -19,6 +19,7 @@ const TEXT_DISPLAY = "RcCanvasText";
 
 export type TextProps = {
   id?: string;
+  name?: string;
   style?: ViewStyle | ((state: { hovered: boolean }) => ViewStyle);
   children?: ReactNode;
   onPointerDown?: (e: ScenePointerEvent) => void;
@@ -118,7 +119,7 @@ function toInsertTextPayload(runs: TextFlatRun[]): string | TextFlatRun[] {
 }
 
 export function Text(props: TextProps): ReactNode {
-  const { style, children, onPointerDown, onPointerUp, onClick, id: idProp } = props;
+  const { style, children, onPointerDown, onPointerUp, onClick, id: idProp, name } = props;
   const rt = useSceneRuntime();
   const parentId = useContext(ParentSceneIdContext);
   const generated = useId().replace(/:/g, "");
@@ -169,7 +170,7 @@ export function Text(props: TextProps): ReactNode {
         queueMicrotask(scheduleInsert);
         return;
       }
-      rt.insertText(parentId, nodeId, textPayload, parsedStyle);
+      rt.insertText(parentId, nodeId, textPayload, parsedStyle, name);
     };
 
     scheduleInsert();

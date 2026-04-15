@@ -39,6 +39,7 @@ function assertNoBareTextChildren(children: ReactNode): void {
 
 export type ViewProps = {
   id?: string;
+  name?: string;
   /**
    * 静态 `ViewStyle` 对象，或 `({ hovered }) => ViewStyle`（由运行时合成 `pointerenter` / `pointerleave` 驱动 `hovered`）。
    *
@@ -54,7 +55,7 @@ export type ViewProps = {
 };
 
 export function View(props: ViewProps): ReactNode {
-  const { style, children, onPointerDown, onPointerUp, onClick, id: idProp } = props;
+  const { style, children, onPointerDown, onPointerUp, onClick, id: idProp, name } = props;
   assertNoBareTextChildren(children);
   const rt = useSceneRuntime();
   const parentId = useContext(ParentSceneIdContext);
@@ -100,7 +101,7 @@ export function View(props: ViewProps): ReactNode {
         queueMicrotask(scheduleInsert);
         return;
       }
-      rt.insertView(parentId, nodeId, styleRef.current);
+      rt.insertView(parentId, nodeId, styleRef.current, name);
     };
 
     scheduleInsert();

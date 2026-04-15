@@ -17,12 +17,7 @@
   ],
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "development": "./src/index.ts",
-      "import": "./dist/index.mjs",
-      "default": "./dist/index.mjs"
-    },
+    ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -53,5 +48,8 @@
     "bumpp": "^11.0.1",
     "typescript": "^6.0.2",
     "vite-plus": "^0.1.14"
+  },
+  "inlinedDependencies": {
+    "yoga-layout": "3.2.1"
   }
 }

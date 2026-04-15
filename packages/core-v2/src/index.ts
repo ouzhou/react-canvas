@@ -58,6 +58,7 @@ export {
   maxScrollYForNode,
   SCENE_CONTENT_ID,
   SCENE_MODAL_ID,
+  type Camera,
   type CreateSceneRuntimeOptions,
   type InsertImageOptions,
   type InsertSvgPathOptions,

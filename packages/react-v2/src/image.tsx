@@ -6,6 +6,7 @@ import { useSceneRuntime } from "./hooks.ts";
 
 export type ImageProps = {
   id?: string;
+  name?: string;
   uri: string;
   objectFit?: ImageObjectFit;
   style?: ViewStyle | ((state: { hovered: boolean }) => ViewStyle);
@@ -27,6 +28,7 @@ export function Image(props: ImageProps): ReactNode {
     onPointerUp,
     onClick,
     id: idProp,
+    name,
   } = props;
   const rt = useSceneRuntime();
   const parentId = useContext(ParentSceneIdContext);
@@ -68,13 +70,18 @@ export function Image(props: ImageProps): ReactNode {
         queueMicrotask(scheduleInsert);
         return;
       }
-      rt.insertImage(parentId, nodeId, {
-        uri,
-        objectFit,
-        style: styleRef.current,
-        onLoad: () => onLoadRef.current?.(),
-        onError: (e) => onErrorRef.current?.(e),
-      });
+      rt.insertImage(
+        parentId,
+        nodeId,
+        {
+          uri,
+          objectFit,
+          style: styleRef.current,
+          onLoad: () => onLoadRef.current?.(),
+          onError: (e) => onErrorRef.current?.(e),
+        },
+        name,
+      );
     };
 
     scheduleInsert();

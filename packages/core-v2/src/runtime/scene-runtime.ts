@@ -212,6 +212,19 @@ export type LayoutCommitPayload = {
   layout: LayoutSnapshot;
 };
 
+/**
+ * 场景相机状态。变换顺序：`screen = world * scale + (tx, ty)`。
+ * 逆变换：`world = (screen - (tx, ty)) / scale`。
+ */
+export type Camera = {
+  /** 缩放系数，`1` 为 1:1，`2` 为放大两倍。范围建议 `[0.01, 64]`。 */
+  scale: number;
+  /** 水平平移（screen px）。 */
+  tx: number;
+  /** 垂直平移（screen px）。 */
+  ty: number;
+};
+
 export type SceneRuntime = {
   getRootId(): string;
   /** 主内容槽位 id，与 {@link SCENE_CONTENT_ID} 相同。 */
@@ -232,9 +245,9 @@ export type SceneRuntime = {
    * 指针离开 `<canvas>` 命中区时由 input 层调用：对上一命中叶派发 `pointerleave` 并清空内部 hover 状态。
    */
   notifyPointerLeftStage(x: number, y: number): void;
-  insertView(parentId: string, id: string, style: ViewStyle): void;
+  insertView(parentId: string, id: string, style: ViewStyle, label?: string): void;
   /** 插入纵向滚动容器；`scrollY` 初值为 `0`，默认 `overflow: "hidden"` 与传入 `style` 合并。 */
-  insertScrollView(parentId: string, id: string, style: ViewStyle): void;
+  insertScrollView(parentId: string, id: string, style: ViewStyle, label?: string): void;
   /** 增加纵向滚动偏移（px），钳制后 **不重跑 Yoga**，仅 `emitLayoutCommit`。 */
   addScrollY(id: string, deltaY: number): void;
   /** 设置纵向滚动绝对位置（px），钳制到 `[0, maxScrollY]`；不重跑 Yoga。 */
@@ -248,9 +261,10 @@ export type SceneRuntime = {
     id: string,
     content: string | readonly TextFlatRun[],
     style: ViewStyle,
+    label?: string,
   ): void;
-  insertImage(parentId: string, id: string, options: InsertImageOptions): void;
-  insertSvgPath(parentId: string, id: string, options: InsertSvgPathOptions): void;
+  insertImage(parentId: string, id: string, options: InsertImageOptions, label?: string): void;
+  insertSvgPath(parentId: string, id: string, options: InsertSvgPathOptions, label?: string): void;
   removeView(id: string): void;
   updateStyle(id: string, style: ViewStyle): void;
   /** 局部合并样式（merge）：仅覆盖传入的字段，未传入字段保持原值。命令式场景（如 hover 切换单属性）使用。 */
@@ -264,6 +278,11 @@ export type SceneRuntime = {
   getSceneGraphSnapshot(): SceneGraphSnapshot;
   getLayoutSnapshot(): LayoutSnapshot;
   getLastDispatchTrace(): DispatchTrace;
+  /**
+   * 只读命中：与 `dispatchPointerLike` 使用相同的 `hitResolver ?? hitTestAt`，**不**派发事件、不更新内部 hover。
+   * 坐标为 **world**（与指针事件中的 `x` / `y` 一致）。
+   */
+  hitTestWorld(x: number, y: number): string | null;
   /** 场景树中是否已有该 id（供 React 等按序挂载时等待父节点先注册）。 */
   hasSceneNode(id: string): boolean;
   /** 每次内部布局同步完成后调用；注册时立即派发当前一帧。 */
@@ -273,6 +292,53 @@ export type SceneRuntime = {
    * 传入 `null` 时回退到 `hitTestAt`（CPU 布局盒命中）。
    */
   setHitResolver(fn: ((x: number, y: number) => string | null) | null): void;
+
+  // ── 相机 ──────────────────────────────────────────────────────────────────
+
+  /** 读取当前相机状态（只读副本）。 */
+  getCamera(): Camera;
+
+  /**
+   * 直接设置相机（部分覆盖），立即触发重绘。
+   * `scale` 会被钳制到 `[CAMERA_SCALE_MIN, CAMERA_SCALE_MAX]`。
+   */
+  setCamera(next: Partial<Camera>): void;
+
+  /** 平移相机（screen px 增量）。 */
+  panBy(dx: number, dy: number): void;
+
+  /**
+   * 以屏幕坐标 `(sx, sy)` 为固定中心缩放。
+   * `factor > 1` 放大，`factor < 1` 缩小。
+   */
+  zoomAt(sx: number, sy: number, factor: number): void;
+
+  /**
+   * 跳转到 world 坐标 `(wx, wy)` 并设置 `targetScale`，
+   * 使该点出现在 screen 中心 `(cx, cy)`（默认视口中心）。
+   */
+  focusToWorld(
+    wx: number,
+    wy: number,
+    targetScale?: number,
+    screenCenter?: { cx: number; cy: number },
+  ): void;
+
+  /** 屏幕坐标 → world 坐标（应用相机逆变换）。 */
+  screenToWorld(sx: number, sy: number): { x: number; y: number };
+
+  /** world 坐标 → 屏幕坐标（应用相机正变换）。 */
+  worldToScreen(wx: number, wy: number): { x: number; y: number };
+
+  /** 订阅相机变化；注册时立即派发当前值。返回取消函数。 */
+  subscribeCamera(listener: (camera: Camera) => void): () => void;
+
+  /**
+   * 自叶向根查找第一个可纵向滚动（`maxScrollY > 0`）的 `scrollView`；
+   * 叶本身是此类 scrollView 时返回其 id。无则返回 `null`。
+   * 供外层手势判断：若命中点在可滚动区域内，应避免抢画布平移。
+   */
+  findVerticalScrollAncestorForLeaf(leafId: string | null): string | null;
 };
 
 function normalizeInsertTextContent(content: string | readonly TextFlatRun[]): {
@@ -359,6 +425,23 @@ export async function createSceneRuntime(
   let hitResolver: ((x: number, y: number) => string | null) | null = null;
   /** 上一帧命中叶（内部 hover；不对外暴露 getter）。 */
   let lastHitTargetId: string | null = null;
+
+  // ── 相机 ────────────────────────────────────────────────────────────────
+  const CAMERA_SCALE_MIN = 0.01;
+  const CAMERA_SCALE_MAX = 64;
+
+  let camera: Camera = { scale: 1, tx: 0, ty: 0 };
+  const cameraListeners = new Set<(c: Camera) => void>();
+
+  function clampScale(s: number): number {
+    return Math.max(CAMERA_SCALE_MIN, Math.min(CAMERA_SCALE_MAX, s));
+  }
+
+  function notifyCameraListeners(): void {
+    for (const fn of cameraListeners) {
+      fn(camera);
+    }
+  }
 
   type ScrollDragState =
     | { kind: "idle" }
@@ -739,24 +822,25 @@ export async function createSceneRuntime(
       applyResolvedCursor();
     },
 
-    insertView(parentId, id, style) {
+    insertView(parentId, id, style, label) {
       layoutDirty = true;
       const existing = store.get(id);
       if (existing) {
         existing.viewStyle = { ...existing.viewStyle, ...style };
+        if (label !== undefined) existing.label = label;
         rebuildYogaStyle(existing, store, yoga);
         runLayout();
         applyResolvedCursor();
         return;
       }
-      const n = store.createChildAt(parentId, id);
+      const n = store.createChildAt(parentId, id, label);
       n.viewStyle = { ...style };
       applyStylesToYoga(n.yogaNode, n.viewStyle);
       runLayout();
       applyResolvedCursor();
     },
 
-    insertScrollView(parentId, id, style) {
+    insertScrollView(parentId, id, style, label) {
       layoutDirty = true;
       const existing = store.get(id);
       if (existing) {
@@ -764,12 +848,13 @@ export async function createSceneRuntime(
           throw new Error(`insertScrollView: node "${id}" exists but is not a scrollView`);
         }
         existing.viewStyle = { overflow: "hidden", ...style };
+        if (label !== undefined) existing.label = label;
         rebuildYogaStyle(existing, store, yoga);
         runLayout();
         applyResolvedCursor();
         return;
       }
-      const n = store.createChildAt(parentId, id);
+      const n = store.createChildAt(parentId, id, label);
       n.kind = "scrollView";
       n.scrollY = 0;
       n.viewStyle = { overflow: "hidden", ...style };
@@ -818,7 +903,7 @@ export async function createSceneRuntime(
       applyResolvedCursor();
     },
 
-    insertText(parentId, id, content, style) {
+    insertText(parentId, id, content, style, label) {
       layoutDirty = true;
       const { textContent, textRuns } = normalizeInsertTextContent(content);
       const existing = store.get(id);
@@ -829,6 +914,7 @@ export async function createSceneRuntime(
         existing.textContent = textContent;
         existing.textRuns = textRuns;
         existing.viewStyle = { ...existing.viewStyle, ...style };
+        if (label !== undefined) existing.label = label;
         rebuildYogaStyle(existing, store, yoga);
         /**
          * 文本内在尺寸变化时，带 measure 的叶需失效测量缓存；否则父 flex 行可能仍按旧宽度分配空间
@@ -843,7 +929,7 @@ export async function createSceneRuntime(
         applyResolvedCursor();
         return;
       }
-      const n = store.createChildAt(parentId, id);
+      const n = store.createChildAt(parentId, id, label);
       n.kind = "text";
       n.textContent = textContent;
       n.textRuns = textRuns;
@@ -853,7 +939,7 @@ export async function createSceneRuntime(
       applyResolvedCursor();
     },
 
-    insertImage(parentId, id, options) {
+    insertImage(parentId, id, options, label) {
       const { uri, objectFit = "contain", style, onLoad, onError } = options;
       layoutDirty = true;
       const existing = store.get(id);
@@ -865,6 +951,7 @@ export async function createSceneRuntime(
         existing.imageUri = uri;
         existing.imageObjectFit = objectFit;
         existing.viewStyle = { ...existing.viewStyle, ...style };
+        if (label !== undefined) existing.label = label;
         rebuildYogaStyle(existing, store, yoga);
         runLayout();
         if (prevUri !== uri) {
@@ -873,7 +960,7 @@ export async function createSceneRuntime(
         applyResolvedCursor();
         return;
       }
-      const n = store.createChildAt(parentId, id);
+      const n = store.createChildAt(parentId, id, label);
       n.kind = "image";
       n.imageUri = uri;
       n.imageObjectFit = objectFit;
@@ -884,7 +971,7 @@ export async function createSceneRuntime(
       applyResolvedCursor();
     },
 
-    insertSvgPath(parentId, id, options) {
+    insertSvgPath(parentId, id, options, label) {
       const { d, viewBox, style, stroke, fill, strokeWidth, onError } = options;
       const parsed = parseSvgViewBox(viewBox);
       if (!parsed.ok) {
@@ -902,12 +989,13 @@ export async function createSceneRuntime(
         existing.svgFill = fill;
         existing.svgStrokeWidth = strokeWidth;
         existing.viewStyle = { ...existing.viewStyle, ...style };
+        if (label !== undefined) existing.label = label;
         rebuildYogaStyle(existing, store, yoga);
         runLayout();
         applyResolvedCursor();
         return;
       }
-      const n = store.createChildAt(parentId, id);
+      const n = store.createChildAt(parentId, id, label);
       n.kind = "svgPath";
       n.svgPathD = d;
       n.svgViewBox = viewBox;
@@ -978,6 +1066,13 @@ export async function createSceneRuntime(
       return lastTrace;
     },
 
+    hitTestWorld(x, y) {
+      if (layoutDirty) {
+        runLayout();
+      }
+      return hitResolver ? hitResolver(x, y) : hitTestAt(x, y, rootId, store);
+    },
+
     hasSceneNode(id) {
       return store.get(id) !== undefined;
     },
@@ -992,6 +1087,88 @@ export async function createSceneRuntime(
 
     setHitResolver(fn) {
       hitResolver = fn;
+    },
+
+    // ── 相机 ──────────────────────────────────────────────────────────────
+
+    getCamera() {
+      return { ...camera };
+    },
+
+    setCamera(next) {
+      const scale = next.scale !== undefined ? clampScale(next.scale) : camera.scale;
+      const tx = next.tx !== undefined ? next.tx : camera.tx;
+      const ty = next.ty !== undefined ? next.ty : camera.ty;
+      camera = { scale, tx, ty };
+      notifyCameraListeners();
+      emitLayoutCommit();
+    },
+
+    panBy(dx, dy) {
+      camera = { ...camera, tx: camera.tx + dx, ty: camera.ty + dy };
+      notifyCameraListeners();
+      emitLayoutCommit();
+    },
+
+    zoomAt(sx, sy, factor) {
+      const nextScale = clampScale(camera.scale * factor);
+      const realFactor = nextScale / camera.scale;
+      // 以屏幕点 (sx,sy) 为中心：保持 world 坐标不变
+      // world = (screen - tx) / scale  =>  新 tx = sx - world * nextScale
+      const worldX = (sx - camera.tx) / camera.scale;
+      const worldY = (sy - camera.ty) / camera.scale;
+      camera = {
+        scale: nextScale,
+        tx: sx - worldX * nextScale,
+        ty: sy - worldY * nextScale,
+      };
+      notifyCameraListeners();
+      emitLayoutCommit();
+      // 避免 lint unused-var
+      void realFactor;
+    },
+
+    focusToWorld(wx, wy, targetScale, screenCenter) {
+      const viewport = apiRef.getViewport();
+      const cx = screenCenter?.cx ?? viewport.width / 2;
+      const cy = screenCenter?.cy ?? viewport.height / 2;
+      const nextScale = targetScale !== undefined ? clampScale(targetScale) : camera.scale;
+      camera = {
+        scale: nextScale,
+        tx: cx - wx * nextScale,
+        ty: cy - wy * nextScale,
+      };
+      notifyCameraListeners();
+      emitLayoutCommit();
+    },
+
+    screenToWorld(sx, sy) {
+      return {
+        x: (sx - camera.tx) / camera.scale,
+        y: (sy - camera.ty) / camera.scale,
+      };
+    },
+
+    worldToScreen(wx, wy) {
+      return {
+        x: wx * camera.scale + camera.tx,
+        y: wy * camera.scale + camera.ty,
+      };
+    },
+
+    subscribeCamera(listener) {
+      cameraListeners.add(listener);
+      listener({ ...camera });
+      return () => {
+        cameraListeners.delete(listener);
+      };
+    },
+
+    findVerticalScrollAncestorForLeaf(leafId) {
+      if (layoutDirty) {
+        runLayout();
+      }
+      return deepestScrollAncestorOfLeaf(store, leafId);
     },
   };
 
