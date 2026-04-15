@@ -1,7 +1,7 @@
 # Minimal Post-Process (SkSL) — Design
 
 **Date:** 2026-04-15  
-**Status:** Proposed  
+**Status:** Approved  
 **Topic:** 在 `@react-canvas/core-v2` 的 CanvasKit 主渲染管线中，增加 **最简 A 方案**：单 pass 全屏后处理，调用方在 **attach 时** 提供 **SkSL**，运行期仅更新 **uniform**；**不**引入第二套 WebGL（如 regl）。
 
 ---
