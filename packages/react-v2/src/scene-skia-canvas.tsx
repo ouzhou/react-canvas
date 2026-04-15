@@ -1,6 +1,8 @@
 import {
   attachCanvasStagePointer,
   attachSceneSkiaPresenter,
+  type PostProcessOptions,
+  type PostProcessDisabledReason,
   type PresentFrameInfo,
   type SceneRuntime,
   type TypefaceFontProvider,
@@ -15,6 +17,9 @@ export type SceneSkiaCanvasProps = {
   paragraphFontProvider?: TypefaceFontProvider | null;
   defaultParagraphFontFamily?: string;
   onPresentFrame?: (info: PresentFrameInfo) => void;
+  /** 见 `@react-canvas/core-v2` `AttachSceneSkiaOptions.postProcess`；`sksl` 变化时会重新挂载 presenter。 */
+  postProcess?: PostProcessOptions;
+  onPostProcessDisabled?: (reason: PostProcessDisabledReason) => void;
 };
 
 /**
@@ -28,10 +33,14 @@ export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
     paragraphFontProvider,
     defaultParagraphFontFamily,
     onPresentFrame,
+    postProcess,
+    onPostProcessDisabled,
   } = props;
   const ref = useRef<HTMLCanvasElement | null>(null);
   const onPresentFrameRef = useRef(onPresentFrame);
   onPresentFrameRef.current = onPresentFrame;
+  const onPostProcessDisabledRef = useRef(onPostProcessDisabled);
+  onPostProcessDisabledRef.current = onPostProcessDisabled;
 
   useEffect(() => {
     const canvas = ref.current;
@@ -53,6 +62,8 @@ export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
       paragraphFontProvider,
       defaultParagraphFontFamily,
       onPresentFrame: (info) => onPresentFrameRef.current?.(info),
+      postProcess,
+      onPostProcessDisabled: (reason) => onPostProcessDisabledRef.current?.(reason),
     })
       .then((detach) => {
         if (!cancelled) detachSkia = detach;
@@ -68,7 +79,14 @@ export function SceneSkiaCanvas(props: SceneSkiaCanvasProps): ReactNode {
       detachSkia?.();
       detachPointer?.();
     };
-  }, [runtime, width, height, paragraphFontProvider, defaultParagraphFontFamily]);
+  }, [
+    runtime,
+    width,
+    height,
+    paragraphFontProvider,
+    defaultParagraphFontFamily,
+    postProcess?.sksl,
+  ]);
 
   return (
     <canvas

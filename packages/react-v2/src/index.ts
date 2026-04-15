@@ -5,6 +5,8 @@ export type {
   ImageObjectFit,
   LayoutCommitPayload,
   PointerEventType,
+  PostProcessDisabledReason,
+  PostProcessOptions,
   Runtime,
   RuntimeInitSnapshot,
   RuntimeOptions,

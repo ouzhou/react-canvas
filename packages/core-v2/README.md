@@ -19,6 +19,21 @@
 
 设计说明见仓库根目录 `docs/core-design.md`（§2.2 与运行时初始化相关）。
 
+### SkSL 全屏后处理（实验）
+
+`attachSceneSkiaPresenter` 的 `postProcess` 可选：在 **WebGL** 下先将整帧场景画到 **独立离屏 Surface**（与 pick 缓冲分离），再经 `CanvasKit.RuntimeEffect` 全屏画到主 canvas。`MakeSWCanvasSurface` 回退时 **不启用** 后处理，并触发 `onPostProcessDisabled('software-surface')`；SkSL **编译失败** 时触发 `compile-failed` 并回退为无后处理绘制。
+
+- **SkSL**：在 `attach` 时传入一次；须声明 **恰好一个** `shader` 子节点，例如：
+
+  ```text
+  uniform shader uScene;
+  half4 main(float2 p) {
+      return uScene.eval(p);
+  }
+  ```
+
+- **Uniform**：通过 `getUniforms(ctx)` 返回 `Record<string, number | Float32Array | number[]>`，键名与 SkSL 中 `uniform` 名一致；未提供的分量填 `0`。
+
 ---
 
 ## 命中测试（当前约定，无 zIndex）

@@ -1,5 +1,7 @@
 import type {
   Camera,
+  PostProcessDisabledReason,
+  PostProcessOptions,
   PresentFrameInfo,
   SceneRuntime,
   TypefaceFontProvider,
@@ -27,6 +29,9 @@ export type CanvasProps = {
   onCameraChange?: (camera: Camera) => void;
   /** runtime 就绪（或销毁）时回调；可持有引用调用 panBy/zoomAt 等相机 API。 */
   onRuntimeReady?: (runtime: SceneRuntime | null) => void;
+  /** 全屏 SkSL 后处理（仅 WebGL）；见 `SceneSkiaCanvas`。 */
+  postProcess?: PostProcessOptions;
+  onPostProcessDisabled?: (reason: PostProcessDisabledReason) => void;
 };
 
 /**
@@ -43,6 +48,8 @@ export function Canvas(props: CanvasProps): ReactNode {
     camera,
     onCameraChange,
     onRuntimeReady,
+    postProcess,
+    onPostProcessDisabled,
   } = props;
   const [runtime, setRuntime] = useState<SceneRuntime | null>(null);
   const [error, setError] = useState<Error | null>(null);
@@ -102,6 +109,8 @@ export function Canvas(props: CanvasProps): ReactNode {
         paragraphFontProvider={paragraphFontProvider}
         defaultParagraphFontFamily={defaultParagraphFontFamily}
         onPresentFrame={onPresentFrame}
+        postProcess={postProcess}
+        onPostProcessDisabled={onPostProcessDisabled}
       />
       <SceneRuntimeContext.Provider value={runtime}>
         <ParentSceneIdContext.Provider value={runtime.getContentRootId()}>
