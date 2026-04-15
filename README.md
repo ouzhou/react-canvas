@@ -33,12 +33,13 @@ For deeper modules (Runtime, Stage, events, …), see [`docs/core-design.md`](do
 
 ### Repository layout
 
-| Path                | Package                  | Notes                                                        |
-| ------------------- | ------------------------ | ------------------------------------------------------------ |
-| `packages/core-v2`  | `@react-canvas/core-v2`  | Scene graph, Yoga, Skia pipeline                             |
-| `packages/react-v2` | `@react-canvas/react-v2` | Reconciler, JSX types, public API                            |
-| `apps/v3`           | `v3` (private app)       | Integration / demo UI (depends on workspace `*-v2` packages) |
-| `docs/`             | —                        | Design notes and archives                                    |
+| Path                   | Package                         | Notes                                                       |
+| ---------------------- | ------------------------------- | ----------------------------------------------------------- |
+| `packages/core-v2`     | `@react-canvas/core-v2`         | Scene graph, Yoga, Skia pipeline                            |
+| `packages/react-v2`    | `@react-canvas/react-v2`        | Reconciler, JSX types, public API                           |
+| `apps/v3`              | `v3` (private app)              | Primary integration / demo UI (depends on workspace `*-v2`) |
+| `apps/open-canvas-lab` | `open-canvas-lab` (private app) | Extended lab / playground UI (depends on workspace `*-v2`)  |
+| `docs/`                | —                               | Design notes and archives                                   |
 
 ### Requirements
 
@@ -57,9 +58,13 @@ This monorepo uses **Vite+** (global CLI `vp`) and **pnpm** workspaces. Conventi
 # Install dependencies (prefer vp; avoid calling pnpm/npm/yarn for installs directly)
 vp install
 
-# Run the demo app (apps/v3)
+# Run the primary demo app (apps/v3)
 pnpm run v3
 # same as: vp run v3#dev
+
+# Run the lab / playground app (apps/open-canvas-lab)
+pnpm run lab
+# same as: vp run open-canvas-lab#dev
 
 # Format + lint + recursive tests + recursive build
 pnpm run ready

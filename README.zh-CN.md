@@ -33,12 +33,13 @@ Skia / CanvasKit 绘制 → <canvas>
 
 ### 仓库结构
 
-| 路径                | 包名                     | 说明                                        |
-| ------------------- | ------------------------ | ------------------------------------------- |
-| `packages/core-v2`  | `@react-canvas/core-v2`  | 场景树、Yoga 布局、Skia 绘制管线            |
-| `packages/react-v2` | `@react-canvas/react-v2` | React reconciler、JSX 类型、入口 API        |
-| `apps/v3`           | `v3`（私有应用）         | 联调与示例界面（依赖 workspace 中的 v2 包） |
-| `docs/`             | —                        | 设计文档与归档说明                          |
+| 路径                   | 包名                          | 说明                                             |
+| ---------------------- | ----------------------------- | ------------------------------------------------ |
+| `packages/core-v2`     | `@react-canvas/core-v2`       | 场景树、Yoga 布局、Skia 绘制管线                 |
+| `packages/react-v2`    | `@react-canvas/react-v2`      | React reconciler、JSX 类型、入口 API             |
+| `apps/v3`              | `v3`（私有应用）              | 主要联调与示例界面（依赖 workspace 中的 v2 包）  |
+| `apps/open-canvas-lab` | `open-canvas-lab`（私有应用） | 扩展实验 / 演练界面（依赖 workspace 中的 v2 包） |
+| `docs/`                | —                             | 设计文档与归档说明                               |
 
 ### 环境要求
 
@@ -57,11 +58,15 @@ Skia / CanvasKit 绘制 → <canvas>
 # 安装依赖（推荐用 vp，勿直接用 pnpm/npm/yarn 装包）
 vp install
 
-# 启动示例应用（apps/v3）
+# 启动主要示例应用（apps/v3）
 pnpm run v3
 # 等价：vp run v3#dev
 
-# 格式化 + 检查 + 递归测试 + 递归构建
+# 启动实验 / 演练应用（apps/open-canvas-lab）
+pnpm run lab
+# 等价：vp run open-canvas-lab#dev
+
+# 格式化、lint、递归测试、递归构建（根 package.json 的 ready 脚本）
 pnpm run ready
 ```
 

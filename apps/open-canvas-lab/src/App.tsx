@@ -8,7 +8,7 @@ import {
   clientXYToStageLocal,
 } from "@react-canvas/react-v2";
 import type { Camera, SceneRuntime } from "@react-canvas/react-v2";
-import type { SceneGraphSnapshot } from "@react-canvas/core-v2";
+import type { SceneGraphSnapshot, ScenePointerEvent } from "@react-canvas/core-v2";
 import { useChat } from "@ai-sdk/react";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { convertToModelMessages, streamText, tool, isToolUIPart, stepCountIs } from "ai";
@@ -2335,7 +2335,7 @@ export function App() {
     const unsub = rt.addListener(
       rt.getRootId(),
       "click",
-      (e) => {
+      (e: ScenePointerEvent) => {
         setSelectedLayerId(e.targetId);
         setRightTab("properties");
         const snap = rt.getSceneGraphSnapshot();
@@ -3508,12 +3508,14 @@ export function App() {
             {t`English`}
           </button>
           <a
-            className="inline-flex rounded-md px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-100"
-            href="https://github.com/zhouou/react-canvas"
+            className="inline-flex rounded-md px-3 py-1.5 text-xs hover:bg-slate-100"
+            href="https://github.com/ouzhou/react-canvas"
             target="_blank"
             rel="noreferrer"
           >
-            GitHub
+            <span className="bg-gradient-to-r from-violet-600 via-fuchsia-500 to-rose-500 bg-clip-text font-medium text-transparent">
+              GitHub
+            </span>
           </a>
         </div>
       </div>
