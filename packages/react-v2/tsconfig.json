@@ -16,7 +16,11 @@
     "esModuleInterop": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@react-canvas/core-v2": ["./../core-v2/src/index.ts"],
+      "@react-canvas/react-v2": ["./src/index.ts"]
+    }
   },
   "include": ["src", "tests"]
 }

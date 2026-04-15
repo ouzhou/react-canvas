@@ -15,8 +15,8 @@
     "jsx": "react-jsx",
     "paths": {
       "@/*": ["./src/*"],
-      "@react-canvas/core-v2": ["../../packages/core-v2/src/index.ts"],
-      "@react-canvas/react-v2": ["../../packages/react-v2/src/index.ts"]
+      "@react-canvas/core-v2": ["./../../packages/core-v2/src/index.ts"],
+      "@react-canvas/react-v2": ["./../../packages/react-v2/src/index.ts"]
     },
 
     /* Linting */
