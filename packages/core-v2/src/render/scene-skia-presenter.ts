@@ -121,6 +121,30 @@ export type PresentFrameInfo = {
   didFlush: boolean;
 };
 
+/** 后处理不可用原因（见 `onPostProcessDisabled`）。 */
+export type PostProcessDisabledReason = "software-surface" | "compile-failed";
+
+export type PostProcessUniformContext = {
+  /** backing store 像素宽 */
+  width: number;
+  /** backing store 像素高 */
+  height: number;
+  /** 与 presenter 使用的 dpr 一致 */
+  dpr: number;
+};
+
+/**
+ * 每帧可调数值；键为 SkSL 中 `uniform` 声明名；运行期将按 `RuntimeEffect` 元数据打包为 `Float32Array`。
+ * 若某 uniform 本帧未提供，填 0。
+ */
+export type PostProcessUniforms = Record<string, number | Float32Array>;
+
+export type PostProcessOptions = {
+  /** SkSL 源码；须含一个 `shader` 子节点供场景采样（见 README）。 */
+  sksl: string;
+  getUniforms: (ctx: PostProcessUniformContext) => PostProcessUniforms;
+};
+
 export type AttachSceneSkiaOptions = {
   /** 默认 `globalThis.devicePixelRatio` 或 1 */
   dpr?: number;
@@ -129,6 +153,10 @@ export type AttachSceneSkiaOptions = {
   defaultParagraphFontFamily?: string;
   /** 每帧 RAF 回调末尾触发（在 `paint()` 之后），用于统计 FPS、区分是否真正落屏绘制。 */
   onPresentFrame?: (info: PresentFrameInfo) => void;
+  /** SkSL 全屏后处理（仅 WebGL；逻辑在后续任务接入）。 */
+  postProcess?: PostProcessOptions;
+  /** 后处理被关闭或编译失败时调用，每种 reason 至多一次。 */
+  onPostProcessDisabled?: (reason: PostProcessDisabledReason) => void;
 };
 
 /**
