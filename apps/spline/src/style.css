@@ -1,0 +1,29 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: rgb(14, 14, 20);
+}
+
+#app {
+  width: 100%;
+  min-height: 100svh;
+  margin: 0;
+}
+
+#crawler-ik-root {
+  width: 100%;
+  height: 100svh;
+}
+
+#crawler-ik-root canvas {
+  display: block;
+  vertical-align: top;
+}

@@ -23,6 +23,7 @@ catalog:
   "@streamdown/mermaid": ^1.0.2
   "@tailwindcss/vite": ^4.2.2
   "@types/node": ^24.12.2
+  "@types/p5": ^1.7.7
   "@types/react": ^19.2.14
   "@types/react-dom": ^19.2.3
   "@types/react-reconciler": 0.33.0
@@ -42,6 +43,7 @@ catalog:
   media-chrome: ^4.19.0
   motion: ^12.38.0
   nanoid: ^5.1.7
+  p5: ^2.2.3
   radix-ui: ^1.4.3
   react: 19.2.0
   react-dom: 19.2.0

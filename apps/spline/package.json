@@ -1,0 +1,20 @@
+{
+  "name": "spline",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "tsc && vp build",
+    "preview": "vp preview"
+  },
+  "dependencies": {
+    "p5": "catalog:"
+  },
+  "devDependencies": {
+    "@types/p5": "catalog:",
+    "typescript": "~6.0.2",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}
