@@ -25,3 +25,6 @@ dist-ssr
 
 # AI agent worktrees
 .claude/worktrees/
+
+# Local reference (Codrops upstream); not part of the app build
+apps/RainEffect-master/
