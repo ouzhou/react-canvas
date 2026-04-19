@@ -8,19 +8,39 @@ import {
   SvgPath,
   type PostProcessDisabledReason,
 } from "@react-canvas/react-v2";
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useGlassLensPostProcess } from "../hooks/use-glass-lens-post-process.ts";
 import { useJuejinSkiaRaindropsLiquid } from "../hooks/use-juejin-skia-raindrops-liquid.ts";
 import { useJuejinWaterRefractionPostProcess } from "../hooks/use-juejin-water-refraction-post-process.ts";
+import { JuejinRainDebugProvider } from "../juejin/juejin-rain-debug-context.tsx";
+import { JuejinRainDebugPanel } from "../juejin/juejin-rain-debug-panel.tsx";
+import {
+  JuejinPostEffectSwitcher,
+  juejinGlassLensOpts,
+  type JuejinPostEffectId,
+} from "../juejin/juejin-post-effect-switcher.tsx";
 import { useViewportSize } from "../smoke/hooks/use-viewport-size";
 import localParagraphFontUrl from "../assets/NotoSansSC-Regular.otf?url";
 
-export const JuejinPage = () => {
+export const JuejinPage = () => (
+  <JuejinRainDebugProvider>
+    <JuejinPageInner />
+  </JuejinRainDebugProvider>
+);
+
+function JuejinPageInner() {
   const { vw, vh } = useViewportSize();
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const skiaLiquidCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [postEffect, setPostEffect] = useState<JuejinPostEffectId>("rain");
   const loadingBarAnimation = "juejin-loading-bar 1.2s ease-in-out infinite";
   const waterPostProcess = useJuejinWaterRefractionPostProcess(skiaLiquidCanvasRef);
-  useJuejinSkiaRaindropsLiquid(skiaLiquidCanvasRef, vw, vh, true);
+  const glassOpts = useMemo(() => juejinGlassLensOpts(postEffect, vw), [postEffect, vw]);
+  const glassPostProcess = useGlassLensPostProcess(canvasAreaRef, glassOpts);
+  useJuejinSkiaRaindropsLiquid(skiaLiquidCanvasRef, vw, vh, postEffect === "rain");
+
+  const activePostProcess =
+    postEffect === "rain" ? waterPostProcess : postEffect === "off" ? undefined : glassPostProcess;
 
   const onPostProcessDisabled = useCallback((reason: PostProcessDisabledReason) => {
     console.warn("[juejin] SkSL post-process disabled:", reason);
@@ -93,7 +113,7 @@ export const JuejinPage = () => {
                 height={vh}
                 paragraphFontProvider={runtime.paragraphFontProvider}
                 defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
-                postProcess={waterPostProcess}
+                postProcess={activePostProcess}
                 onPostProcessDisabled={onPostProcessDisabled}
               >
                 <View
@@ -1026,6 +1046,8 @@ export const JuejinPage = () => {
           );
         }}
       </CanvasProvider>
+      <JuejinPostEffectSwitcher value={postEffect} onChange={setPostEffect} />
+      <JuejinRainDebugPanel />
     </>
   );
-};
+}

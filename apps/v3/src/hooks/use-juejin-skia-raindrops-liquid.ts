@@ -1,6 +1,8 @@
 import { canvasBackingStoreSize } from "@react-canvas/core-v2";
 import type { RefObject } from "react";
 import { useEffect, useRef } from "react";
+import { JUEJIN_RAIN_DEBUG_DEFAULT } from "../juejin/juejin-rain-debug-defaults.ts";
+import { useJuejinRainDebugOptional } from "../juejin/juejin-rain-debug-context.tsx";
 import { loadImages, RaindropsCtor as Raindrops } from "../rain-effect/index.ts";
 
 const IMG_BASE = "/rain-effect/img";
@@ -8,7 +10,7 @@ const IMG_BASE = "/rain-effect/img";
 type Loaded = Awaited<ReturnType<typeof loadImages>>;
 
 /**
- * Codrops **index1**（`src/index.js`，Weather `rain`）的 Raindrops 参数：无开局随机水珠，靠 `rainChance`/`dropletsRate` 下雨。
+ * Raindrops 参数可由 `JuejinRainDebugProvider` 浮层实时调整；无 Provider 时用 `JUEJIN_RAIN_DEBUG_DEFAULT`。
  */
 export function useJuejinSkiaRaindropsLiquid(
   liquidCanvasRef: RefObject<HTMLCanvasElement | null>,
@@ -20,6 +22,9 @@ export function useJuejinSkiaRaindropsLiquid(
   const vhRef = useRef(vh);
   vwRef.current = vw;
   vhRef.current = vh;
+
+  const debugCtx = useJuejinRainDebugOptional();
+  const rd = debugCtx?.state.raindrops ?? JUEJIN_RAIN_DEBUG_DEFAULT.raindrops;
 
   useEffect(() => {
     if (!enabled) {
@@ -41,17 +46,17 @@ export function useJuejinSkiaRaindropsLiquid(
 
       /** 与 Skia presenter 一致：`bw/rootScale` 等于布局逻辑宽，勿用裸 `dpr`（二者可能略有差异）。 */
       raindrops = new Raindrops(bw, bh, rootScale, dropAlpha, dropColor, {
-        minR: 20,
-        maxR: 50,
-        rainChance: 0.35,
-        rainLimit: 6,
-        dropletsRate: 50,
-        dropletsSize: [3, 5.5],
-        trailRate: 1,
-        trailScaleRange: [0.25, 0.35],
-        collisionRadius: 0.45,
-        collisionRadiusIncrease: 0.0002,
-        dropletsCleaningRadiusMultiplier: 0.28,
+        minR: rd.minR,
+        maxR: rd.maxR,
+        collisionRadiusIncrease: rd.collisionRadiusIncrease,
+        dropletsRate: rd.dropletsRate,
+        dropletsSize: [rd.dropletsSizeMin, rd.dropletsSizeMax],
+        dropletsCleaningRadiusMultiplier: rd.dropletsCleaningRadiusMultiplier,
+        rainChance: rd.rainChance,
+        rainLimit: rd.rainLimit,
+        trailRate: rd.trailRate,
+        trailScaleRange: [rd.trailScaleMin, rd.trailScaleMax],
+        collisionRadius: rd.collisionRadius,
       });
 
       liquidCanvasRef.current = raindrops.canvas;
@@ -70,5 +75,5 @@ export function useJuejinSkiaRaindropsLiquid(
       raindrops = null;
       liquidCanvasRef.current = null;
     };
-  }, [enabled, liquidCanvasRef, vw, vh]);
+  }, [enabled, liquidCanvasRef, vw, vh, rd]);
 }
