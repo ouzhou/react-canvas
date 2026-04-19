@@ -1,14 +1,14 @@
 import { canvasBackingStoreSize } from "@react-canvas/core-v2";
 import type { RefObject } from "react";
 import { useEffect, useRef } from "react";
-import { loadImages, RaindropsCtor as Raindrops, times, random } from "../rain-effect/index.ts";
+import { loadImages, RaindropsCtor as Raindrops } from "../rain-effect/index.ts";
 
 const IMG_BASE = "/rain-effect/img";
 
 type Loaded = Awaited<ReturnType<typeof loadImages>>;
 
 /**
- * 仅运行 Codrops 2D Raindrops，输出与 Skia backing 同尺寸的液体层 Canvas，供后处理每帧采样。
+ * Codrops **index1**（`src/index.js`，Weather `rain`）的 Raindrops 参数：无开局随机水珠，靠 `rainChance`/`dropletsRate` 下雨。
  */
 export function useJuejinSkiaRaindropsLiquid(
   liquidCanvasRef: RefObject<HTMLCanvasElement | null>,
@@ -42,30 +42,16 @@ export function useJuejinSkiaRaindropsLiquid(
       /** 与 Skia presenter 一致：`bw/rootScale` 等于布局逻辑宽，勿用裸 `dpr`（二者可能略有差异）。 */
       raindrops = new Raindrops(bw, bh, rootScale, dropAlpha, dropColor, {
         minR: 20,
-        maxR: 60,
-        rainChance: 0.3,
-        rainLimit: 10,
-        dropletsRate: 0,
-        globalTimeScale: 0.45,
-        trailRate: 1.1,
-        dropFallMultiplier: 0.2,
-        trailScaleRange: [0.2, 0.35],
-        autoShrink: false,
-        spawnArea: [-0.3, 0.3],
+        maxR: 50,
+        rainChance: 0.35,
+        rainLimit: 6,
+        dropletsRate: 50,
+        dropletsSize: [3, 5.5],
+        trailRate: 1,
+        trailScaleRange: [0.25, 0.35],
         collisionRadius: 0.45,
-        collisionRadiusIncrease: 0,
-        collisionBoost: 0.35,
-        collisionBoostMultiplier: 0.025,
-      });
-
-      times(80, () => {
-        raindrops!.addDrop(
-          raindrops!.createDrop({
-            x: random(bw),
-            y: random(bh),
-            r: random(10, 20),
-          }),
-        );
+        collisionRadiusIncrease: 0.0002,
+        dropletsCleaningRadiusMultiplier: 0.28,
       });
 
       liquidCanvasRef.current = raindrops.canvas;
