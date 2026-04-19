@@ -1,4 +1,12 @@
-import { CanvasProvider, Canvas, View, Text, ScrollView, SvgPath } from "@react-canvas/react-v2";
+import {
+  CanvasProvider,
+  Canvas,
+  View,
+  Text,
+  ScrollView,
+  SvgPath,
+  type PostProcessDisabledReason,
+} from "@react-canvas/react-v2";
 import { useCallback, useRef } from "react";
 import { useGlassLensPostProcess } from "../hooks/use-glass-lens-post-process.ts";
 import { useViewportSize } from "../smoke/hooks/use-viewport-size";
@@ -9,7 +17,7 @@ export const DevToPage = () => {
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const postProcess = useGlassLensPostProcess(canvasAreaRef, { radius: 120, lerp: 0.15 });
   const loadingBarAnimation = "devto-loading-bar 1.2s ease-in-out infinite";
-  const onPostProcessDisabled = useCallback((reason: "software-surface" | "compile-failed") => {
+  const onPostProcessDisabled = useCallback((reason: PostProcessDisabledReason) => {
     console.warn("[devto] SkSL post-process disabled:", reason);
   }, []);
 

@@ -23,7 +23,7 @@
 
 `attachSceneSkiaPresenter` 的 `postProcess` 可选：在 **WebGL** 下先将整帧场景画到 **独立离屏 Surface**（与 pick 缓冲分离），再经 `CanvasKit.RuntimeEffect` 全屏画到主 canvas。`MakeSWCanvasSurface` 回退时 **不启用** 后处理，并触发 `onPostProcessDisabled('software-surface')`；SkSL **编译失败** 时触发 `compile-failed` 并回退为无后处理绘制。
 
-- **SkSL**：在 `attach` 时传入一次；须声明 **恰好一个** `shader` 子节点，例如：
+- **SkSL**：在 `attach` 时传入一次。子节点顺序为：**场景快照** →（可选）`imageShaderUrls` 按 URL 顺序各一张解码图 →（可选）**液体层**（`getLiquidTextureCanvas` 返回的 Canvas2D，须与 backing 同宽高）。SkSL 中 `uniform shader` 声明须与此顺序一致。仅场景、无附加子节点时例如：
 
   ```text
   uniform shader uScene;
@@ -32,6 +32,8 @@
   }
   ```
 
+- **`imageShaderUrls` / `imageShaderTileModes`**：静态图 URL 列表；解码失败时触发 `onPostProcessDisabled('post-process-images-failed')` 并回退无后处理。`tileModes` 与 URL 等长，每项 `repeat`（默认）或 `clamp`。
+- **`getLiquidTextureCanvas`**：每帧将返回的 `HTMLCanvasElement` 采样为最后一个子 shader；尺寸不符时暂用 1×1 占位，仍保持子节点个数不变。
 - **Uniform**：通过 `getUniforms(ctx)` 返回 `Record<string, number | Float32Array | number[]>`，键名与 SkSL 中 `uniform` 名一致；未提供的分量填 `0`。
 - **`continuousRepaint`**：为 `true` 时每帧 `requestAnimationFrame` 触发绘制（用于跟手透镜等仅 uniform 变化的场景）；否则仍在布局提交后绘制。
 

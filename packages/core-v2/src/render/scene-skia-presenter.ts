@@ -1,6 +1,7 @@
 import type {
   Canvas,
   CanvasKit,
+  Image,
   ImageInfo,
   Paint,
   RuntimeEffect,
@@ -11,7 +12,11 @@ import type {
 
 import { canvasBackingStoreSize } from "../geometry/canvas-backing-store.ts";
 import { computeImageDestSrcRects } from "../media/image-object-fit.ts";
-import { normalizeUriKey, peekDecodedImage } from "../media/image-uri-cache.ts";
+import {
+  getOrStartInflightDecode,
+  normalizeUriKey,
+  peekDecodedImage,
+} from "../media/image-uri-cache.ts";
 import { viewBoxToDestTransform } from "../media/view-box.ts";
 import type { ViewStyle } from "../layout/style-map.ts";
 import { setParagraphMeasureContext } from "../layout/paragraph-measure-context.ts";
@@ -28,6 +33,22 @@ import { mergePlainTextStyle } from "../text/text-flat-run.ts";
 import { PickBuffer } from "../hit/pick-buffer.ts";
 import { initCanvasKit } from "./canvaskit.ts";
 import { packPostProcessUniforms } from "./post-process-uniforms.ts";
+
+/** 1×1 PNG，作液体层未就绪时的占位 `ImageShader`（透明像素）。 */
+const NEUTRAL_LIQUID_PNG_BASE64 =
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+function decodeNeutralLiquidPngBytes(): Uint8Array {
+  if (typeof atob !== "function") {
+    return new Uint8Array();
+  }
+  const bin = atob(NEUTRAL_LIQUID_PNG_BASE64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) {
+    out[i] = bin.charCodeAt(i) & 0xff;
+  }
+  return out;
+}
 
 /** 由 {@link attachSceneSkiaPresenter} 注册；用于在「仅 uniform 变化」时唤醒下一帧绘制。 */
 const canvasRepaintRegistry = new WeakMap<HTMLCanvasElement, () => void>();
@@ -144,7 +165,10 @@ export type PresentFrameInfo = {
 };
 
 /** 后处理不可用原因（见 `onPostProcessDisabled`）。 */
-export type PostProcessDisabledReason = "software-surface" | "compile-failed";
+export type PostProcessDisabledReason =
+  | "software-surface"
+  | "compile-failed"
+  | "post-process-images-failed";
 
 export type PostProcessUniformContext = {
   /** backing store 像素宽 */
@@ -158,7 +182,10 @@ export type PostProcessUniformContext = {
 export type { PostProcessUniforms } from "./post-process-uniforms.ts";
 
 export type PostProcessOptions = {
-  /** SkSL 源码；须含一个 `shader` 子节点供场景采样（见 README）。 */
+  /**
+   * SkSL 源码；`makeShaderWithChildren` 的子节点顺序须与声明的 `uniform shader` 一致：
+   * 第一项为场景快照，其后为 `imageShaderUrls` 解码顺序，最后（若提供 `getLiquidTextureCanvas`）为液体层。
+   */
   sksl: string;
   getUniforms: (ctx: PostProcessUniformContext) => PostProcessUniforms;
   /**
@@ -172,6 +199,15 @@ export type PostProcessOptions = {
    * 跟手动画应在 `getUniforms` 内更新状态，再于此判断是否需要继续重绘；指针移动时可调用 {@link requestCanvasRepaint} 唤醒。
    */
   shouldContinueRepaint?: (ctx: PostProcessUniformContext) => boolean;
+  /** 按顺序 `fetch` 解码为 SkImage，作为 uScene 之后的子 shader（与 SkSL 中 `uniform shader` 顺序一致）。 */
+  imageShaderUrls?: readonly string[];
+  /** 与 `imageShaderUrls` 等长；缺省为 `repeat`。小图高光等可用 `clamp`。 */
+  imageShaderTileModes?: readonly ("repeat" | "clamp")[];
+  /**
+   * 液体层：每帧从该 Canvas2D 采样，作为最后一个子 shader；尺寸须与 Skia backing store（`bw`×`bh`）一致。
+   * 未就绪时改用内部1×1 占位 shader，仍保持子节点数量一致。
+   */
+  getLiquidTextureCanvas?: () => HTMLCanvasElement | null;
 };
 
 export type AttachSceneSkiaOptions = {
@@ -247,6 +283,10 @@ export async function attachSceneSkiaPresenter(
   let postProcessEffect: RuntimeEffect | null = null;
   let sceneColorSurface: Surface | null = null;
   const postProcessDisabledNotified = new Set<PostProcessDisabledReason>();
+  type PostProcessSkImage = NonNullable<ReturnType<CanvasKit["MakeImageFromEncoded"]>>;
+  let postProcessDecodedImages: PostProcessSkImage[] = [];
+  let neutralLiquidImage: Image | null = null;
+  let neutralLiquidShader: Shader | null = null;
 
   function notifyPostProcessDisabled(reason: PostProcessDisabledReason): void {
     if (postProcessDisabledNotified.has(reason)) return;
@@ -265,6 +305,37 @@ export async function attachSceneSkiaPresenter(
         notifyPostProcessDisabled("compile-failed");
       } else {
         postProcessEffect = compiled;
+        const urls = options.postProcess.imageShaderUrls;
+        if (urls && urls.length > 0) {
+          for (const url of urls) {
+            const img = await getOrStartInflightDecode(normalizeUriKey(url), url, ck, fetch);
+            if (!img) {
+              notifyPostProcessDisabled("post-process-images-failed");
+              postProcessEffect.delete();
+              postProcessEffect = null;
+              postProcessDecodedImages = [];
+              break;
+            }
+            postProcessDecodedImages.push(img);
+          }
+        }
+        if (postProcessEffect && typeof options.postProcess.getLiquidTextureCanvas === "function") {
+          const nImg = ck.MakeImageFromEncoded(decodeNeutralLiquidPngBytes());
+          if (!nImg) {
+            notifyPostProcessDisabled("post-process-images-failed");
+            postProcessEffect.delete();
+            postProcessEffect = null;
+            postProcessDecodedImages = [];
+          } else {
+            neutralLiquidImage = nImg;
+            neutralLiquidShader = nImg.makeShaderOptions(
+              ck.TileMode.Clamp,
+              ck.TileMode.Clamp,
+              ck.FilterMode.Linear,
+              ck.MipmapMode.None,
+            )!;
+          }
+        }
       }
     }
   }
@@ -717,7 +788,43 @@ export async function attachSceneSkiaPresenter(
           postProcessEffect,
           options.postProcess.getUniforms(uniformCtx),
         );
-        const effectShader = postProcessEffect.makeShaderWithChildren(flat, [childShader]);
+
+        const imageShaders: Shader[] = [];
+        const tileModes = options.postProcess.imageShaderTileModes;
+        for (let i = 0; i < postProcessDecodedImages.length; i++) {
+          const img = postProcessDecodedImages[i]!;
+          const mode = tileModes?.[i] === "clamp" ? ck.TileMode.Clamp : ck.TileMode.Repeat;
+          imageShaders.push(
+            img.makeShaderOptions(mode, mode, ck.FilterMode.Linear, ck.MipmapMode.None)!,
+          );
+        }
+        const baseChildren: Shader[] = [childShader, ...imageShaders];
+
+        const getLiq = options.postProcess.getLiquidTextureCanvas;
+        let liquidSampleShader: Shader | null = null;
+        let liquidImage: Image | null = null;
+        let children: Shader[] = baseChildren;
+        if (typeof getLiq === "function" && neutralLiquidShader) {
+          const c = getLiq();
+          const ckWithCanvas = ck as CanvasKit & {
+            MakeImageFromCanvasImageSource?: (src: CanvasImageSource) => Image;
+          };
+          const mk = ckWithCanvas.MakeImageFromCanvasImageSource;
+          if (c && c.width === bw && c.height === bh && typeof mk === "function") {
+            liquidImage = mk(c);
+            liquidSampleShader = liquidImage.makeShaderOptions(
+              ck.TileMode.Clamp,
+              ck.TileMode.Clamp,
+              ck.FilterMode.Linear,
+              ck.MipmapMode.None,
+            )!;
+            children = [...baseChildren, liquidSampleShader];
+          } else {
+            children = [...baseChildren, neutralLiquidShader];
+          }
+        }
+
+        const effectShader = postProcessEffect.makeShaderWithChildren(flat, children);
         const mainCanvas = skSurface.getCanvas();
         mainCanvas.clear(ck.Color(248, 250, 252, 255));
         const overlayPaint = new ck.Paint();
@@ -725,6 +832,11 @@ export async function attachSceneSkiaPresenter(
         mainCanvas.drawRect(ck.LTRBRect(0, 0, bw, bh), overlayPaint);
         overlayPaint.delete();
         effectShader.delete();
+        liquidSampleShader?.delete();
+        liquidImage?.delete();
+        for (const ish of imageShaders) {
+          ish.delete();
+        }
         childShader.delete();
         snap.delete();
         skSurface.flush();
@@ -781,6 +893,8 @@ export async function attachSceneSkiaPresenter(
     runtime.setHitResolver(null);
     sceneColorSurface?.delete();
     postProcessEffect?.delete();
+    neutralLiquidShader?.delete();
+    neutralLiquidImage?.delete();
     pickSurface?.delete();
     skSurface.delete();
   };

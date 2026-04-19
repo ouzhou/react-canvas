@@ -6,19 +6,25 @@ import {
   ScrollView,
   Image,
   SvgPath,
+  type PostProcessDisabledReason,
 } from "@react-canvas/react-v2";
-import { useRef } from "react";
-import { useJuejinIndex2Rain } from "../hooks/use-juejin-index2-rain.ts";
+import { useCallback, useRef } from "react";
+import { useJuejinSkiaRaindropsLiquid } from "../hooks/use-juejin-skia-raindrops-liquid.ts";
+import { useJuejinWaterRefractionPostProcess } from "../hooks/use-juejin-water-refraction-post-process.ts";
 import { useViewportSize } from "../smoke/hooks/use-viewport-size";
 import localParagraphFontUrl from "../assets/NotoSansSC-Regular.otf?url";
 
 export const JuejinPage = () => {
   const { vw, vh } = useViewportSize();
   const canvasAreaRef = useRef<HTMLDivElement>(null);
-  const rainOverlayRef = useRef<HTMLDivElement>(null);
+  const skiaLiquidCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const loadingBarAnimation = "juejin-loading-bar 1.2s ease-in-out infinite";
+  const waterPostProcess = useJuejinWaterRefractionPostProcess(skiaLiquidCanvasRef);
+  useJuejinSkiaRaindropsLiquid(skiaLiquidCanvasRef, vw, vh, true);
 
-  useJuejinIndex2Rain(rainOverlayRef, vw, vh, true);
+  const onPostProcessDisabled = useCallback((reason: PostProcessDisabledReason) => {
+    console.warn("[juejin] SkSL post-process disabled:", reason);
+  }, []);
 
   return (
     <>
@@ -87,6 +93,8 @@ export const JuejinPage = () => {
                 height={vh}
                 paragraphFontProvider={runtime.paragraphFontProvider}
                 defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
+                postProcess={waterPostProcess}
+                onPostProcessDisabled={onPostProcessDisabled}
               >
                 <View
                   style={{
@@ -1018,19 +1026,6 @@ export const JuejinPage = () => {
           );
         }}
       </CanvasProvider>
-      <div
-        ref={rainOverlayRef}
-        style={{
-          position: "fixed",
-          left: 0,
-          top: 0,
-          width: vw,
-          height: vh,
-          zIndex: 1000,
-          pointerEvents: "none",
-        }}
-        aria-hidden
-      />
     </>
   );
 };
