@@ -8,8 +8,9 @@ import {
   SvgPath,
   type PostProcessDisabledReason,
 } from "@react-canvas/react-v2";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGlassLensPostProcess } from "../hooks/use-glass-lens-post-process.ts";
+import { useJuejinIntroPostProcess } from "../hooks/use-juejin-intro-post-process.ts";
 import { useJuejinSkiaRaindropsLiquid } from "../hooks/use-juejin-skia-raindrops-liquid.ts";
 import { useJuejinWaterRefractionPostProcess } from "../hooks/use-juejin-water-refraction-post-process.ts";
 import { JuejinRainDebugProvider } from "../juejin/juejin-rain-debug-context.tsx";
@@ -19,6 +20,12 @@ import {
   juejinGlassLensOpts,
   type JuejinPostEffectId,
 } from "../juejin/juejin-post-effect-switcher.tsx";
+import {
+  cloneJuejinRainDebugDefault,
+  juejinRainDebugPresetIndex1,
+} from "../juejin/juejin-rain-debug-defaults.ts";
+import { useJuejinRainDebug } from "../juejin/juejin-rain-debug-context.tsx";
+import { useJuejinCodropsIndex2Webgl } from "../juejin/use-juejin-codrops-index2-webgl.ts";
 import { useViewportSize } from "../smoke/hooks/use-viewport-size";
 import localParagraphFontUrl from "../assets/NotoSansSC-Regular.otf?url";
 
@@ -32,15 +39,46 @@ function JuejinPageInner() {
   const { vw, vh } = useViewportSize();
   const canvasAreaRef = useRef<HTMLDivElement>(null);
   const skiaLiquidCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [postEffect, setPostEffect] = useState<JuejinPostEffectId>("rain");
+  const [postEffect, setPostEffect] = useState<JuejinPostEffectId>("off");
+  const { setState: setRainDebugState } = useJuejinRainDebug();
   const loadingBarAnimation = "juejin-loading-bar 1.2s ease-in-out infinite";
   const waterPostProcess = useJuejinWaterRefractionPostProcess(skiaLiquidCanvasRef);
   const glassOpts = useMemo(() => juejinGlassLensOpts(postEffect, vw), [postEffect, vw]);
   const glassPostProcess = useGlassLensPostProcess(canvasAreaRef, glassOpts);
-  useJuejinSkiaRaindropsLiquid(skiaLiquidCanvasRef, vw, vh, postEffect === "rain");
 
-  const activePostProcess =
-    postEffect === "rain" ? waterPostProcess : postEffect === "off" ? undefined : glassPostProcess;
+  const skiaRainOn = postEffect === "rain-index1" || postEffect === "rain-index2";
+  const skiaRainPreset = postEffect === "rain-index1" ? "index1" : "index2";
+  useJuejinSkiaRaindropsLiquid(skiaLiquidCanvasRef, vw, vh, skiaRainOn, skiaRainPreset);
+
+  const codropsWebglOn = postEffect === "webgl-index2";
+  useJuejinCodropsIndex2Webgl(codropsWebglOn, vw, vh);
+
+  const {
+    postProcess: introPostProcess,
+    replayIntro,
+    introActive,
+    introKind,
+  } = useJuejinIntroPostProcess(canvasAreaRef);
+
+  useEffect(() => {
+    if (postEffect === "rain-index1") {
+      setRainDebugState(juejinRainDebugPresetIndex1());
+    } else if (postEffect === "rain-index2") {
+      setRainDebugState(cloneJuejinRainDebugDefault());
+    }
+  }, [postEffect, setRainDebugState]);
+
+  const basePostProcess = useMemo(
+    () =>
+      skiaRainOn
+        ? waterPostProcess
+        : postEffect === "off" || codropsWebglOn
+          ? undefined
+          : glassPostProcess,
+    [skiaRainOn, postEffect, codropsWebglOn, waterPostProcess, glassPostProcess],
+  );
+
+  const canvasPostProcess = introActive ? introPostProcess : basePostProcess;
 
   const onPostProcessDisabled = useCallback((reason: PostProcessDisabledReason) => {
     console.warn("[juejin] SkSL post-process disabled:", reason);
@@ -113,7 +151,7 @@ function JuejinPageInner() {
                 height={vh}
                 paragraphFontProvider={runtime.paragraphFontProvider}
                 defaultParagraphFontFamily={runtime.defaultParagraphFontFamily}
-                postProcess={activePostProcess}
+                postProcess={canvasPostProcess}
                 onPostProcessDisabled={onPostProcessDisabled}
               >
                 <View
@@ -1046,7 +1084,18 @@ function JuejinPageInner() {
           );
         }}
       </CanvasProvider>
-      <JuejinPostEffectSwitcher value={postEffect} onChange={setPostEffect} />
+      <JuejinPostEffectSwitcher
+        value={postEffect}
+        onChange={setPostEffect}
+        onReplayIntroNoise={() => replayIntro("noise")}
+        onReplayIntroHex={() => replayIntro("hex")}
+        onReplayIntroPixelScan={() => replayIntro("pixelScan")}
+        onReplayIntroEmergePixel={() => replayIntro("emergePixel")}
+        onReplayIntroEmergeChaos={() => replayIntro("emergeChaos")}
+        onReplayIntroEmergeCurtain={() => replayIntro("emergeCurtain")}
+        introActive={introActive}
+        introKind={introKind}
+      />
       <JuejinRainDebugPanel />
     </>
   );

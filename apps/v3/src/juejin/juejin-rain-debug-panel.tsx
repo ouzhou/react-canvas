@@ -92,7 +92,7 @@ export function JuejinRainDebugPanel() {
         position: "fixed",
         right: 12,
         bottom: 12,
-        zIndex: 100000,
+        zIndex: 100090,
         fontFamily: "system-ui, sans-serif",
         maxWidth: open ? 320 : "auto",
       }}
