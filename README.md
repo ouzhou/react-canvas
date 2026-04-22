@@ -6,6 +6,9 @@ The API borrows from React Native’s component model and `style` props: Skia vi
 
 **Website:** [react-canvas-design.vercel.app](https://react-canvas-design.vercel.app/)
 
+- [Juejin homepage recreation + shader animation](https://react-canvas-design.vercel.app/#/juejin)
+- [Figma-like design tool (Open Canvas Lab)](https://open-canvas-lab.vercel.app/)
+
 **Other languages:** [简体中文](README.zh-CN.md)
 
 ### Architecture
